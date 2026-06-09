@@ -1,16 +1,73 @@
-# React + Vite
+# ⚡ Smart Queue Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, full-stack Smart Queue Management System for hospitals, banks, colleges, government offices, and salons.
 
-Currently, two official plugins are available:
+## 📂 Project Structure
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```
+Smart-Queue-Management-System/
+├── frontend/          # React.js Frontend (Vite + Tailwind CSS)
+│   ├── src/
+│   │   ├── components/    # Reusable UI components
+│   │   ├── pages/         # All 10 pages
+│   │   ├── layouts/       # MainLayout & DashboardLayout
+│   │   ├── routes/        # React Router config
+│   │   ├── context/       # Theme context (Dark/Light mode)
+│   │   ├── services/      # Mock data (to be replaced with API calls)
+│   │   └── App.jsx        # Root component
+│   └── package.json
+│
+└── backend/           # (Coming Soon) Node.js + Express + MongoDB
+```
 
-## React Compiler
+## 🚀 Getting Started
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+Opens at `http://localhost:5173/`
 
-## Expanding the ESLint configuration
+## 🛠️ Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Frontend
+- React.js 19 (Functional Components + Hooks)
+- Vite (Build Tool)
+- Tailwind CSS v3
+- Framer Motion (Animations)
+- Recharts (Charts & Analytics)
+- React Router v6
+- react-hot-toast (Notifications)
+- qrcode.react (QR Code Generation)
+
+### Backend (Planned)
+- Node.js + Express.js
+- MongoDB + Mongoose
+- JWT Authentication
+- RESTful APIs
+
+## 📄 Pages
+1. Landing Page
+2. Login
+3. Registration
+4. Book Token
+5. Live Queue Status
+6. My Tokens
+7. Admin Dashboard
+8. Reports & Analytics
+9. User Profile
+
+## ✨ Features
+- 🌗 Dark/Light Mode
+- 📱 Fully Responsive (Mobile + Tablet + Desktop)
+- 🎨 Modern Dashboard UI
+- 📊 Interactive Charts
+- 📷 QR Code Token Generation
+- 🔔 Toast Notifications
+- ⚡ Smooth Animations
+- 🏥 Multi-service Support (Hospital, Bank, College, Govt, Salon)
+
+## 👨‍💻 Author
+Vaibhav Patel
