@@ -14,14 +14,23 @@ const tokenRoutes = require('./routes/tokenRoutes');
 const queueRoutes = require('./routes/queueRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const serviceRoutes = require('./routes/serviceRoutes');
 
 const app = express();
+const allowedOrigins = [
+  process.env.CORS_ORIGIN,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+]
+  .filter(Boolean)
+  .flatMap(origin => origin.split(',').map(item => item.trim()))
+  .filter(Boolean);
 
 // Security Middlewares
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: allowedOrigins.length ? allowedOrigins : '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   })
@@ -75,6 +84,7 @@ app.use('/api/queues', queueRoutes);
 app.use('/api/queue', queueRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/services', serviceRoutes);
 
 // Error Handling Middlewares
 app.use(notFound);

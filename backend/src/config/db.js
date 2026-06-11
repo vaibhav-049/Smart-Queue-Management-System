@@ -77,7 +77,7 @@ const seedDatabase = async () => {
       }
     }
 
-    // 3. Seed Users (Admin & regular users)
+    // 3. Seed Users (Admin only)
     const defaultUsers = [
       {
         name: 'Vikram Patel',
@@ -85,20 +85,6 @@ const seedDatabase = async () => {
         phone: '+91 98765 43210',
         password: 'admin123',
         role: 'admin',
-      },
-      {
-        name: 'Priya Sharma',
-        email: 'priya@example.com',
-        phone: '+91 87654 32109',
-        password: 'user123',
-        role: 'user',
-      },
-      {
-        name: 'Rahul Verma',
-        email: 'rahul@example.com',
-        phone: '+91 76543 21098',
-        password: 'user123',
-        role: 'user',
       },
     ];
 

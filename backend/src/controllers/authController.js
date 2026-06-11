@@ -8,8 +8,14 @@ const generateToken = (id) => {
   });
 };
 
+const OTP = require('../models/OTP');
+const { sendOTPEmail } = require('../services/emailService');
+
+// Helper to generate 6-digit OTP
+const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
+
 /**
- * @desc    Register a new user
+ * @desc    Send OTP for new user registration
  * @route   POST /api/auth/register
  * @access  Public
  */
@@ -29,13 +35,65 @@ const registerUser = async (req, res, next) => {
       throw new Error('User already exists with this email');
     }
 
-    // Create user
-    const user = await User.create({
-      name,
+    // Delete any existing register OTPs for this email
+    await OTP.deleteMany({ email, type: 'register' });
+
+    // Generate and save new OTP
+    const otpCode = generateOTP();
+    await OTP.create({
       email,
-      phone,
-      password,
+      otp: otpCode,
+      type: 'register',
+      userData: { name, email, phone, password } // Store temporarily
     });
+
+    // Send email
+    await sendOTPEmail(email, otpCode, 'register');
+
+    res.status(200).json({
+      success: true,
+      message: 'OTP sent to your email. Please verify to complete registration.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Verify OTP and finalize registration
+ * @route   POST /api/auth/verify-register
+ * @access  Public
+ */
+const verifyOTPAndRegister = async (req, res, next) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      res.status(400);
+      throw new Error('Please provide email and OTP');
+    }
+
+    // Find the OTP record
+    const otpRecord = await OTP.findOne({ email, otp, type: 'register' });
+    if (!otpRecord) {
+      res.status(400);
+      throw new Error('Invalid or expired OTP');
+    }
+
+    const { name, phone, password } = otpRecord.userData;
+
+    // Double check user doesn't exist
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      res.status(400);
+      throw new Error('User already exists');
+    }
+
+    // Create user
+    const user = await User.create({ name, email, phone, password });
+
+    // Delete the OTP record so it can't be reused
+    await OTP.deleteOne({ _id: otpRecord._id });
 
     if (user) {
       res.status(201).json({
@@ -126,8 +184,85 @@ const getMe = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Request Password Reset OTP
+ * @route   POST /api/auth/forgot-password
+ * @access  Public
+ */
+const forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      res.status(400);
+      throw new Error('Please provide an email');
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(404);
+      throw new Error('No user found with this email');
+    }
+
+    await OTP.deleteMany({ email, type: 'reset_password' });
+    const otpCode = generateOTP();
+    await OTP.create({ email, otp: otpCode, type: 'reset_password' });
+
+    await sendOTPEmail(email, otpCode, 'reset_password');
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset OTP sent to your email.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Verify OTP and Reset Password
+ * @route   POST /api/auth/reset-password
+ * @access  Public
+ */
+const resetPassword = async (req, res, next) => {
+  try {
+    const { email, otp, newPassword } = req.body;
+
+    if (!email || !otp || !newPassword) {
+      res.status(400);
+      throw new Error('Please provide email, OTP, and new password');
+    }
+
+    const otpRecord = await OTP.findOne({ email, otp, type: 'reset_password' });
+    if (!otpRecord) {
+      res.status(400);
+      throw new Error('Invalid or expired OTP');
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(404);
+      throw new Error('User not found');
+    }
+
+    user.password = newPassword;
+    await user.save();
+    
+    await OTP.deleteOne({ _id: otpRecord._id });
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successful. You can now login.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   registerUser,
+  verifyOTPAndRegister,
   loginUser,
+  forgotPassword,
+  resetPassword,
   getMe,
 };

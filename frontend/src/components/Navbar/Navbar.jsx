@@ -1,15 +1,25 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
+import { getSocket } from '../../services/socket';
 import { FiSun, FiMoon, FiBell, FiMenu, FiX, FiUser, FiLogOut, FiSettings, FiChevronDown } from 'react-icons/fi';
-import { notifications as mockNotifications } from '../../services/mockData';
+import toast from 'react-hot-toast';
+
+const publicLinks = [
+  { path: '/', label: 'Home' },
+  { path: '/login', label: 'Login' },
+  { path: '/register', label: 'Register' },
+];
 
 export default function Navbar({ onMenuToggle, isSidebarOpen }) {
   const { darkMode, toggleDarkMode } = useTheme();
+  const { user, logout } = useAuth();
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
   const profileRef = useRef(null);
@@ -20,15 +30,37 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
     location.pathname.startsWith('/queue-status') ||
     location.pathname.startsWith('/my-tokens') ||
     location.pathname.startsWith('/reports') ||
+    location.pathname.startsWith('/reports') ||
     location.pathname.startsWith('/profile');
 
-  const publicLinks = [
-    { path: '/', label: 'Home' },
-    { path: '/login', label: 'Login' },
-    { path: '/register', label: 'Register' },
-  ];
+  const unreadCount = notifications.filter(n => !n.read).length;
 
-  const unreadCount = mockNotifications.filter(n => !n.read).length;
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleSocketNotification = (notif) => {
+      setNotifications(prev => [
+        {
+          id: notif.id || Date.now(),
+          title: notif.title || 'Queue Alert',
+          message: notif.message || notif.text || '',
+          time: 'Just now',
+          read: false,
+          type: notif.type || 'info',
+        },
+        ...prev,
+      ]);
+      toast(notif.message || notif.text, {
+        icon: notif.type === 'success' ? '✅' : '🔔',
+      });
+    };
+
+    socket.on('notification', handleSocketNotification);
+    return () => {
+      socket.off('notification', handleSocketNotification);
+    };
+  }, [user]);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -40,7 +72,7 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
   }, []);
 
   return (
-    <motion.nav
+    <m.nav
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       className={`navbar ${darkMode ? 'dark' : ''}`}
@@ -49,7 +81,7 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
         {/* Left: Logo + Menu Toggle */}
         <div className="navbar-left">
           {isDashboard && (
-            <button className="sidebar-toggle" onClick={onMenuToggle} aria-label="Toggle sidebar">
+            <button type="button" className="sidebar-toggle" onClick={onMenuToggle} aria-label="Toggle sidebar">
               {isSidebarOpen ? <FiX size={20} /> : <FiMenu size={20} />}
             </button>
           )}
@@ -72,7 +104,7 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
                 {link.label}
               </Link>
             ))}
-            <Link to="/book-token" className="nav-cta" onClick={() => setMobileMenuOpen(false)}>
+            <Link to="/register" className="nav-cta" onClick={() => setMobileMenuOpen(false)}>
               Get Started
             </Link>
           </div>
@@ -81,7 +113,8 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
         {/* Right: Actions */}
         <div className="navbar-right">
           {/* Theme Toggle */}
-          <motion.button
+          <m.button
+            type="button"
             whileTap={{ scale: 0.9 }}
             className="icon-btn"
             onClick={toggleDarkMode}
@@ -89,27 +122,27 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
           >
             <AnimatePresence mode="wait">
               {darkMode ? (
-                <motion.div key="sun" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
+                <m.div key="sun" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
                   <FiSun size={18} />
-                </motion.div>
+                </m.div>
               ) : (
-                <motion.div key="moon" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.2 }}>
+                <m.div key="moon" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.2 }}>
                   <FiMoon size={18} />
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
-          </motion.button>
+          </m.button>
 
           {/* Notifications */}
           {isDashboard && (
             <div className="notif-wrapper" ref={notifRef}>
-              <motion.button whileTap={{ scale: 0.9 }} className="icon-btn" onClick={() => setShowNotifications(!showNotifications)}>
+              <m.button type="button" whileTap={{ scale: 0.9 }} className="icon-btn" onClick={() => setShowNotifications(!showNotifications)}>
                 <FiBell size={18} />
                 {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
-              </motion.button>
+              </m.button>
               <AnimatePresence>
                 {showNotifications && (
-                  <motion.div
+                  <m.div
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -120,7 +153,7 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
                       <span className="notif-count">{unreadCount} new</span>
                     </div>
                     <div className="dropdown-body">
-                      {mockNotifications.map(n => (
+                      {notifications.map(n => (
                         <div key={n.id} className={`notif-item ${!n.read ? 'unread' : ''}`}>
                           <div className={`notif-dot ${n.type}`} />
                           <div className="notif-content">
@@ -131,7 +164,7 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
                         </div>
                       ))}
                     </div>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </div>
@@ -140,14 +173,18 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
           {/* Profile Dropdown */}
           {isDashboard && (
             <div className="profile-wrapper" ref={profileRef}>
-              <button className="profile-trigger" onClick={() => setShowProfile(!showProfile)}>
-                <div className="avatar-sm">VP</div>
-                <span className="profile-name">Vikram</span>
+              <button type="button" className="profile-trigger" onClick={() => setShowProfile(!showProfile)}>
+                <div className="avatar-sm">
+                  {user?.name ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'U'}
+                </div>
+                <span className="profile-name">
+                  {user?.name ? user.name.split(' ')[0] : 'User'}
+                </span>
                 <FiChevronDown size={14} className={`chevron ${showProfile ? 'rotated' : ''}`} />
               </button>
               <AnimatePresence>
                 {showProfile && (
-                  <motion.div
+                  <m.div
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
@@ -160,10 +197,10 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
                       <FiSettings size={16} /> <span>Settings</span>
                     </Link>
                     <hr className="dropdown-divider" />
-                    <button className="dropdown-item logout" onClick={() => { setShowProfile(false); navigate('/login'); }}>
+                    <button type="button" className="dropdown-item logout" onClick={() => { setShowProfile(false); logout(); navigate('/login'); }}>
                       <FiLogOut size={16} /> <span>Logout</span>
                     </button>
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
             </div>
@@ -171,12 +208,12 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
 
           {/* Mobile Menu Toggle (Public) */}
           {!isDashboard && (
-            <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button type="button" className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               {mobileMenuOpen ? <FiX size={22} /> : <FiMenu size={22} />}
             </button>
           )}
         </div>
       </div>
-    </motion.nav>
+    </m.nav>
   );
 }

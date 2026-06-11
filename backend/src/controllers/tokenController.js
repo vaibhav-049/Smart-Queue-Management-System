@@ -263,10 +263,45 @@ const getTokenQR = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Get public token tracking details by display ID
+ * @route   GET /api/tokens/track/:displayId
+ * @access  Public
+ */
+const trackToken = async (req, res, next) => {
+  try {
+    const { displayId } = req.params;
+    const token = await Token.findOne({ displayId });
+
+    if (!token) {
+      res.status(404);
+      throw new Error('Token not found');
+    }
+
+    const position = await getDynamicPosition(token);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        displayId: token.displayId,
+        service: token.service,
+        status: token.status,
+        position,
+        waitTime: token.waitTime,
+        timeSlot: token.timeSlot,
+        createdAt: token.createdAt,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   bookToken,
   getMyTokens,
   getTokenById,
   cancelToken,
   getTokenQR,
+  trackToken,
 };

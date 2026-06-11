@@ -1,12 +1,15 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
+import { m } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
-import {
-  dashboardStats, dailyQueueData, serviceUsageData, recentActivity
-} from '../../services/mockData';
+import { useAuth } from '../../context/AuthContext';
+import { useServices } from '../../hooks/useServices';
+import { initiateSocket, getSocket } from '../../services/socket';
+import api from '../../services/api';
 import StatsCard from '../../components/StatsCard/StatsCard';
+import PriorityBadge from '../../components/PriorityBadge/PriorityBadge';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
-import { FiTag, FiList, FiUsers, FiClock, FiCheckCircle, FiXCircle, FiPlay } from 'react-icons/fi';
+import { FiTag, FiList, FiUsers, FiClock, FiCheckCircle, FiXCircle, FiPlay, FiAlertCircle, FiSettings } from 'react-icons/fi';
+import toast from 'react-hot-toast';
 
 const AdminCharts = lazy(() => import('./AdminCharts'));
 
@@ -26,14 +29,152 @@ const activityColors = {
 
 export default function AdminDashboard() {
   const { darkMode } = useTheme();
+  const { user } = useAuth();
+  
   const [loading, setLoading] = useState(true);
+  const [analytics, setAnalytics] = useState(null);
+  
+  
+  // Service Queue Control states
+  const { services, loading: servicesLoading } = useServices();
+  const [selectedService, setSelectedService] = useState('');
+  const [serviceQueue, setServiceQueue] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
+  // Update selectedService when services load
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1500);
-    return () => clearTimeout(timer);
+    if (services.length > 0 && !selectedService) {
+      setSelectedService(services[0].id);
+    }
+  }, [services, selectedService]);
+
+  // Fetch Dashboard Analytics
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      const response = await api.get('/admin/analytics');
+      if (response.data && response.data.success) {
+        setAnalytics(response.data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching admin analytics:', err);
+      toast.error('Failed to load analytics dashboard');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  if (loading) {
+  // Fetch detailed service queue state
+  const fetchServiceQueue = useCallback(async () => {
+    if (!selectedService) return;
+    try {
+      const response = await api.get(`/queues/${selectedService}/status`);
+      if (response.data && response.data.success) {
+        setServiceQueue(response.data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching service queue details:', err);
+    }
+  }, [selectedService]);
+
+  // Load Initial Data
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
+
+  useEffect(() => {
+    fetchServiceQueue();
+  }, [fetchServiceQueue]);
+
+  // Handle Socket Live Events
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleQueueUpdated = (payload) => {
+      // Re-fetch analytics & details to update totals
+      fetchAnalytics();
+      if (payload.service === selectedService) {
+        fetchServiceQueue();
+      }
+    };
+
+    socket.on('queue-updated', handleQueueUpdated);
+    return () => {
+      socket.off('queue-updated', handleQueueUpdated);
+    };
+  }, [selectedService, fetchAnalytics, fetchServiceQueue]);
+
+  // Admin Actions
+  const handleCallNext = async () => {
+    setActionLoading(true);
+    try {
+      const response = await api.post(`/admin/queues/${selectedService}/next`);
+      if (response.data && response.data.success) {
+        toast.success(response.data.message);
+        fetchServiceQueue();
+        fetchAnalytics();
+      }
+    } catch (err) {
+      const errMsg = err.response?.data?.message || 'Failed to call next token';
+      toast.error(errMsg);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCompleteCurrent = async () => {
+    setActionLoading(true);
+    try {
+      const response = await api.post('/admin/complete-token', { service: selectedService });
+      if (response.data && response.data.success) {
+        toast.success(response.data.message);
+        fetchServiceQueue();
+        fetchAnalytics();
+      }
+    } catch (err) {
+      const errMsg = err.response?.data?.message || 'Failed to complete token';
+      toast.error(errMsg);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleSkipToken = async (tokenId) => {
+    setActionLoading(true);
+    try {
+      const response = await api.post(`/admin/queues/${selectedService}/skip/${tokenId}`);
+      if (response.data && response.data.success) {
+        toast.success(response.data.message);
+        fetchServiceQueue();
+        fetchAnalytics();
+      }
+    } catch (err) {
+      const errMsg = err.response?.data?.message || 'Failed to skip token';
+      toast.error(errMsg);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const toggleQueueActive = async (currentActive) => {
+    setActionLoading(true);
+    const endpoint = currentActive ? 'close' : 'open';
+    try {
+      const response = await api.post(`/admin/queues/${selectedService}/${endpoint}`);
+      if (response.data && response.data.success) {
+        toast.success(response.data.message);
+        fetchServiceQueue();
+        fetchAnalytics();
+      }
+    } catch (err) {
+      const errMsg = err.response?.data?.message || 'Failed to toggle queue status';
+      toast.error(errMsg);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  if (loading || !analytics) {
     return (
       <div className={`admin-page ${darkMode ? 'dark' : ''}`}>
         <div className="page-header">
@@ -50,18 +191,24 @@ export default function AdminDashboard() {
     );
   }
 
+  const { dashboardStats, serviceUsageData, dailyQueueData, recentActivity } = analytics;
+  const currentServing = serviceQueue?.currentServing;
+  const activeTokens = serviceQueue?.activeTokens || [];
+  const servingTokenData = activeTokens.find(t => t.displayId === currentServing);
+  const upcomingTokens = activeTokens.filter(t => t.status === 'waiting');
+
   return (
     <div className={`admin-page ${darkMode ? 'dark' : ''}`}>
-      <motion.div
+      <m.div
         className="page-header"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
         <div>
           <h1>Dashboard</h1>
-          <p>Welcome back, Vikram! Here's what's happening today.</p>
+          <p>Welcome back, {user?.name || 'Administrator'}! Here's what's happening today.</p>
         </div>
-      </motion.div>
+      </m.div>
 
       {/* Stats Row */}
       <div className="stats-grid">
@@ -109,8 +256,165 @@ export default function AdminDashboard() {
         />
       </Suspense>
 
+      {/* Queue Control Panel Console */}
+      <m.div
+        className="activity-card"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+        style={{ marginTop: '2rem', marginBottom: '2rem' }}
+      >
+        <div className="chart-header">
+          <h3 className="flex items-center gap-2">
+            <FiSettings style={{ animation: 'spin 1s linear infinite', marginRight: '6px' }} />
+            Queue Control Panel Console
+          </h3>
+          <div className="flex gap-2">
+            {servicesLoading ? (
+              <span className="text-sm">Loading services...</span>
+            ) : (
+              services.map(s => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setSelectedService(s.id)}
+                  className={`filter-tab ${selectedService === s.id ? 'active' : ''}`}
+                  style={{ padding: '6px 12px', fontSize: '0.85rem' }}
+                >
+                  {s.icon} {s.name}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+
+        {serviceQueue && (
+          <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Status overview and quick buttons */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+              
+              {/* Active Serving Token Details */}
+              <div style={{ border: '1px solid var(--border-color)', borderRadius: '12px', padding: '1.25rem', background: 'var(--card-bg)' }}>
+                <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Currently Serving</span>
+                <h2 style={{ fontSize: '2.5rem', margin: '0.5rem 0', color: currentServing ? 'var(--status-serving)' : 'var(--text-muted)' }}>
+                  {currentServing || 'Idle'}
+                </h2>
+                {servingTokenData ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.9rem' }}>
+                    <p><strong>Customer:</strong> {servingTokenData.name}</p>
+                    <p><strong>Phone:</strong> {servingTokenData.phone}</p>
+                    <p><strong>Slot:</strong> {servingTokenData.timeSlot}</p>
+                    <div style={{ marginTop: '0.25rem' }}><PriorityBadge priority={servingTokenData.priority} size="sm" /></div>
+                  </div>
+                ) : (
+                  <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No token is currently active.</p>
+                )}
+              </div>
+
+              {/* Action Buttons Box */}
+              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '1rem' }}>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <button
+                    type="button"
+                    disabled={actionLoading || upcomingTokens.length === 0}
+                    onClick={handleCallNext}
+                    className="btn-primary-full"
+                    style={{ flex: 1, padding: '14px', background: '#3B82F6' }}
+                  >
+                    📞 Call Next Customer
+                  </button>
+                  <button
+                    type="button"
+                    disabled={actionLoading || !currentServing}
+                    onClick={handleCompleteCurrent}
+                    className="btn-primary-full"
+                    style={{ flex: 1, padding: '14px', background: '#10B981' }}
+                  >
+                    ✅ Complete Serving
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={actionLoading}
+                  onClick={() => toggleQueueActive(serviceQueue.isActive)}
+                  className="btn-outline"
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderColor: serviceQueue.isActive ? '#EF4444' : '#10B981',
+                    color: serviceQueue.isActive ? '#EF4444' : '#10B981',
+                    background: 'transparent',
+                    fontWeight: 'bold',
+                    borderRadius: '8px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {serviceQueue.isActive ? '🔴 Close Bookings (Pause)' : '🟢 Open Bookings (Resume)'}
+                </button>
+              </div>
+            </div>
+
+            {/* Upcoming queue list */}
+            <div>
+              <h4 style={{ marginBottom: '0.75rem' }}>Upcoming Customers in Line ({upcomingTokens.length})</h4>
+              <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--card-bg-hover)', borderBottom: '1px solid var(--border-color)' }}>
+                      <th style={{ padding: '10px 15px' }}>Position</th>
+                      <th style={{ padding: '10px 15px' }}>Token</th>
+                      <th style={{ padding: '10px 15px' }}>Customer Name</th>
+                      <th style={{ padding: '10px 15px' }}>Priority</th>
+                      <th style={{ padding: '10px 15px' }}>Slot</th>
+                      <th style={{ padding: '10px 15px', textAlign: 'right' }}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {upcomingTokens.map((token, idx) => (
+                      <tr key={token._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                        <td style={{ padding: '10px 15px' }}>#{idx + 1}</td>
+                        <td style={{ padding: '10px 15px', fontWeight: 'bold' }}>{token.displayId}</td>
+                        <td style={{ padding: '10px 15px' }}>{token.name}</td>
+                        <td style={{ padding: '10px 15px' }}><PriorityBadge priority={token.priority} size="sm" /></td>
+                        <td style={{ padding: '10px 15px' }}>{token.timeSlot}</td>
+                        <td style={{ padding: '10px 15px', textAlign: 'right' }}>
+                          <button
+                            type="button"
+                            disabled={actionLoading}
+                            onClick={() => handleSkipToken(token._id)}
+                            style={{
+                              background: 'transparent',
+                              border: '1px solid #EF4444',
+                              color: '#EF4444',
+                              padding: '4px 8px',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              fontSize: '0.8rem'
+                            }}
+                          >
+                            Skip / Cancel
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {upcomingTokens.length === 0 && (
+                      <tr>
+                        <td colSpan="6" style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                          No customers waiting in line.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </m.div>
+
       {/* Recent Activity */}
-      <motion.div
+      <m.div
         className="activity-card"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -118,11 +422,10 @@ export default function AdminDashboard() {
       >
         <div className="chart-header">
           <h3>Recent Activity</h3>
-          <button type="button" className="btn-text">View All</button>
         </div>
         <div className="activity-list">
           {recentActivity.map((activity, index) => (
-            <motion.div
+            <m.div
               key={activity.id}
               className="activity-item"
               initial={{ opacity: 0, x: -20 }}
@@ -137,10 +440,10 @@ export default function AdminDashboard() {
                 <p className="activity-meta">{activity.user} · {activity.service}</p>
               </div>
               <span className="activity-time">{activity.time}</span>
-            </motion.div>
+            </m.div>
           ))}
         </div>
-      </motion.div>
+      </m.div>
     </div>
   );
 }

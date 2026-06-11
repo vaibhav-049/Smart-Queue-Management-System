@@ -7,14 +7,8 @@ const QRCode = require('qrcode');
  */
 const generateQR = async (tokenData, position = 1) => {
   try {
-    const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-    const payload = {
-      token: tokenData.displayId,
-      service: capitalize(tokenData.service),
-      position: position,
-    };
-
-    const payloadString = JSON.stringify(payload);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const payloadString = `${frontendUrl}/track/${tokenData.displayId}`;
     
     // Generate QR Code as Data URI
     const dataUrl = await QRCode.toDataURL(payloadString, {

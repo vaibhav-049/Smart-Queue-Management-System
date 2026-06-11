@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend
@@ -8,7 +8,7 @@ export default function AdminCharts({ dailyQueueData, serviceUsageData, darkMode
   return (
     <div className="charts-grid">
       {/* Daily Queue Analysis */}
-      <motion.div
+      <m.div
         className="chart-card"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -47,10 +47,10 @@ export default function AdminCharts({ dailyQueueData, serviceUsageData, darkMode
             <Legend />
           </AreaChart>
         </ResponsiveContainer>
-      </motion.div>
+      </m.div>
 
       {/* Service Usage */}
-      <motion.div
+      <m.div
         className="chart-card"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -87,7 +87,7 @@ export default function AdminCharts({ dailyQueueData, serviceUsageData, darkMode
             />
           </PieChart>
         </ResponsiveContainer>
-      </motion.div>
+      </m.div>
     </div>
   );
 }

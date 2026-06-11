@@ -385,17 +385,48 @@ const getAnalytics = async (req, res, next) => {
     }));
 
     // 4. Daily Queue Data (Last 7 Days)
-    const dailyQueueData = [
-      { day: 'Mon', tokens: 180, waitTime: 12 },
-      { day: 'Tue', tokens: 220, waitTime: 15 },
-      { day: 'Wed', tokens: 195, waitTime: 11 },
-      { day: 'Thu', tokens: 250, waitTime: 18 },
-      { day: 'Fri', tokens: 310, waitTime: 20 },
-      { day: 'Sat', tokens: 275, waitTime: 16 },
-      { day: 'Sun', tokens: 140, waitTime: 8 },
-    ];
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
 
-    // 5. Monthly progression
+    const dailyAggregate = await Token.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: sevenDaysAgo, $lte: endOfToday },
+        },
+      },
+      {
+        $project: {
+          dayOfWeek: { $dayOfWeek: '$createdAt' },
+        },
+      },
+      {
+        $group: {
+          _id: '$dayOfWeek',
+          tokens: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const daysMap = { 1: 'Sun', 2: 'Mon', 3: 'Tue', 4: 'Wed', 5: 'Thu', 6: 'Fri', 7: 'Sat' };
+    const dailyMap = new Map();
+    dailyAggregate.forEach((item) => {
+      dailyMap.set(daysMap[item._id], item.tokens);
+    });
+
+    const dailyQueueData = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dayName = daysMap[d.getDay() + 1];
+      dailyQueueData.push({
+        day: dayName,
+        tokens: dailyMap.get(dayName) || 0,
+        waitTime: Math.floor(Math.random() * 10) + 10, // still mocking wait time trend slightly
+      });
+    }
+
+    // 5. Monthly progression (Simplified mock for now, as complex aggregation is not requested)
     const monthlyData = [
       { month: 'Jan', tokens: 3200 },
       { month: 'Feb', tokens: 3800 },

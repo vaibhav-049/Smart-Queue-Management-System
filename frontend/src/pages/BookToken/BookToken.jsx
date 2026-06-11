@@ -1,16 +1,42 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { m, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
-import { services, timeSlots } from '../../services/mockData';
+import { useServices } from '../../hooks/useServices';
+
+const timeSlots = [
+  '09:00 AM - 10:00 AM',
+  '10:00 AM - 11:00 AM',
+  '11:00 AM - 12:00 PM',
+  '01:00 PM - 02:00 PM',
+  '02:00 PM - 03:00 PM',
+  '03:00 PM - 04:00 PM'
+];
 import QRCodeCard from '../../components/QRCodeCard/QRCodeCard';
 import toast from 'react-hot-toast';
 
+import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
+
 export default function BookToken() {
   const { darkMode } = useTheme();
+  const { user } = useAuth();
+  const { services, loading: servicesLoading } = useServices();
+  
   const [selectedService, setSelectedService] = useState(null);
-  const [form, setForm] = useState({ name: '', phone: '', serviceType: '', timeSlot: '' });
+  const [form, setForm] = useState({ name: '', phone: '', serviceType: '', timeSlot: '', priorityType: 'Normal' });
   const [generatedToken, setGeneratedToken] = useState(null);
   const [showQR, setShowQR] = useState(false);
+
+  // Auto-populate fields when user context is available
+  useEffect(() => {
+    if (user) {
+      setForm(prev => ({
+        ...prev,
+        name: user.name || '',
+        phone: user.phone || '',
+      }));
+    }
+  }, [user]);
 
   const handleServiceSelect = (service) => {
     setSelectedService(service);
@@ -19,7 +45,7 @@ export default function BookToken() {
     setShowQR(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedService) {
       toast.error('Please select a service first');
@@ -30,67 +56,71 @@ export default function BookToken() {
       return;
     }
 
-    const prefix = selectedService.id.charAt(0).toUpperCase();
-    const num = Math.floor(Math.random() * 900) + 100;
-    const token = {
-      id: `${prefix}${num}`,
-      name: form.name,
-      phone: form.phone,
-      service: selectedService.name,
-      position: Math.floor(Math.random() * 20) + 1,
-      waitTime: Math.floor(Math.random() * 30) + 5,
-      timeSlot: form.timeSlot,
-      priority: 'normal',
-      status: 'waiting',
-    };
+    try {
+      const response = await api.post('/tokens/book', {
+        service: selectedService.id,
+        timeSlot: form.timeSlot,
+        priorityType: form.priorityType || 'Normal',
+      });
 
-    setGeneratedToken(token);
-    toast.success(`Token ${token.id} generated successfully!`);
+      if (response.data && response.data.success) {
+        const bookedToken = response.data.data;
+        setGeneratedToken(bookedToken);
+        toast.success(`Token ${bookedToken.displayId} generated successfully!`);
+      }
+    } catch (err) {
+      const errMsg = err.response?.data?.message || 'Failed to book token. Please try again.';
+      toast.error(errMsg);
+    }
   };
 
   return (
     <div className={`book-token-page ${darkMode ? 'dark' : ''}`}>
-      <motion.div
+      <m.div
         className="page-header"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
         <h1>Book a Token</h1>
         <p>Select a service and fill in your details to get a queue token</p>
-      </motion.div>
+      </m.div>
 
       {/* Service Selection */}
       <div className="service-selection">
         <h2 className="section-label">Select Service</h2>
         <div className="service-grid">
-          {services.map((service, index) => (
-            <motion.div
-              key={service.id}
-              className={`service-card ${selectedService?.id === service.id ? 'selected' : ''}`}
-              onClick={() => handleServiceSelect(service)}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -6, boxShadow: '0 12px 40px rgba(0,0,0,0.1)' }}
-              style={{ '--service-color': service.color }}
-            >
-              <div className="service-card-icon" style={{ background: `${service.color}15`, color: service.color }}>
-                <span style={{ fontSize: '2rem' }}>{service.icon}</span>
-              </div>
-              <h3>{service.name}</h3>
-              <p>{service.description}</p>
-              {selectedService?.id === service.id && (
-                <motion.div
-                  className="service-check"
-                  initial={{ scale: 0.95, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  style={{ background: service.color }}
-                >
-                  ✓
-                </motion.div>
-              )}
-            </motion.div>
-          ))}
+          {servicesLoading ? (
+            <p>Loading services...</p>
+          ) : (
+            services.map((service, index) => (
+              <m.div
+                key={service.id}
+                className={`service-card ${selectedService?.id === service.id ? 'selected' : ''}`}
+                onClick={() => handleServiceSelect(service)}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ y: -6, boxShadow: '0 12px 40px rgba(0,0,0,0.1)' }}
+                style={{ '--service-color': service.color }}
+              >
+                <div className="service-card-icon" style={{ background: `${service.color}15`, color: service.color }}>
+                  <span style={{ fontSize: '2rem' }}>{service.icon}</span>
+                </div>
+                <h3>{service.name}</h3>
+                <p>{service.description}</p>
+                {selectedService?.id === service.id && (
+                  <m.div
+                    className="service-check"
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    style={{ background: service.color }}
+                  >
+                    ✓
+                  </m.div>
+                )}
+              </m.div>
+            ))
+          )}
         </div>
       </div>
 
@@ -98,7 +128,7 @@ export default function BookToken() {
       <div className="booking-layout">
         <AnimatePresence mode="wait">
           {selectedService && (
-            <motion.div
+            <m.div
               className="booking-form-card"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -154,7 +184,21 @@ export default function BookToken() {
                     ))}
                   </select>
                 </div>
-                <motion.button
+                <div className="form-group">
+                  <label htmlFor="bt-priority">Priority Category</label>
+                  <select
+                    id="bt-priority"
+                    value={form.priorityType}
+                    onChange={e => setForm({ ...form, priorityType: e.target.value })}
+                    required
+                  >
+                    <option value="Normal">Normal</option>
+                    <option value="Senior Citizen">Senior Citizen (60+)</option>
+                    <option value="VIP">VIP</option>
+                    <option value="Emergency">Emergency</option>
+                  </select>
+                </div>
+                <m.button
                   type="submit"
                   className="btn-primary-full"
                   whileHover={{ scale: 1.02 }}
@@ -162,16 +206,16 @@ export default function BookToken() {
                   style={{ background: selectedService.color }}
                 >
                   🎫 Generate Token
-                </motion.button>
+                </m.button>
               </form>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
 
         {/* Generated Token */}
         <AnimatePresence>
           {generatedToken && (
-            <motion.div
+            <m.div
               className="generated-token-section"
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -197,29 +241,29 @@ export default function BookToken() {
                       <span className="gt-value">{generatedToken.timeSlot}</span>
                     </div>
                   </div>
-                  <motion.button
+                  <m.button
                     type="button"
                     className="btn-outline"
                     onClick={() => setShowQR(!showQR)}
                     whileHover={{ scale: 1.02 }}
                   >
                     {showQR ? 'Hide QR Code' : 'View QR Code'}
-                  </motion.button>
+                  </m.button>
                 </div>
               </div>
 
               <AnimatePresence>
                 {showQR && (
-                  <motion.div
+                  <m.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
                     exit={{ opacity: 0, height: 0 }}
                   >
                     <QRCodeCard token={generatedToken} />
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

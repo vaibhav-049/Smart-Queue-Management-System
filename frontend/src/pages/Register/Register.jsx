@@ -1,17 +1,22 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 import { FiUser, FiMail, FiPhone, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
+import { useAuth } from '../../context/AuthContext';
+
 export default function Register() {
   const { darkMode } = useTheme();
+  const { register, verifyRegister, loading } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
+  const [otp, setOtp] = useState('');
+  const [step, setStep] = useState(1);
   const [errors, setErrors] = useState({});
+  const [resendingOtp, setResendingOtp] = useState(false);
 
   const validate = () => {
     const errs = {};
@@ -22,18 +27,41 @@ export default function Register() {
     else if (!/^\+?[\d\s-]{10,}$/.test(form.phone)) errs.phone = 'Invalid phone number';
     if (!form.password) errs.password = 'Password is required';
     else if (form.password.length < 6) errs.password = 'Password must be at least 6 characters';
-    if (!form.confirmPassword) errs.confirmPassword = 'Please confirm your password';
-    else if (form.password !== form.confirmPassword) errs.confirmPassword = 'Passwords do not match';
     return errs;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const errs = validate();
-    setErrors(errs);
-    if (Object.keys(errs).length === 0) {
-      toast.success('Registration successful! Redirecting to login...');
-      setTimeout(() => navigate('/login'), 1500);
+    if (step === 1) {
+      const errs = validate();
+      setErrors(errs);
+      if (Object.keys(errs).length === 0) {
+        const res = await register(form.name, form.email, form.phone, form.password);
+        if (res.success) {
+          setStep(2);
+        }
+      }
+    } else {
+      if (otp.length < 6) {
+        toast.error('Please enter a valid 6-digit OTP');
+        return;
+      }
+      const res = await verifyRegister(form.email, otp);
+      if (res.success) {
+        navigate('/book-token');
+      }
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setResendingOtp(true);
+    try {
+      const res = await register(form.name, form.email, form.phone, form.password);
+      if (res.success) {
+        setOtp('');
+      }
+    } finally {
+      setResendingOtp(false);
     }
   };
 
@@ -41,7 +69,7 @@ export default function Register() {
     <div className={`auth-page ${darkMode ? 'dark' : ''}`}>
       <div className="auth-container">
         {/* Left Panel */}
-        <motion.div
+        <m.div
           className="auth-left"
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
@@ -66,10 +94,10 @@ export default function Register() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Right Panel - Form */}
-        <motion.div
+        <m.div
           className="auth-right"
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
@@ -80,108 +108,132 @@ export default function Register() {
             <p className="auth-subtitle">Fill in your details to get started</p>
 
             <form onSubmit={handleSubmit} className="auth-form">
-              <div className={`form-group ${errors.name ? 'error' : ''}`}>
-                <label htmlFor="name">Full Name</label>
-                <div className="input-wrapper">
-                  <FiUser size={18} className="input-icon" />
-                  <input
-                    id="name"
-                    type="text"
-                    placeholder="Enter your full name"
-                    value={form.name}
-                    onChange={e => setForm({ ...form, name: e.target.value })}
-                  />
-                </div>
-                {errors.name && <span className="error-text">{errors.name}</span>}
-              </div>
-
-              <div className={`form-group ${errors.email ? 'error' : ''}`}>
-                <label htmlFor="reg-email">Email Address</label>
-                <div className="input-wrapper">
-                  <FiMail size={18} className="input-icon" />
-                  <input
-                    id="reg-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={form.email}
-                    onChange={e => setForm({ ...form, email: e.target.value })}
-                  />
-                </div>
-                {errors.email && <span className="error-text">{errors.email}</span>}
-              </div>
-
-              <div className={`form-group ${errors.phone ? 'error' : ''}`}>
-                <label htmlFor="phone">Phone Number</label>
-                <div className="input-wrapper">
-                  <FiPhone size={18} className="input-icon" />
-                  <input
-                    id="phone"
-                    type="tel"
-                    placeholder="+91 98765 43210"
-                    value={form.phone}
-                    onChange={e => setForm({ ...form, phone: e.target.value })}
-                  />
-                </div>
-                {errors.phone && <span className="error-text">{errors.phone}</span>}
-              </div>
-
-              <div className="form-row">
-                <div className={`form-group ${errors.password ? 'error' : ''}`}>
-                  <label htmlFor="reg-password">Password</label>
-                  <div className="input-wrapper">
-                    <FiLock size={18} className="input-icon" />
-                    <input
-                      id="reg-password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Min 6 characters"
-                      value={form.password}
-                      onChange={e => setForm({ ...form, password: e.target.value })}
-                    />
-                    <button type="button" className="input-toggle" onClick={() => setShowPassword(!showPassword)}>
-                      {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                    </button>
+              {step === 1 ? (
+                <>
+                  <div className={`form-group ${errors.name ? 'error' : ''}`}>
+                    <label htmlFor="name">Full Name</label>
+                    <div className="input-wrapper">
+                      <FiUser size={18} className="input-icon" />
+                      <input
+                        id="name"
+                        type="text"
+                        placeholder="Enter your full name"
+                        value={form.name}
+                        onChange={e => setForm({ ...form, name: e.target.value })}
+                      />
+                    </div>
+                    {errors.name && <span className="error-text">{errors.name}</span>}
                   </div>
-                  {errors.password && <span className="error-text">{errors.password}</span>}
-                </div>
 
-                <div className={`form-group ${errors.confirmPassword ? 'error' : ''}`}>
-                  <label htmlFor="confirm-password">Confirm Password</label>
-                  <div className="input-wrapper">
-                    <FiLock size={18} className="input-icon" />
-                    <input
-                      id="confirm-password"
-                      type={showConfirm ? 'text' : 'password'}
-                      placeholder="Re-enter password"
-                      value={form.confirmPassword}
-                      onChange={e => setForm({ ...form, confirmPassword: e.target.value })}
-                    />
-                    <button type="button" className="input-toggle" onClick={() => setShowConfirm(!showConfirm)}>
-                      {showConfirm ? <FiEyeOff size={18} /> : <FiEye size={18} />}
-                    </button>
+                  <div className={`form-group ${errors.email ? 'error' : ''}`}>
+                    <label htmlFor="reg-email">Email Address</label>
+                    <div className="input-wrapper">
+                      <FiMail size={18} className="input-icon" />
+                      <input
+                        id="reg-email"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={form.email}
+                        onChange={e => setForm({ ...form, email: e.target.value })}
+                      />
+                    </div>
+                    {errors.email && <span className="error-text">{errors.email}</span>}
                   </div>
-                  {errors.confirmPassword && <span className="error-text">{errors.confirmPassword}</span>}
-                </div>
-              </div>
 
-              <label className="checkbox-label" style={{ marginBottom: '1rem' }}>
-                <input type="checkbox" required /> I agree to the <Link to="/" className="auth-link">Terms of Service</Link> and <Link to="/" className="auth-link">Privacy Policy</Link>
-              </label>
+                  <div className={`form-group ${errors.phone ? 'error' : ''}`}>
+                    <label htmlFor="phone">Phone Number</label>
+                    <div className="input-wrapper">
+                      <FiPhone size={18} className="input-icon" />
+                      <input
+                        id="phone"
+                        type="tel"
+                        placeholder="+91 98765 43210"
+                        value={form.phone}
+                        onChange={e => setForm({ ...form, phone: e.target.value })}
+                      />
+                    </div>
+                    {errors.phone && <span className="error-text">{errors.phone}</span>}
+                  </div>
 
-              <motion.button
-                type="submit"
-                className="btn-primary-full"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                Create Account
-              </motion.button>
+                  <div className={`form-group ${errors.password ? 'error' : ''}`}>
+                    <label htmlFor="reg-password">Password</label>
+                    <div className="input-wrapper">
+                      <FiLock size={18} className="input-icon" />
+                      <input
+                        id="reg-password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Min 6 characters"
+                        value={form.password}
+                        onChange={e => setForm({ ...form, password: e.target.value })}
+                      />
+                      <button type="button" className="input-toggle" onClick={() => setShowPassword(!showPassword)}>
+                        {showPassword ? <FiEyeOff size={18} /> : <FiEye size={18} />}
+                      </button>
+                    </div>
+                    {errors.password && <span className="error-text">{errors.password}</span>}
+                  </div>
+
+                  <m.button
+                    type="submit"
+                    className="btn-primary-full"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Send Verification Code
+                  </m.button>
+                </>
+              ) : (
+                <m.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+                  <div className="form-group">
+                    <label htmlFor="otp">Enter 6-Digit OTP</label>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+                      We sent a code to <strong>{form.email}</strong>.
+                    </p>
+                    <div className="input-wrapper">
+                      <FiLock size={18} className="input-icon" />
+                      <input
+                        id="otp"
+                        type="text"
+                        placeholder="123456"
+                        maxLength={6}
+                        value={otp}
+                        onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
+                        style={{ letterSpacing: '8px', fontSize: '1.2rem', textAlign: 'center' }}
+                      />
+                    </div>
+                  </div>
+
+                  <m.button
+                    type="submit"
+                    className="btn-primary-full"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    style={{ marginTop: '1rem' }}
+                    disabled={loading || resendingOtp}
+                  >
+                    Verify & Create Account
+                  </m.button>
+                  <button
+                    type="button"
+                    className="auth-link"
+                    onClick={handleResendOtp}
+                    disabled={loading || resendingOtp}
+                    style={{ background: 'none', border: 'none', width: '100%', marginTop: '0.75rem', cursor: 'pointer', opacity: loading || resendingOtp ? 0.6 : 1 }}
+                  >
+                    {resendingOtp ? 'Resending OTP...' : 'Resend OTP'}
+                  </button>
+                  <button type="button" className="auth-link" onClick={() => setStep(1)} style={{ background: 'none', border: 'none', width: '100%', marginTop: '1rem', cursor: 'pointer' }}>
+                    Back to edit details
+                  </button>
+                </m.div>
+              )}
             </form>
 
             <p className="auth-footer-text">
               Already have an account? <Link to="/login" className="auth-link">Sign In</Link>
             </p>
           </div>
-        </motion.div>
+        </m.div>
       </div>
     </div>
   );

@@ -1,13 +1,14 @@
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 import { QRCodeSVG } from 'qrcode.react';
 
 export default function QRCodeCard({ token }) {
   const { darkMode } = useTheme();
-  const qrValue = JSON.stringify({ id: token.id, name: token.name, service: token.service, position: token.position });
+  const tokenNumber = token.id || token.displayId;
+  const qrValue = `${window.location.origin}/track/${tokenNumber}`;
 
   return (
-    <motion.div
+    <m.div
       className={`qr-card ${darkMode ? 'dark' : ''}`}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -27,7 +28,7 @@ export default function QRCodeCard({ token }) {
 
       {/* Token Info */}
       <div className="qr-ticket-body">
-        <div className="qr-token-number">{token.id}</div>
+        <div className="qr-token-number">{tokenNumber}</div>
         <div className="qr-ticket-details">
           <div className="qr-detail">
             <span className="qr-label">Name</span>
@@ -66,6 +67,6 @@ export default function QRCodeCard({ token }) {
         <span>Valid for today only</span>
         <span suppressHydrationWarning>{new Date().toLocaleDateString('en-IN')}</span>
       </div>
-    </motion.div>
+    </m.div>
   );
 }

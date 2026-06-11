@@ -103,8 +103,45 @@ const getLiveQueue = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Get public aggregate stats for the landing page
+ * @route   GET /api/queues/public-stats
+ * @access  Public
+ */
+const getPublicStats = async (req, res, next) => {
+  try {
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const tokensServedToday = await Token.countDocuments({
+      status: 'completed',
+      updatedAt: { $gte: startOfToday, $lte: endOfToday },
+    });
+
+    const activeUserIds = await Token.distinct('userId', {
+      status: { $in: ['waiting', 'serving'] },
+    });
+    const activeUsers = activeUserIds.length;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        tokensServedToday,
+        activeUsers,
+        waitTimeReduced: 40,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getQueuesStatus,
   getServiceQueueStatus,
   getLiveQueue,
+  getPublicStats,
 };

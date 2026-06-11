@@ -1,69 +1,60 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useCallback } from 'react';
+import { m, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
-import { tokens, queueData, services } from '../../services/mockData';
+import { useServices } from '../../hooks/useServices';
+import { joinServiceRoom, getSocket } from '../../services/socket';
+import api from '../../services/api';
 import PriorityBadge from '../../components/PriorityBadge/PriorityBadge';
 import WaitingTimeCard from '../../components/WaitingTimeCard/WaitingTimeCard';
+import toast from 'react-hot-toast';
 
-function QueueStatusDetails({ selectedService, currentQueue, totalInQueue, darkMode }) {
-  const [queueState, setQueueState] = useState(() => {
-    const q = queueData[selectedService] || queueData.hospital;
-    return {
-      currentToken: q.currentServing,
-      upcomingTokens: q.upcoming,
-    };
-  });
+function QueueStatusDetails({ selectedService, queueInfo, darkMode }) {
+  if (!queueInfo) {
+    return (
+      <div className="empty-state">
+        <p>Loading queue data...</p>
+      </div>
+    );
+  }
 
-  // Simulate real-time queue movement
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setQueueState(prev => {
-        if (prev.upcomingTokens.length <= 1) return prev;
-        const next = [...prev.upcomingTokens];
-        const nextToken = next[0];
-        next.shift();
-        return {
-          currentToken: nextToken,
-          upcomingTokens: next,
-        };
-      });
-    }, 8000);
-    return () => clearInterval(interval);
-  }, []);
+  const { currentServing, upcoming = [], totalInQueue = 0, avgWait = 10, activeTokens = [] } = queueInfo;
 
-  const servingToken = tokens.find(t => t.id === queueState.currentToken);
+  // Find the token currently serving
+  const servingToken = activeTokens.find(t => t.displayId === currentServing);
 
   return (
     <div className="queue-status-layout">
       {/* Current Serving */}
-      <motion.div
+      <m.div
         className="current-serving-card"
-        key={queueState.currentToken}
+        key={currentServing || 'idle'}
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ type: 'spring', stiffness: 200 }}
       >
         <div className="cs-header">
           <span className="cs-label">Now Serving</span>
-          <motion.div
-            className="cs-pulse"
-            animate={{ scale: [1, 1.3, 1] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
+          {currentServing && (
+            <m.div
+              className="cs-pulse"
+              animate={{ scale: [1, 1.3, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+          )}
         </div>
-        <div className="cs-token">{queueState.currentToken}</div>
+        <div className="cs-token">{currentServing || 'Idle'}</div>
         {servingToken && (
           <div className="cs-details">
             <span>{servingToken.name}</span>
             <PriorityBadge priority={servingToken.priority} />
           </div>
         )}
-      </motion.div>
+      </m.div>
 
       {/* Waiting Time */}
       <WaitingTimeCard
-        waitTime={currentQueue.avgWait}
-        position={2}
+        waitTime={avgWait}
+        position={currentServing ? 2 : 1}
         total={totalInQueue}
       />
 
@@ -72,10 +63,10 @@ function QueueStatusDetails({ selectedService, currentQueue, totalInQueue, darkM
         <h3 className="section-label">Upcoming Tokens</h3>
         <div className="upcoming-list">
           <AnimatePresence>
-            {queueState.upcomingTokens.map((tokenId, index) => {
-              const tokenData = tokens.find(t => t.id === tokenId);
+            {upcoming.map((tokenId, index) => {
+              const tokenData = activeTokens.find(t => t.displayId === tokenId);
               return (
-                <motion.div
+                <m.div
                   key={tokenId}
                   className={`upcoming-token ${index === 0 ? 'next' : ''}`}
                   initial={{ opacity: 0, x: -20 }}
@@ -93,12 +84,17 @@ function QueueStatusDetails({ selectedService, currentQueue, totalInQueue, darkM
                   </div>
                   <div className="ut-right">
                     {tokenData && <PriorityBadge priority={tokenData.priority} size="sm" />}
-                    <span className="ut-wait">~{currentQueue.avgWait * (index + 1)} min</span>
+                    <span className="ut-wait">~{avgWait * (index + 1)} min</span>
                   </div>
-                </motion.div>
+                </m.div>
               );
             })}
           </AnimatePresence>
+          {upcoming.length === 0 && (
+            <div className="no-upcoming" style={{ textAlign: 'center', padding: '1rem', opacity: 0.7 }}>
+              No other tokens in line.
+            </div>
+          )}
         </div>
       </div>
 
@@ -106,32 +102,39 @@ function QueueStatusDetails({ selectedService, currentQueue, totalInQueue, darkM
       <div className="queue-progress-section">
         <h3 className="section-label">Queue Progress</h3>
         <div className="queue-progress-visual">
-          {tokens.filter(t => t.service === selectedService && (t.status === 'waiting' || t.status === 'serving')).map((token, index) => (
-            <motion.div
-              key={token.id}
+          {activeTokens.map((token, index) => (
+            <m.div
+              key={token._id || token.displayId}
               className={`qp-item ${token.status}`}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.05 }}
             >
-              <span className="qp-token">{token.id}</span>
+              <span className="qp-token">{token.displayId}</span>
               <span className={`qp-status ${token.status}`}>
                 {token.status === 'serving' ? '🟢' : '🟡'}
               </span>
-            </motion.div>
+            </m.div>
           ))}
+          {activeTokens.length === 0 && (
+            <div style={{ opacity: 0.7, padding: '1rem' }}>No active queue tokens.</div>
+          )}
         </div>
-        <div className="queue-progress-bar-full">
-          <motion.div
-            className="queue-progress-bar-fill"
-            initial={{ width: 0 }}
-            animate={{ width: `${((totalInQueue - queueState.upcomingTokens.length) / Math.max(totalInQueue, 1)) * 100}%` }}
-            transition={{ duration: 1 }}
-          />
-        </div>
-        <p className="queue-progress-text">
-          {totalInQueue - queueState.upcomingTokens.length} of {totalInQueue} tokens served
-        </p>
+        {activeTokens.length > 0 && (
+          <>
+            <div className="queue-progress-bar-full">
+              <m.div
+                className="queue-progress-bar-fill"
+                initial={{ width: 0 }}
+                animate={{ width: `${((totalInQueue - upcoming.length) / Math.max(totalInQueue, 1)) * 100}%` }}
+                transition={{ duration: 1 }}
+              />
+            </div>
+            <p className="queue-progress-text">
+              {totalInQueue - upcoming.length} of {totalInQueue} tokens served
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
@@ -139,45 +142,90 @@ function QueueStatusDetails({ selectedService, currentQueue, totalInQueue, darkM
 
 export default function QueueStatus() {
   const { darkMode } = useTheme();
-  const [selectedService, setSelectedService] = useState('hospital');
+  const { services, loading: servicesLoading } = useServices();
+  const [selectedService, setSelectedService] = useState('');
+  const [queueInfo, setQueueInfo] = useState(null);
 
-  const currentQueue = queueData[selectedService] || queueData.hospital;
-  const queueTokens = tokens.filter(t => t.service === selectedService && (t.status === 'waiting' || t.status === 'serving'));
-  const totalInQueue = queueTokens.length;
+  // Update selectedService when services load
+  useEffect(() => {
+    if (services.length > 0 && !selectedService) {
+      setSelectedService(services[0].id);
+    }
+  }, [services, selectedService]);
+
+  // Fetch detailed service queue status
+  const fetchQueueStatus = useCallback(async () => {
+    if (!selectedService) return;
+    try {
+      const response = await api.get(`/queues/${selectedService}/status`);
+      if (response.data && response.data.success) {
+        setQueueInfo(response.data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching service queue details:', err);
+      toast.error('Failed to load queue details');
+    }
+  }, [selectedService]);
+
+  // Join service room and fetch details on load/change
+  useEffect(() => {
+    if (!selectedService) return;
+    joinServiceRoom(selectedService);
+    fetchQueueStatus();
+  }, [selectedService, fetchQueueStatus]);
+
+  // Listen for socket queue-updated notifications
+  useEffect(() => {
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleQueueUpdated = (payload) => {
+      // payload: { service, data }
+      if (payload.service === selectedService) {
+        fetchQueueStatus();
+      }
+    };
+
+    socket.on('queue-updated', handleQueueUpdated);
+    return () => {
+      socket.off('queue-updated', handleQueueUpdated);
+    };
+  }, [selectedService, fetchQueueStatus]);
 
   return (
     <div className={`queue-status-page ${darkMode ? 'dark' : ''}`}>
-      <motion.div
+      <m.div
         className="page-header"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
         <h1>Live Queue Status</h1>
         <p>Track queue progress in real-time</p>
-      </motion.div>
+      </m.div>
 
       {/* Service Tabs */}
-      <div className="service-tabs">
-        {services.map(service => (
-          <motion.button
-            type="button"
-            key={service.id}
-            className={`service-tab ${selectedService === service.id ? 'active' : ''}`}
-            onClick={() => setSelectedService(service.id)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            style={selectedService === service.id ? { borderColor: service.color, color: service.color } : {}}
-          >
-            <span>{service.icon}</span> {service.name}
-          </motion.button>
-        ))}
+      <div className="service-filters">
+        {servicesLoading ? (
+          <p>Loading services...</p>
+        ) : (
+          services.map((s) => (
+            <button
+              key={s.id}
+              type="button"
+              onClick={() => setSelectedService(s.id)}
+              className={`filter-btn ${selectedService === s.id ? 'active' : ''}`}
+              style={{ borderColor: selectedService === s.id ? s.color : 'var(--border-color)', color: selectedService === s.id ? s.color : 'inherit' }}
+            >
+              <span className="filter-icon">{s.icon}</span> {s.name}
+            </button>
+          ))
+        )}
       </div>
 
       <QueueStatusDetails
         key={selectedService}
         selectedService={selectedService}
-        currentQueue={currentQueue}
-        totalInQueue={totalInQueue}
+        queueInfo={queueInfo}
         darkMode={darkMode}
       />
     </div>

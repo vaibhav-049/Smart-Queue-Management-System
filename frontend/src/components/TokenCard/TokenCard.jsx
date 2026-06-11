@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 import PriorityBadge from '../PriorityBadge/PriorityBadge';
 
@@ -14,7 +14,7 @@ export default function TokenCard({ token, onClick, compact = false }) {
   const status = statusColors[token.status] || statusColors.waiting;
 
   return (
-    <motion.div
+    <m.div
       className={`token-card ${darkMode ? 'dark' : ''} ${compact ? 'compact' : ''}`}
       whileHover={{ y: -4, boxShadow: '0 12px 40px rgba(0,0,0,0.12)' }}
       transition={{ type: 'spring', stiffness: 300 }}
@@ -60,6 +60,6 @@ export default function TokenCard({ token, onClick, compact = false }) {
           <span>{token.waitTime} min wait</span>
         </div>
       )}
-    </motion.div>
+    </m.div>
   );
 }

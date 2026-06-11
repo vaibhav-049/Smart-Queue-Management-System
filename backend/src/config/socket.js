@@ -2,10 +2,19 @@ const { Server } = require('socket.io');
 
 let io = null;
 
+const allowedOrigins = [
+  process.env.CORS_ORIGIN,
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+]
+  .filter(Boolean)
+  .flatMap(origin => origin.split(',').map(item => item.trim()))
+  .filter(Boolean);
+
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: process.env.CORS_ORIGIN || '*',
+      origin: allowedOrigins.length ? allowedOrigins : '*',
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
       credentials: true,
     },

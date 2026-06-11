@@ -15,4 +15,7 @@ router.get('/:id', protect, getTokenById);
 router.put('/:id/cancel', protect, cancelToken);
 router.get('/:id/qr', protect, getTokenQR);
 
+// Public route for QR code scanning
+router.get('/track/:displayId', require('../controllers/tokenController').trackToken);
+
 module.exports = router;

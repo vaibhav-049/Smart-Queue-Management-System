@@ -11,6 +11,7 @@
     "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
+    "axios": "^1.17.0",
     "framer-motion": "^12.40.0",
     "qrcode.react": "^4.2.0",
     "react": "^19.2.6",
@@ -18,7 +19,8 @@
     "react-hot-toast": "^2.6.0",
     "react-icons": "^5.6.0",
     "react-router-dom": "^7.17.0",
-    "recharts": "^3.8.1"
+    "recharts": "^3.8.1",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

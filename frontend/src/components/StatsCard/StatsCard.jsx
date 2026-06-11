@@ -1,4 +1,4 @@
-import { motion, useMotionValue, useTransform, animate } from 'framer-motion';
+import { m, useMotionValue, useTransform, animate } from 'framer-motion';
 import { useEffect } from 'react';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -11,14 +11,14 @@ function AnimatedCounter({ value }) {
     return controls.stop;
   }, [value, count]);
 
-  return <motion.span>{rounded}</motion.span>;
+  return <m.span>{rounded}</m.span>;
 }
 
 export default function StatsCard({ title, value, icon: Icon, trend, trendValue, color = '#3B82F6', suffix = '' }) {
   const { darkMode } = useTheme();
 
   return (
-    <motion.div
+    <m.div
       className={`stats-card ${darkMode ? 'dark' : ''}`}
       whileHover={{ y: -4, boxShadow: '0 12px 40px rgba(0,0,0,0.1)' }}
       initial={{ opacity: 0, y: 20 }}
@@ -43,6 +43,6 @@ export default function StatsCard({ title, value, icon: Icon, trend, trendValue,
           <span className="stats-trend-label">vs last week</span>
         </div>
       )}
-    </motion.div>
+    </m.div>
   );
 }

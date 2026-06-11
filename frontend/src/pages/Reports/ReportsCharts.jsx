@@ -1,4 +1,4 @@
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line
@@ -8,7 +8,7 @@ export default function ReportsCharts({ hourlyData, monthlyData, darkMode }) {
   return (
     <div className="charts-grid">
       {/* Hourly Traffic */}
-      <motion.div
+      <m.div
         className="chart-card"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -35,10 +35,10 @@ export default function ReportsCharts({ hourlyData, monthlyData, darkMode }) {
             <Bar dataKey="visitors" fill="#3B82F6" radius={[6, 6, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-      </motion.div>
+      </m.div>
 
       {/* Monthly Trend */}
-      <motion.div
+      <m.div
         className="chart-card"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -65,7 +65,7 @@ export default function ReportsCharts({ hourlyData, monthlyData, darkMode }) {
             <Line type="monotone" dataKey="tokens" stroke="#8B5CF6" strokeWidth={3} dot={{ r: 5, fill: '#8B5CF6' }} />
           </LineChart>
         </ResponsiveContainer>
-      </motion.div>
+      </m.div>
     </div>
   );
 }

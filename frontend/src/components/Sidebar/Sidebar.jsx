@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   FiGrid, FiBookOpen, FiList, FiTag, FiBarChart2,
   FiUser, FiActivity, FiX
@@ -17,14 +18,22 @@ const menuItems = [
 
 export default function Sidebar({ isOpen, onClose }) {
   const { darkMode } = useTheme();
+  const { user } = useAuth();
   const location = useLocation();
+
+  const filteredItems = menuItems.filter((item) => {
+    if (item.path === '/admin' || item.path === '/reports') {
+      return user?.role === 'admin';
+    }
+    return true;
+  });
 
   return (
     <>
       {/* Overlay for mobile */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -34,19 +43,19 @@ export default function Sidebar({ isOpen, onClose }) {
         )}
       </AnimatePresence>
 
-      <motion.aside
+      <m.aside
         className={`sidebar ${isOpen ? 'open' : ''} ${darkMode ? 'dark' : ''}`}
         initial={false}
       >
         <div className="sidebar-header">
           <span className="sidebar-title">Navigation</span>
-          <button className="sidebar-close" onClick={onClose}>
+          <button type="button" className="sidebar-close" onClick={onClose}>
             <FiX size={20} />
           </button>
         </div>
 
         <nav className="sidebar-nav">
-          {menuItems.map((item) => {
+          {filteredItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
             return (
@@ -56,13 +65,13 @@ export default function Sidebar({ isOpen, onClose }) {
                 className={`sidebar-link ${isActive ? 'active' : ''}`}
                 onClick={() => { if (window.innerWidth < 1024) onClose(); }}
               >
-                <motion.div
+                <m.div
                   className="sidebar-link-inner"
                   whileHover={{ x: 4 }}
                   transition={{ type: 'spring', stiffness: 300 }}
                 >
                   {isActive && (
-                    <motion.div
+                    <m.div
                       layoutId="sidebar-active"
                       className="sidebar-active-bg"
                       transition={{ type: 'spring', stiffness: 350, damping: 30 }}
@@ -70,7 +79,7 @@ export default function Sidebar({ isOpen, onClose }) {
                   )}
                   <Icon size={18} className="sidebar-icon" />
                   <span>{item.label}</span>
-                </motion.div>
+                </m.div>
               </NavLink>
             );
           })}
@@ -78,14 +87,16 @@ export default function Sidebar({ isOpen, onClose }) {
 
         <div className="sidebar-footer">
           <div className="sidebar-user">
-            <div className="avatar-sm">VP</div>
+            <div className="avatar-sm">
+              {user?.name ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'U'}
+            </div>
             <div className="sidebar-user-info">
-              <p className="sidebar-user-name">Vikram Patel</p>
-              <p className="sidebar-user-role">Administrator</p>
+              <p className="sidebar-user-name">{user?.name || 'Guest User'}</p>
+              <p className="sidebar-user-role">{user?.role === 'admin' ? 'Administrator' : 'User'}</p>
             </div>
           </div>
         </div>
-      </motion.aside>
+      </m.aside>
     </>
   );
 }

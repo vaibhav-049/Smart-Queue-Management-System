@@ -1,39 +1,76 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
+import { m } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
-import { currentUser } from '../../services/mockData';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 import { FiUser, FiMail, FiPhone, FiBell, FiMoon, FiSave, FiCamera } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
 export default function Profile() {
   const { darkMode, toggleDarkMode } = useTheme();
+  const { user, updateProfile } = useAuth();
+  
   const [form, setForm] = useState({
-    name: currentUser.name,
-    email: currentUser.email,
-    phone: currentUser.phone,
+    name: '',
+    email: '',
+    phone: '',
   });
+  
+  const [tokenStats, setTokenStats] = useState({ total: 0, completed: 0 });
   const [notifications, setNotifications] = useState(true);
   const [editing, setEditing] = useState(false);
 
-  const handleSave = () => {
+  // Set form values when user changes
+  useEffect(() => {
+    if (user) {
+      setForm({
+        name: user.name || '',
+        email: user.email || '',
+        phone: user.phone || '',
+      });
+    }
+  }, [user]);
+
+  // Fetch token stats
+  useEffect(() => {
+    if (user) {
+      api.get('/tokens/my-tokens')
+        .then(res => {
+          if (res.data && res.data.success) {
+            const list = res.data.data || [];
+            const completedCount = list.filter(t => t.status === 'completed').length;
+            setTokenStats({
+              total: list.length,
+              completed: completedCount
+            });
+          }
+        })
+        .catch(err => console.error('Error fetching profile token stats:', err));
+    }
+  }, [user]);
+
+  const handleSave = async () => {
     setEditing(false);
-    toast.success('Profile updated successfully!');
+    await updateProfile({
+      name: form.name,
+      phone: form.phone,
+    });
   };
 
   return (
     <div className={`profile-page ${darkMode ? 'dark' : ''}`}>
-      <motion.div
+      <m.div
         className="page-header"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
       >
         <h1>My Profile</h1>
         <p>Manage your account settings and preferences</p>
-      </motion.div>
+      </m.div>
 
       <div className="profile-layout">
         {/* Profile Card */}
-        <motion.div
+        <m.div
           className="profile-card"
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -48,17 +85,17 @@ export default function Profile() {
               </button>
             </div>
             <h2 className="profile-name">{form.name}</h2>
-            <p className="profile-role">{currentUser.role === 'admin' ? 'Administrator' : 'User'}</p>
+            <p className="profile-role">{user?.role === 'admin' ? 'Administrator' : 'User'}</p>
             <span className="profile-badge">Pro Plan</span>
           </div>
 
           <div className="profile-stats-row">
             <div className="profile-stat">
-              <span className="profile-stat-value">24</span>
+              <span className="profile-stat-value">{tokenStats.total}</span>
               <span className="profile-stat-label">Tokens</span>
             </div>
             <div className="profile-stat">
-              <span className="profile-stat-value">18</span>
+              <span className="profile-stat-value">{tokenStats.completed}</span>
               <span className="profile-stat-label">Completed</span>
             </div>
             <div className="profile-stat">
@@ -66,12 +103,12 @@ export default function Profile() {
               <span className="profile-stat-label">Rating</span>
             </div>
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Details & Settings */}
         <div className="profile-details-section">
           {/* User Details */}
-          <motion.div
+          <m.div
             className="profile-details-card"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -79,7 +116,7 @@ export default function Profile() {
           >
             <div className="card-header-row">
               <h3>Personal Information</h3>
-              <motion.button
+              <m.button
                 type="button"
                 className={`btn-outline-sm ${editing ? 'btn-primary-sm' : ''}`}
                 onClick={() => editing ? handleSave() : setEditing(true)}
@@ -87,7 +124,7 @@ export default function Profile() {
                 whileTap={{ scale: 0.95 }}
               >
                 {editing ? <><FiSave size={16} /> Save</> : 'Edit'}
-              </motion.button>
+              </m.button>
             </div>
 
             <div className="profile-form">
@@ -122,10 +159,10 @@ export default function Profile() {
                 />
               </div>
             </div>
-          </motion.div>
+          </m.div>
 
           {/* Settings */}
-          <motion.div
+          <m.div
             className="profile-settings-card"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -173,7 +210,7 @@ export default function Profile() {
                 <span className="toggle-slider" />
               </label>
             </div>
-          </motion.div>
+          </m.div>
         </div>
       </div>
     </div>

@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { m } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 import { FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { FcGoogle } from 'react-icons/fc';
-import { BsMicrosoft } from 'react-icons/bs';
 import toast from 'react-hot-toast';
+
+import { useAuth } from '../../context/AuthContext';
 
 export default function Login() {
   const { darkMode } = useTheme();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ email: '', password: '' });
+  const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({});
 
   const validate = () => {
@@ -23,13 +26,19 @@ export default function Login() {
     return errs;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
     setErrors(errs);
     if (Object.keys(errs).length === 0) {
-      toast.success('Login successful! Redirecting...');
-      setTimeout(() => navigate('/admin'), 1500);
+      const res = await login(form.email, form.password, rememberMe);
+      if (res.success) {
+        if (res.user.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/book-token');
+        }
+      }
     }
   };
 
@@ -37,7 +46,7 @@ export default function Login() {
     <div className={`auth-page ${darkMode ? 'dark' : ''}`}>
       <div className="auth-container">
         {/* Left Panel */}
-        <motion.div
+        <m.div
           className="auth-left"
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
@@ -62,10 +71,10 @@ export default function Login() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </m.div>
 
         {/* Right Panel - Form */}
-        <motion.div
+        <m.div
           className="auth-right"
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}
@@ -79,9 +88,6 @@ export default function Login() {
             <div className="social-login-buttons">
               <button type="button" className="social-btn" onClick={() => toast('Google login coming soon!')}>
                 <FcGoogle size={20} /> <span>Google</span>
-              </button>
-              <button type="button" className="social-btn" onClick={() => toast('Microsoft login coming soon!')}>
-                <BsMicrosoft size={18} style={{ color: '#00a4ef' }} /> <span>Microsoft</span>
               </button>
             </div>
 
@@ -125,26 +131,31 @@ export default function Login() {
 
               <div className="form-options">
                 <label className="checkbox-label">
-                  <input type="checkbox" /> Remember me
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={e => setRememberMe(e.target.checked)}
+                  />
+                  Remember me
                 </label>
-                <a href="#forgot" className="forgot-link">Forgot Password?</a>
+                <Link to="/forgot-password" className="forgot-link">Forgot Password?</Link>
               </div>
 
-              <motion.button
+              <m.button
                 type="submit"
                 className="btn-primary-full"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
                 Sign In
-              </motion.button>
+              </m.button>
             </form>
 
             <p className="auth-footer-text">
               Don't have an account? <Link to="/register" className="auth-link">Sign Up</Link>
             </p>
           </div>
-        </motion.div>
+        </m.div>
       </div>
     </div>
   );
