@@ -77,10 +77,10 @@ export default function Login() {
 
             {/* Social Login */}
             <div className="social-login-buttons">
-              <button className="social-btn" onClick={() => toast('Google login coming soon!')}>
+              <button type="button" className="social-btn" onClick={() => toast('Google login coming soon!')}>
                 <FcGoogle size={20} /> <span>Google</span>
               </button>
-              <button className="social-btn" onClick={() => toast('Microsoft login coming soon!')}>
+              <button type="button" className="social-btn" onClick={() => toast('Microsoft login coming soon!')}>
                 <BsMicrosoft size={18} style={{ color: '#00a4ef' }} /> <span>Microsoft</span>
               </button>
             </div>
@@ -127,7 +127,7 @@ export default function Login() {
                 <label className="checkbox-label">
                   <input type="checkbox" /> Remember me
                 </label>
-                <a href="#" className="forgot-link">Forgot Password?</a>
+                <a href="#forgot" className="forgot-link">Forgot Password?</a>
               </div>
 
               <motion.button

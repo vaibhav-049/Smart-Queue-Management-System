@@ -82,8 +82,8 @@ export default function BookToken() {
               {selectedService?.id === service.id && (
                 <motion.div
                   className="service-check"
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
                   style={{ background: service.color }}
                 >
                   ✓
@@ -136,6 +136,7 @@ export default function BookToken() {
                     id="bt-service"
                     type="text"
                     value={selectedService.name}
+                    readOnly
                     disabled
                   />
                 </div>
@@ -197,6 +198,7 @@ export default function BookToken() {
                     </div>
                   </div>
                   <motion.button
+                    type="button"
                     className="btn-outline"
                     onClick={() => setShowQR(!showQR)}
                     whileHover={{ scale: 1.02 }}

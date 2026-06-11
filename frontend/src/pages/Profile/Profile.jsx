@@ -43,7 +43,7 @@ export default function Profile() {
               <div className="profile-avatar-lg">
                 {form.name.split(' ').map(n => n[0]).join('')}
               </div>
-              <button className="avatar-upload-btn">
+              <button type="button" className="avatar-upload-btn">
                 <FiCamera size={16} />
               </button>
             </div>
@@ -80,6 +80,7 @@ export default function Profile() {
             <div className="card-header-row">
               <h3>Personal Information</h3>
               <motion.button
+                type="button"
                 className={`btn-outline-sm ${editing ? 'btn-primary-sm' : ''}`}
                 onClick={() => editing ? handleSave() : setEditing(true)}
                 whileHover={{ scale: 1.05 }}
@@ -91,8 +92,9 @@ export default function Profile() {
 
             <div className="profile-form">
               <div className="form-group">
-                <label><FiUser size={16} /> Full Name</label>
+                <label htmlFor="pf-name"><FiUser size={16} /> Full Name</label>
                 <input
+                  id="pf-name"
                   type="text"
                   value={form.name}
                   onChange={e => setForm({ ...form, name: e.target.value })}
@@ -100,8 +102,9 @@ export default function Profile() {
                 />
               </div>
               <div className="form-group">
-                <label><FiMail size={16} /> Email Address</label>
+                <label htmlFor="pf-email"><FiMail size={16} /> Email Address</label>
                 <input
+                  id="pf-email"
                   type="email"
                   value={form.email}
                   onChange={e => setForm({ ...form, email: e.target.value })}
@@ -109,8 +112,9 @@ export default function Profile() {
                 />
               </div>
               <div className="form-group">
-                <label><FiPhone size={16} /> Phone Number</label>
+                <label htmlFor="pf-phone"><FiPhone size={16} /> Phone Number</label>
                 <input
+                  id="pf-phone"
                   type="tel"
                   value={form.phone}
                   onChange={e => setForm({ ...form, phone: e.target.value })}
@@ -145,6 +149,7 @@ export default function Profile() {
                     setNotifications(!notifications);
                     toast.success(notifications ? 'Notifications disabled' : 'Notifications enabled');
                   }}
+                  aria-label="Push Notifications"
                 />
                 <span className="toggle-slider" />
               </label>
@@ -163,6 +168,7 @@ export default function Profile() {
                   type="checkbox"
                   checked={darkMode}
                   onChange={toggleDarkMode}
+                  aria-label="Dark Mode"
                 />
                 <span className="toggle-slider" />
               </label>

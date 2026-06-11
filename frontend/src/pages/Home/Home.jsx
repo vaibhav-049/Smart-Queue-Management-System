@@ -83,7 +83,7 @@ export default function Home() {
               <Link to="/book-token" className="btn-primary-lg">
                 Get Started <FiArrowRight />
               </Link>
-              <a href="#features" className="btn-secondary-lg">
+              <a href="#features" className="btn-secondary-lg" aria-label="Learn more about features">
                 Learn More
               </a>
             </div>
@@ -173,14 +173,13 @@ export default function Home() {
           </motion.div>
 
           <div className="features-grid">
-            {features.map((feature, index) => (
+            {features.map((feature) => (
               <motion.div
-                key={index}
+                key={feature.title}
                 className="feature-card"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
                 whileHover={{ y: -8, boxShadow: '0 20px 60px rgba(0,0,0,0.1)' }}
               >
                 <div className="feature-icon">{feature.icon}</div>
@@ -198,7 +197,7 @@ export default function Home() {
           <div className="stats-grid-home">
             {stats.map((stat, index) => (
               <motion.div
-                key={index}
+                key={stat.label}
                 className="stat-card-home"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -240,7 +239,7 @@ export default function Home() {
               >
                 <div className="testimonial-stars">
                   {[...Array(t.rating)].map((_, i) => (
-                    <FiStar key={i} size={16} className="star-filled" />
+                    <FiStar key={`star-${t.id}-${i}`} size={16} className="star-filled" />
                   ))}
                 </div>
                 <p className="testimonial-text">"{t.text}"</p>
@@ -258,11 +257,13 @@ export default function Home() {
           </div>
 
           <div className="testimonial-dots">
-            {testimonials.map((_, i) => (
+            {testimonials.map((t, i) => (
               <button
-                key={i}
+                type="button"
+                key={t.id}
                 className={`testimonial-dot ${i === activeTestimonial ? 'active' : ''}`}
                 onClick={() => setActiveTestimonial(i)}
+                aria-label={`Go to testimonial ${i + 1}`}
               />
             ))}
           </div>

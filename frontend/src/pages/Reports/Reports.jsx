@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { motion } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 import {
@@ -6,11 +6,16 @@ import {
 } from '../../services/mockData';
 import { FiDownload, FiCalendar, FiTrendingUp, FiClock, FiActivity } from 'react-icons/fi';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line, Legend, PieChart, Pie, Cell
-} from 'recharts';
 import toast from 'react-hot-toast';
+
+const ReportsCharts = lazy(() => import('./ReportsCharts'));
+
+const summaryCards = [
+  { label: 'Total Tokens Generated', value: reportData.totalTokensGenerated.toLocaleString(), icon: FiActivity, color: '#3B82F6' },
+  { label: 'Peak Hours', value: reportData.peakHours, icon: FiClock, color: '#F59E0B' },
+  { label: 'Most Used Service', value: reportData.mostUsedService, icon: FiTrendingUp, color: '#10B981' },
+  { label: 'Average Wait Time', value: reportData.avgWaitTime, icon: FiClock, color: '#8B5CF6' },
+];
 
 export default function Reports() {
   const { darkMode } = useTheme();
@@ -20,13 +25,6 @@ export default function Reports() {
     const timer = setTimeout(() => setLoading(false), 1200);
     return () => clearTimeout(timer);
   }, []);
-
-  const summaryCards = [
-    { label: 'Total Tokens Generated', value: reportData.totalTokensGenerated.toLocaleString(), icon: FiActivity, color: '#3B82F6' },
-    { label: 'Peak Hours', value: reportData.peakHours, icon: FiClock, color: '#F59E0B' },
-    { label: 'Most Used Service', value: reportData.mostUsedService, icon: FiTrendingUp, color: '#10B981' },
-    { label: 'Average Wait Time', value: reportData.avgWaitTime, icon: FiClock, color: '#8B5CF6' },
-  ];
 
   if (loading) {
     return (
@@ -50,6 +48,7 @@ export default function Reports() {
           <p>Comprehensive insights into your queue performance</p>
         </div>
         <motion.button
+          type="button"
           className="btn-primary"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -65,7 +64,7 @@ export default function Reports() {
           const Icon = card.icon;
           return (
             <motion.div
-              key={index}
+              key={card.label}
               className="report-summary-card"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -84,67 +83,13 @@ export default function Reports() {
       </div>
 
       {/* Charts Row */}
-      <div className="charts-grid">
-        {/* Hourly Traffic */}
-        <motion.div
-          className="chart-card"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <div className="chart-header">
-            <h3>Hourly Visitor Traffic</h3>
-            <span className="chart-badge">Today</span>
-          </div>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={hourlyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#e2e8f0'} />
-              <XAxis dataKey="hour" stroke={darkMode ? '#94a3b8' : '#64748b'} />
-              <YAxis stroke={darkMode ? '#94a3b8' : '#64748b'} />
-              <Tooltip
-                contentStyle={{
-                  background: darkMode ? '#1e293b' : '#fff',
-                  border: 'none',
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                  color: darkMode ? '#e2e8f0' : '#1e293b',
-                }}
-              />
-              <Bar dataKey="visitors" fill="#3B82F6" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </motion.div>
-
-        {/* Monthly Trend */}
-        <motion.div
-          className="chart-card"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <div className="chart-header">
-            <h3>Monthly Token Trend</h3>
-            <span className="chart-badge">6 Months</span>
-          </div>
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={monthlyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#e2e8f0'} />
-              <XAxis dataKey="month" stroke={darkMode ? '#94a3b8' : '#64748b'} />
-              <YAxis stroke={darkMode ? '#94a3b8' : '#64748b'} />
-              <Tooltip
-                contentStyle={{
-                  background: darkMode ? '#1e293b' : '#fff',
-                  border: 'none',
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-                  color: darkMode ? '#e2e8f0' : '#1e293b',
-                }}
-              />
-              <Line type="monotone" dataKey="tokens" stroke="#8B5CF6" strokeWidth={3} dot={{ r: 5, fill: '#8B5CF6' }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </motion.div>
-      </div>
+      <Suspense fallback={<LoadingSkeleton type="chart" count={2} />}>
+        <ReportsCharts
+          hourlyData={hourlyData}
+          monthlyData={monthlyData}
+          darkMode={darkMode}
+        />
+      </Suspense>
 
       {/* Weekly Report Table */}
       <motion.div
@@ -171,7 +116,7 @@ export default function Reports() {
             <tbody>
               {weeklyReport.map((week, index) => (
                 <motion.tr
-                  key={index}
+                  key={week.week}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5 + index * 0.1 }}

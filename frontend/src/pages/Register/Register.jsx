@@ -164,7 +164,7 @@ export default function Register() {
               </div>
 
               <label className="checkbox-label" style={{ marginBottom: '1rem' }}>
-                <input type="checkbox" required /> I agree to the <a href="#" className="auth-link">Terms of Service</a> and <a href="#" className="auth-link">Privacy Policy</a>
+                <input type="checkbox" required /> I agree to the <Link to="/" className="auth-link">Terms of Service</Link> and <Link to="/" className="auth-link">Privacy Policy</Link>
               </label>
 
               <motion.button

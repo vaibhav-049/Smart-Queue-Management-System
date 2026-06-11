@@ -21,7 +21,7 @@ export const timeSlots = [
   '04:00 PM - 05:00 PM',
 ];
 
-export const users = [
+const users = [
   { id: 1, name: 'Vikram Patel', email: 'vikram@example.com', phone: '+91 98765 43210', role: 'admin', avatar: null },
   { id: 2, name: 'Priya Sharma', email: 'priya@example.com', phone: '+91 87654 32109', role: 'user', avatar: null },
   { id: 3, name: 'Rahul Verma', email: 'rahul@example.com', phone: '+91 76543 21098', role: 'user', avatar: null },

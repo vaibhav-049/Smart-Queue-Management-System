@@ -19,10 +19,10 @@ export default function Footer() {
               Modern queue management system for hospitals, banks, colleges, government offices, and salons. Reduce wait times, improve efficiency.
             </p>
             <div className="footer-social">
-              <a href="#" className="social-link" aria-label="GitHub"><FiGithub size={18} /></a>
-              <a href="#" className="social-link" aria-label="Twitter"><FiTwitter size={18} /></a>
-              <a href="#" className="social-link" aria-label="LinkedIn"><FiLinkedin size={18} /></a>
-              <a href="#" className="social-link" aria-label="Email"><FiMail size={18} /></a>
+              <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="GitHub"><FiGithub size={18} /></a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="Twitter"><FiTwitter size={18} /></a>
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="social-link" aria-label="LinkedIn"><FiLinkedin size={18} /></a>
+              <a href="mailto:smartqueue@example.com" className="social-link" aria-label="Email"><FiMail size={18} /></a>
             </div>
           </div>
 
@@ -38,11 +38,11 @@ export default function Footer() {
           {/* Services */}
           <div className="footer-col">
             <h4>Services</h4>
-            <a href="#">Hospital</a>
-            <a href="#">Bank</a>
-            <a href="#">College Office</a>
-            <a href="#">Government Office</a>
-            <a href="#">Salon</a>
+            <Link to="/book-token">Hospital</Link>
+            <Link to="/book-token">Bank</Link>
+            <Link to="/book-token">College Office</Link>
+            <Link to="/book-token">Government Office</Link>
+            <Link to="/book-token">Salon</Link>
           </div>
 
           {/* Contact */}
@@ -55,10 +55,10 @@ export default function Footer() {
         </div>
 
         <div className="footer-bottom">
-          <p>&copy; {new Date().getFullYear()} SmartQueue. All rights reserved.</p>
+          <p suppressHydrationWarning>&copy; {new Date().getFullYear()} SmartQueue. All rights reserved.</p>
           <div className="footer-bottom-links">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
+            <Link to="/">Privacy Policy</Link>
+            <Link to="/">Terms of Service</Link>
           </div>
         </div>
       </div>
