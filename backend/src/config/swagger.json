@@ -1,0 +1,296 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Smart Queue Management System API",
+    "description": "Production-ready RESTful backend API documentation for hospital, banking, salon, government and college student service queue operations.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000",
+      "description": "Local Development Server"
+    }
+  ],
+  "paths": {
+    "/api/auth/register": {
+      "post": {
+        "summary": "Register a new user",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string" },
+                  "phone": { "type": "string" },
+                  "password": { "type": "string" }
+                },
+                "required": ["name", "email", "phone", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": { "type": "string" },
+                    "user": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "Authenticate user & get token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string" },
+                  "password": { "type": "string" }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authentication successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "token": { "type": "string" },
+                    "user": { "type": "object" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "summary": "Get logged in user session profile",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Profile data retrieved" }
+        }
+      }
+    },
+    "/api/tokens/book": {
+      "post": {
+        "summary": "Book a new queue token",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "service": { "type": "string", "example": "Hospital" },
+                  "priorityType": { "type": "string", "example": "Normal" }
+                },
+                "required": ["service"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Token booked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tokenNumber": { "type": "string" },
+                    "position": { "type": "integer" },
+                    "estimatedWaitTime": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/queue/live": {
+      "get": {
+        "summary": "Live tracking for a specific service counter",
+        "parameters": [
+          {
+            "name": "service",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string", "default": "Hospital" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Lobby tracking state details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "currentlyServing": { "type": "string" },
+                    "nextTokens": { "type": "array", "items": { "type": "string" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/call-next": {
+      "post": {
+        "summary": "Serve the next token in the queue",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "service": { "type": "string" }
+                },
+                "required": ["service"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Token called successfully" }
+        }
+      }
+    },
+    "/api/admin/skip-token": {
+      "post": {
+        "summary": "Skip a waiting token",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "service": { "type": "string" },
+                  "tokenNumber": { "type": "string" }
+                },
+                "required": ["service", "tokenNumber"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Token skipped successfully" }
+        }
+      }
+    },
+    "/api/admin/complete-token": {
+      "post": {
+        "summary": "Mark serving token as completed",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "service": { "type": "string" },
+                  "tokenNumber": { "type": "string" }
+                },
+                "required": ["service"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Token completed successfully" }
+        }
+      }
+    },
+    "/api/admin/close-queue": {
+      "post": {
+        "summary": "Close service bookings",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "service": { "type": "string" }
+                },
+                "required": ["service"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Queue closed successfully" }
+        }
+      }
+    },
+    "/api/reports/daily": {
+      "get": {
+        "summary": "Daily stats analytics summary",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Report retrieved" }
+        }
+      }
+    },
+    "/api/reports/weekly": {
+      "get": {
+        "summary": "Weekly progression stats summary",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Report retrieved" }
+        }
+      }
+    },
+    "/api/reports/monthly": {
+      "get": {
+        "summary": "Monthly progression stats summary",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Report retrieved" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
