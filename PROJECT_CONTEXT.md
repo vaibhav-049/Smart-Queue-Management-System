@@ -54,6 +54,7 @@ Frontend:
 - Axios for API requests
 - Socket.io Client for live queue/user updates
 - qrcode.react for frontend QR rendering
+- html5-qrcode for live webcam scanning feeds
 
 Backend:
 - Node.js and Express 4
@@ -158,6 +159,8 @@ Admin:
 - `POST /api/admin/close-queue`: action-style close endpoint.
 - `POST /api/admin/open-queue`: action-style open endpoint.
 - `GET /api/admin/analytics`: admin dashboard analytics.
+- `POST /api/admin/verify-token`: verify scanned token details.
+- `POST /api/admin/serve-token`: serve verified scanned token directly.
 
 Reports:
 - `GET /api/reports/download`: CSV or JSON token export, filtered by format/service/date range.
@@ -203,7 +206,7 @@ Queue ordering rules:
 - Priority ranking: emergency, senior, VIP, normal.
 - Serving tokens get wait time `0`.
 - Waiting token wait time is `(position - 1) * service.avgServiceTime`.
-- The matching `Queue` document is updated with `currentServing`, `upcoming`, `totalInQueue`, and `avgWait`.
+- The matching `Queue` document is updated with `currentServing`, `upcoming`, `totalInQueue`, `avgWait`.
 - Socket events notify queue screens and individual users.
 
 Token generation:
@@ -353,6 +356,7 @@ Frontend:
 - `frontend/src/pages/QueueStatus/QueueStatus.jsx`: live queue display.
 - `frontend/src/pages/MyTokens/MyTokens.jsx`: user token management.
 - `frontend/src/pages/AdminDashboard/AdminDashboard.jsx`: admin dashboard and queue controls.
+- `frontend/src/pages/QRScanner/QRScanner.jsx`: Live webcam QR code verification scanner and physical card dashboard.
 - `frontend/src/pages/Reports/Reports.jsx`: report UI.
 - `frontend/src/pages/TrackToken/TrackToken.jsx`: public token tracking with sorting to ensure latest lookup.
 
@@ -360,4 +364,3 @@ Frontend:
 
 - Root `README.md` and `PROJECT_CONTEXT.md` are fully updated to reflect the implemented backend, OTP-based registrations, security validations, and date-based scheduling constraints.
 - Backend and frontend READMEs remain as historical guidelines.
-

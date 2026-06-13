@@ -18,6 +18,7 @@ import Profile from '../pages/Profile/Profile';
 import TrackToken from '../pages/TrackToken/TrackToken';
 import ForgotPassword from '../pages/ForgotPassword/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword/ResetPassword';
+import QRScanner from '../pages/QRScanner/QRScanner';
 
 function AdminRoute() {
   const { user, loading } = useAuth();
@@ -54,6 +55,7 @@ export default function AppRoutes() {
           {/* Admin Routes */}
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/scanner" element={<QRScanner />} />
             <Route path="/reports" element={<Reports />} />
           </Route>
         </Route>

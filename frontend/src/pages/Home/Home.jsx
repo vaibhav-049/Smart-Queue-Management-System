@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { m, useMotionValue, useTransform, animate } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import { FiArrowRight, FiCheck, FiStar } from 'react-icons/fi';
 import api from '../../services/api';
 
@@ -32,6 +33,18 @@ const features = [
 
 export default function Home() {
   const { darkMode } = useTheme();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'admin') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/book-token', { replace: true });
+      }
+    }
+  }, [user, navigate]);
   const [dynamicStats, setDynamicStats] = useState({
     tokensServedToday: 0,
     activeUsers: 0,
@@ -93,9 +106,15 @@ export default function Home() {
               government offices, and salons. Book tokens, track queues, and get served — all digitally.
             </p>
             <div className="hero-actions">
-              <Link to="/register" className="btn-primary-lg">
-                Get Started <FiArrowRight />
-              </Link>
+              {user ? (
+                <Link to={user.role === 'admin' ? '/admin' : '/book-token'} className="btn-primary-lg">
+                  Go to Dashboard <FiArrowRight />
+                </Link>
+              ) : (
+                <Link to="/register" className="btn-primary-lg">
+                  Get Started <FiArrowRight />
+                </Link>
+              )}
               <a href="#features" className="btn-secondary-lg" aria-label="Learn more about features">
                 Learn More
               </a>
@@ -171,12 +190,20 @@ export default function Home() {
           >
             <h2>Ready to eliminate long queues?</h2>
             <div className="cta-actions">
-              <Link to="/register" className="btn-primary-lg">
-                Start Free Trial <FiArrowRight />
-              </Link>
-              <Link to="/login" className="btn-ghost-lg">
-                Sign In
-              </Link>
+              {user ? (
+                <Link to={user.role === 'admin' ? '/admin' : '/book-token'} className="btn-primary-lg">
+                  Go to Dashboard <FiArrowRight />
+                </Link>
+              ) : (
+                <>
+                  <Link to="/register" className="btn-primary-lg">
+                    Start Free Trial <FiArrowRight />
+                  </Link>
+                  <Link to="/login" className="btn-ghost-lg">
+                    Sign In
+                  </Link>
+                </>
+              )}
             </div>
             <div className="cta-features">
               <span><FiCheck /> Free 14-day trial</span>

@@ -85,6 +85,23 @@ const seedDatabase = async () => {
         phone: '+91 98765 43210',
         password: 'admin123',
         role: 'admin',
+        service: null,
+      },
+      {
+        name: 'Hospital Staff',
+        email: 'hospital_staff@example.com',
+        phone: '+91 98765 43211',
+        password: 'admin123',
+        role: 'admin',
+        service: 'hospital',
+      },
+      {
+        name: 'Bank Staff',
+        email: 'bank_staff@example.com',
+        phone: '+91 98765 43212',
+        password: 'admin123',
+        role: 'admin',
+        service: 'bank',
       },
     ];
 

@@ -4,11 +4,12 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import {
   FiGrid, FiBookOpen, FiList, FiTag, FiBarChart2,
-  FiUser, FiActivity, FiX
+  FiUser, FiActivity, FiX, FiCamera
 } from 'react-icons/fi';
 
 const menuItems = [
   { path: '/admin', label: 'Dashboard', icon: FiGrid },
+  { path: '/admin/scanner', label: 'QR Scanner', icon: FiCamera },
   { path: '/book-token', label: 'Book Token', icon: FiBookOpen },
   { path: '/queue-status', label: 'Queue Status', icon: FiActivity },
   { path: '/my-tokens', label: 'My Tokens', icon: FiTag },
@@ -22,7 +23,7 @@ export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation();
 
   const filteredItems = menuItems.filter((item) => {
-    if (item.path === '/admin' || item.path === '/reports') {
+    if (item.path === '/admin' || item.path === '/admin/scanner' || item.path === '/reports') {
       return user?.role === 'admin';
     }
     return true;

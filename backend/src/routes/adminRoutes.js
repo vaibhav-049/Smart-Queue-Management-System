@@ -7,9 +7,12 @@ const {
   closeQueue,
   openQueue,
   getAnalytics,
+  verifyScannedToken,
+  serveScannedToken,
 } = require('../controllers/adminController');
 const { protect } = require('../middleware/authMiddleware');
 const { admin } = require('../middleware/adminMiddleware');
+const { validateBody, verifyTokenSchema } = require('../middleware/validationMiddleware');
 
 // Traditional REST endpoints
 router.post('/queues/:service/next', protect, admin, callNextToken);
@@ -25,5 +28,9 @@ router.post('/close-queue', protect, admin, closeQueue);
 router.post('/open-queue', protect, admin, openQueue);
 
 router.get('/analytics', protect, admin, getAnalytics);
+
+// QR verification and specific serve actions
+router.post('/verify-token', protect, admin, validateBody(verifyTokenSchema), verifyScannedToken);
+router.post('/serve-token', protect, admin, validateBody(verifyTokenSchema), serveScannedToken);
 
 module.exports = router;

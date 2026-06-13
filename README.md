@@ -87,6 +87,7 @@ Frontend runs at `http://localhost:5173/`.
 10. **Reports & Analytics**: Admin service usage, busy hours, visitor analytics, CSV/JSON report exporting.
 11. **User Profile**: Manage name, avatar, mobile, and password.
 12. **Public Token Tracking**: Scan QR codes to monitor positions in real-time.
+13. **QR Verification Scanner**: Admin-only live webcam QR code scan panel with manual search, physical details verification, and immediate queue actions (Serve, Complete, Skip).
 
 ## ✨ Key Features
 - 🌓 **Dark/Light Mode**
@@ -97,6 +98,7 @@ Frontend runs at `http://localhost:5173/`.
 - 🔒 **Secured WebSockets** (Handshake token signatures and room security)
 - ⏰ **Dynamic Slot Filtering**: Blocks past hours for today's bookings.
 - 🗑️ **Background Cleanup interval**: Deletes expired unserved and cancelled tokens every 10 minutes to maintain database performance.
+- 📷 **Multi-Service QR Verification Scanner**: Admin-only webcam scanner panel using `html5-qrcode` and manual ID verification with physical matching controls.
 
 ## 👨‍💻 Author
 Vaibhav Patel

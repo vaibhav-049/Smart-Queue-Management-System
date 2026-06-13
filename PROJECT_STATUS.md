@@ -6,7 +6,9 @@ Status date: 2026-06-13
 
 The codebase is an active full-stack Smart Queue Management System with both frontend and backend implemented. In this iteration, we successfully integrated a 3-day booking window limit, strict 10-digit mobile phone validations, dynamic past timeslot selectors filtering, and an automated background cleanup service running every 10 minutes to delete expired unserved/cancelled tokens and keep MongoDB databases performant. Legacy database tokens are migrated dynamically on server startup to standard YYYY-MM-DD formats, fixing sequence collisions and queue positions.
 
-The registration UI uses a single password field and verification step. The email service sends registration and password reset OTPs. All live queue operations (call next, skip, complete) are date-scoped.
+Additionally, a secure, admin-only **QR Code Scanner Verification** interface has been implemented. Admins can scan user token QRs using a live webcam stream or perform a manual search to verify physical visitor details (Name, Phone, Booking Date, Time Slot, Priority Category) and immediately execute queue actions (Serve, Complete, Skip) with real-time socket lobby updates.
+
+The registration UI uses a single password field and verification step. The email service sends registration and password reset OTPs. All live queue operations (call next, skip, complete, QR serve) are date-scoped.
 
 ## Working Tree Snapshot
 
@@ -47,12 +49,13 @@ Backend:
 - Admin queue operations: call next, skip token, complete token, open/close queue.
 - Admin analytics and report endpoints.
 - Real-time Socket.io queue and token/user notification events.
+- Admin QR verification endpoint (`/api/admin/verify-token`) and direct QR serving endpoint (`/api/admin/serve-token`).
 
 Frontend:
 - App shell with theme, auth, router, toast notifications, and Framer Motion setup.
 - Public pages for home, login, registration, forgot password, reset password, and QR token tracking.
 - Dashboard pages for booking tokens, live queue status, my tokens, and profile.
-- Admin-only dashboard and reports routes guarded by role.
+- Admin-only dashboard, QR Verification Scanner, and reports routes guarded by role.
 - Axios API client with bearer-token injection and global 401 logout handling.
 - Socket client with service/user room helpers.
 - Service metadata hook backed by `/api/services`.
@@ -103,9 +106,10 @@ VITE_SOCKET_URL=http://localhost:5000
 All systems have been fully verified:
 - **Backend server startup**: Successful on port 5000 with connection to MongoDB. Seeding runs automatically on boot.
 - **Legacy Database Migration**: Standardizes `bookingDate` fields to `YYYY-MM-DD` strings on connection startup.
-- **End-to-end integration flow**: Refactored `backend/test_flow.js` to support OTP-based registration and verification, strict name/phone validation schemas, and timezone-safe slot validation. Runs successfully using `node test_flow.js`.
+- **End-to-end integration flow**: Refactored `backend/test_flow.js` to support OTP-based registration and verification, strict name/phone validation schemas, timezone-safe slot validation, admin QR verification, and QR serving. Runs successfully using `node test_flow.js`.
 - **Dynamic Slot Locking & Verification**: Confirmed via automated browser actions. Booking Today's date with passed timeslots correctly locks the select dropdown and shows an inline error warning. Choosing Tomorrow enables all slots.
 - **Cleanup Service**: Verified background job runs every 10 minutes, deleting past stale/cancelled tokens and today's expired unserved tokens.
+- **QR Scanner Verification & Serving**: Verified using automated browser flows. Admins can log in, access the scanner panel, perform manual Display ID lookups, see complete physical verification details, and manage token status controls.
 
 ## Known Risks And Gaps
 
@@ -168,9 +172,11 @@ With MongoDB running and valid environment variables:
 5. Book a token for one service.
 6. Confirm the token appears under My Tokens with a QR code.
 7. Open `/track/{displayId}` and confirm public tracking works.
-8. Log in as the seeded admin.
+8. Log in as the seeded admin (`vikram@example.com` / `admin123`).
 9. Open the admin dashboard and call next token.
 10. Confirm Queue Status, My Tokens, and Track Token update correctly.
+11. Navigate to `/admin/scanner` on the admin panel, scan or search for the booked token display ID, and verify physical matching details load correctly.
+12. Click "Serve" or "Complete" on the scanner and verify the changes update lobby status screens in real-time.
 
 ## Ownership Notes
 

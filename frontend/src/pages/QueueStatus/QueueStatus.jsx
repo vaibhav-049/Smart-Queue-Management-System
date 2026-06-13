@@ -193,7 +193,7 @@ export default function QueueStatus() {
   }, [selectedService, fetchQueueStatus]);
 
   return (
-    <div className={`queue-status-page ${darkMode ? 'dark' : ''}`}>
+    <div className={`queue-status-page ${darkMode ? 'dark' : ''}`} style={{ padding: '0 0.25rem' }}>
       <m.div
         className="page-header"
         initial={{ opacity: 0, y: -20 }}

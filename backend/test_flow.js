@@ -114,6 +114,32 @@ async function testFlow() {
   if (!analyticsData.success) throw new Error('Analytics failed: ' + JSON.stringify(analyticsData));
   console.log(`✅ Analytics fetched successfully. Total Tokens: ${analyticsData.data.dashboardStats.totalTokens}`);
 
+  // 7. Verify QR Scan token (admin endpoint)
+  console.log(`\n[7] Testing Admin QR verification for ${displayId}...`);
+  const verifyScanRes = await fetch(`${API_URL}/admin/verify-token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+    body: JSON.stringify({ displayId })
+  });
+  const verifyScanData = await verifyScanRes.json();
+  if (!verifyScanData.success || verifyScanData.data.displayId !== displayId) {
+    throw new Error('Admin QR verification failed: ' + JSON.stringify(verifyScanData));
+  }
+  console.log(`✅ Admin QR verification successful. Verified user name: ${verifyScanData.data.name}, Phone: ${verifyScanData.data.phone}`);
+
+  // 8. Serve scanned token directly (admin endpoint)
+  console.log(`\n[8] Testing Admin QR Serve (Admit) for ${displayId}...`);
+  const serveScanRes = await fetch(`${API_URL}/admin/serve-token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+    body: JSON.stringify({ displayId })
+  });
+  const serveScanData = await serveScanRes.json();
+  if (!serveScanData.success || serveScanData.data.status !== 'serving') {
+    throw new Error('Admin QR Serve failed: ' + JSON.stringify(serveScanData));
+  }
+  console.log(`✅ Admin QR Serve (Admit) successful. Token status is now: ${serveScanData.data.status}`);
+
   console.log('\n🎉 ALL TESTS PASSED SUCCESSFULLY! The features are perfectly integrated.');
   mongoose.disconnect();
 }

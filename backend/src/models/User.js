@@ -34,6 +34,11 @@ const userSchema = new mongoose.Schema(
       enum: ['user', 'admin'],
       default: 'user',
     },
+    service: {
+      type: String,
+      enum: ['hospital', 'bank', 'college', 'government', 'salon', null],
+      default: null,
+    },
     avatar: {
       type: String,
       default: null,

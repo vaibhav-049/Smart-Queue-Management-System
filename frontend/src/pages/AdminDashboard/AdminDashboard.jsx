@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { m } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
@@ -43,10 +44,12 @@ export default function AdminDashboard() {
 
   // Update selectedService when services load
   useEffect(() => {
-    if (services.length > 0 && !selectedService) {
+    if (user?.service) {
+      setSelectedService(user.service.toLowerCase());
+    } else if (services.length > 0 && !selectedService) {
       setSelectedService(services[0].id);
     }
-  }, [services, selectedService]);
+  }, [services, selectedService, user]);
 
   // Fetch Dashboard Analytics
   const fetchAnalytics = useCallback(async () => {
@@ -203,10 +206,31 @@ export default function AdminDashboard() {
         className="page-header"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
+        style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}
       >
         <div>
           <h1>Dashboard</h1>
           <p>Welcome back, {user?.name || 'Administrator'}! Here's what's happening today.</p>
+        </div>
+        <div>
+          <Link
+            to="/admin/scanner"
+            className="btn-primary"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '10px 20px',
+              textDecoration: 'none',
+              borderRadius: '8px',
+              fontWeight: '600',
+              background: '#8B5CF6',
+              color: 'white',
+              boxShadow: '0 4px 6px -1px rgba(139, 92, 246, 0.3)'
+            }}
+          >
+            📷 QR Verification Scanner
+          </Link>
         </div>
       </m.div>
 
@@ -272,6 +296,10 @@ export default function AdminDashboard() {
           <div className="flex gap-2">
             {servicesLoading ? (
               <span className="text-sm">Loading services...</span>
+            ) : user?.service ? (
+              <span className="filter-tab active" style={{ padding: '6px 12px', fontSize: '0.85rem', cursor: 'default' }}>
+                {services.find(s => s.id === user.service.toLowerCase())?.icon || '🏢'} {services.find(s => s.id === user.service.toLowerCase())?.name || user.service}
+              </span>
             ) : (
               services.map(s => (
                 <button
@@ -313,24 +341,24 @@ export default function AdminDashboard() {
 
               {/* Action Buttons Box */}
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '1rem' }}>
-                <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <button
                     type="button"
                     disabled={actionLoading || upcomingTokens.length === 0}
                     onClick={handleCallNext}
                     className="btn-primary-full"
-                    style={{ flex: 1, padding: '14px', background: '#3B82F6' }}
+                    style={{ flex: '1 1 140px', padding: '12px', background: '#3B82F6' }}
                   >
-                    📞 Call Next Customer
+                    📞 Call Next
                   </button>
                   <button
                     type="button"
                     disabled={actionLoading || !currentServing}
                     onClick={handleCompleteCurrent}
                     className="btn-primary-full"
-                    style={{ flex: 1, padding: '14px', background: '#10B981' }}
+                    style={{ flex: '1 1 140px', padding: '12px', background: '#10B981' }}
                   >
-                    ✅ Complete Serving
+                    ✅ Complete
                   </button>
                 </div>
 

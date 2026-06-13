@@ -142,6 +142,10 @@ const bookTokenSchema = {
   phone: { type: 'string', required: true, regex: /^(?:\+91[\s\-]?)?[6-9]\d{9}$/, message: 'Please provide a valid 10-digit mobile number.' }
 };
 
+const verifyTokenSchema = {
+  displayId: { type: 'string', required: true, regex: /^[A-Z]\d{3}$/, message: 'Display ID must be in standard format (e.g. H001).' }
+};
+
 module.exports = {
   validateBody,
   registerSchema,
@@ -151,4 +155,5 @@ module.exports = {
   resetPasswordSchema,
   updateProfileSchema,
   bookTokenSchema,
+  verifyTokenSchema,
 };

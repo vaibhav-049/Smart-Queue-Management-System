@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { m } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
@@ -9,8 +9,18 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function Register() {
   const { darkMode } = useTheme();
-  const { register, verifyRegister, loading } = useAuth();
+  const { register, verifyRegister, loading, user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/book-token');
+      }
+    }
+  }, [user, navigate]);
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
   const [otp, setOtp] = useState('');

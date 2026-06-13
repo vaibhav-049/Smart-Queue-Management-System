@@ -91,7 +91,7 @@ export default function MyTokens() {
       </m.div>
 
       {/* Filter Tabs */}
-      <div className="filter-tabs">
+      <div className="filter-tabs" style={{ WebkitOverflowScrolling: 'touch' }}>
         {statusFilters.map(status => (
           <m.button
             type="button"
@@ -166,7 +166,6 @@ export default function MyTokens() {
                   type="button"
                   onClick={() => handleCancelToken(selectedToken._id)}
                   style={{
-                    marginTop: '1rem',
                     width: '100%',
                     padding: '12px',
                     borderRadius: '8px',
@@ -174,14 +173,19 @@ export default function MyTokens() {
                     color: '#fff',
                     fontWeight: 'bold',
                     border: 'none',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
                   }}
                 >
-                  Cancel Token Booking
+                  ❌ Cancel Token Booking
                 </button>
               )}
 
-              <button className="modal-close" onClick={() => setSelectedToken(null)} style={{ marginTop: '0.5rem' }}>
+              <button
+                className="modal-close"
+                onClick={() => setSelectedToken(null)}
+                style={{ width: '100%', marginTop: '0.25rem' }}
+              >
                 Close
               </button>
             </m.div>

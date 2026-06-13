@@ -18,6 +18,7 @@ const getUserProfile = async (req, res, next) => {
           email: user.email,
           phone: user.phone,
           role: user.role,
+          service: user.service,
           avatar: user.avatar,
         },
       });
@@ -58,6 +59,7 @@ const updateUserProfile = async (req, res, next) => {
           email: updatedUser.email,
           phone: updatedUser.phone,
           role: updatedUser.role,
+          service: updatedUser.service,
           avatar: updatedUser.avatar,
         },
       });

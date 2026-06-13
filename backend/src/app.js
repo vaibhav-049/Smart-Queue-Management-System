@@ -30,7 +30,21 @@ const allowedOrigins = [
 app.use(helmet());
 app.use(
   cors({
-    origin: allowedOrigins.length ? allowedOrigins : '*',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl)
+      if (!origin) return callback(null, true);
+      
+      // In development, allow any origin (e.g. local IP network for mobile testing)
+      if (process.env.NODE_ENV === 'development') {
+        return callback(null, true);
+      }
+      
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      } else {
+        return callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true,
   })

@@ -19,6 +19,12 @@ const callNextToken = async (req, res, next) => {
     }
     const service = serviceParam.toLowerCase();
 
+    // Restricted staff check
+    if (req.user && req.user.service && req.user.service.toLowerCase() !== service) {
+      res.status(403);
+      throw new Error(`Access denied: You are restricted to operating the ${req.user.service} service queue.`);
+    }
+
     const getLocalDateString = () => {
       const d = new Date();
       const offset = d.getTimezoneOffset();
@@ -129,6 +135,12 @@ const skipToken = async (req, res, next) => {
       throw new Error('Token not found');
     }
 
+    // Restricted staff check
+    if (req.user && req.user.service && req.user.service.toLowerCase() !== token.service.toLowerCase()) {
+      res.status(403);
+      throw new Error(`Access denied: You are restricted to operating the ${req.user.service} service queue.`);
+    }
+
     if (token.status !== 'waiting' && token.status !== 'serving') {
       res.status(400);
       throw new Error(`Token is already in ${token.status} state`);
@@ -184,6 +196,13 @@ const completeToken = async (req, res, next) => {
     const todayStr = getLocalDateString();
 
     const serviceSlug = service.toLowerCase();
+
+    // Restricted staff check
+    if (req.user && req.user.service && req.user.service.toLowerCase() !== serviceSlug) {
+      res.status(403);
+      throw new Error(`Access denied: You are restricted to operating the ${req.user.service} service queue.`);
+    }
+
     const query = { service: serviceSlug, status: 'serving', bookingDate: todayStr };
     if (tokenNumber) {
       query.displayId = tokenNumber;
@@ -226,6 +245,12 @@ const closeQueue = async (req, res, next) => {
     }
     const service = serviceParam.toLowerCase();
 
+    // Restricted staff check
+    if (req.user && req.user.service && req.user.service.toLowerCase() !== service) {
+      res.status(403);
+      throw new Error(`Access denied: You are restricted to operating the ${req.user.service} service queue.`);
+    }
+
     const queue = await Queue.findOneAndUpdate(
       { service },
       { isActive: false },
@@ -265,6 +290,12 @@ const openQueue = async (req, res, next) => {
     }
     const service = serviceParam.toLowerCase();
 
+    // Restricted staff check
+    if (req.user && req.user.service && req.user.service.toLowerCase() !== service) {
+      res.status(403);
+      throw new Error(`Access denied: You are restricted to operating the ${req.user.service} service queue.`);
+    }
+
     const queue = await Queue.findOneAndUpdate(
       { service },
       { isActive: true },
@@ -290,11 +321,6 @@ const openQueue = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Get dashboard analytics and reports data
- * @route   GET /api/admin/analytics
- * @access  Private (Admin Only)
- */
 const getAnalytics = async (req, res, next) => {
   try {
     const startOfToday = new Date();
@@ -303,17 +329,21 @@ const getAnalytics = async (req, res, next) => {
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
 
+    const serviceFilter = req.user.service ? { service: req.user.service } : {};
+
     // 1. Calculate General Dashboard Stats
-    const totalTokens = await Token.countDocuments({});
-    const activeQueuesCount = await Queue.countDocuments({ isActive: true });
-    const todaysVisitors = await Token.countDocuments({ createdAt: { $gte: startOfToday, $lte: endOfToday } });
+    const totalTokens = await Token.countDocuments(serviceFilter);
+    const activeQueuesCount = await Queue.countDocuments({ ...serviceFilter, isActive: true });
+    const todaysVisitors = await Token.countDocuments({ ...serviceFilter, createdAt: { $gte: startOfToday, $lte: endOfToday } });
     const tokensServedToday = await Token.countDocuments({
+      ...serviceFilter,
       status: 'completed',
       updatedAt: { $gte: startOfToday, $lte: endOfToday },
     });
 
     // Average waiting time for completed tokens today
     const completedTokensToday = await Token.find({
+      ...serviceFilter,
       status: 'completed',
       updatedAt: { $gte: startOfToday, $lte: endOfToday },
     });
@@ -326,12 +356,15 @@ const getAnalytics = async (req, res, next) => {
     }
 
     // Most used service
-    const serviceGrouping = await Token.aggregate([
-      { $group: { _id: '$service', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 1 },
-    ]);
-    const mostUsedService = serviceGrouping.length > 0 ? serviceGrouping[0]._id : 'Hospital';
+    let mostUsedService = req.user.service || 'Hospital';
+    if (!req.user.service) {
+      const serviceGrouping = await Token.aggregate([
+        { $group: { _id: '$service', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 1 },
+      ]);
+      mostUsedService = serviceGrouping.length > 0 ? serviceGrouping[0]._id : 'Hospital';
+    }
     const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
     const dashboardStats = {
@@ -347,6 +380,7 @@ const getAnalytics = async (req, res, next) => {
 
     // 2. Service Usage Data (percentage split)
     const usageAggregate = await Token.aggregate([
+      { $match: serviceFilter },
       { $group: { _id: '$service', count: { $sum: 1 } } },
     ]);
     const totalUsageCount = usageAggregate.reduce((acc, curr) => acc + curr.count, 0) || 1;
@@ -373,6 +407,7 @@ const getAnalytics = async (req, res, next) => {
     const hourlyAggregate = await Token.aggregate([
       {
         $match: {
+          ...serviceFilter,
           createdAt: { $gte: startOfToday, $lte: endOfToday },
         },
       },
@@ -416,6 +451,7 @@ const getAnalytics = async (req, res, next) => {
     const dailyAggregate = await Token.aggregate([
       {
         $match: {
+          ...serviceFilter,
           createdAt: { $gte: sevenDaysAgo, $lte: endOfToday },
         },
       },
@@ -461,7 +497,7 @@ const getAnalytics = async (req, res, next) => {
     ];
 
     // 6. Recent Activity Logs (last 6 tokens)
-    const recentTokens = await Token.find({})
+    const recentTokens = await Token.find(serviceFilter)
       .sort({ updatedAt: -1 })
       .limit(6);
 
@@ -527,6 +563,119 @@ const getAnalytics = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Verify a scanned token displayId (for today's date)
+ * @route   POST /api/admin/verify-token
+ * @access  Private (Admin Only)
+ */
+const verifyScannedToken = async (req, res, next) => {
+  try {
+    const { displayId } = req.body;
+    
+    const getLocalDateString = () => {
+      const d = new Date();
+      const offset = d.getTimezoneOffset();
+      const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+      return localDate.toISOString().split('T')[0];
+    };
+    const todayStr = getLocalDateString();
+
+    const token = await Token.findOne({ displayId, bookingDate: todayStr });
+
+    if (!token) {
+      res.status(404);
+      throw new Error(`Token '${displayId}' not found for today's date.`);
+    }
+
+    // Restricted staff check
+    if (req.user && req.user.service && req.user.service.toLowerCase() !== token.service.toLowerCase()) {
+      res.status(403);
+      throw new Error(`Access denied: You are restricted to operating the ${req.user.service} service queue.`);
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Token verified successfully',
+      data: token
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Admit/Serve a specific scanned token
+ * @route   POST /api/admin/serve-token
+ * @access  Private (Admin Only)
+ */
+const serveScannedToken = async (req, res, next) => {
+  try {
+    const { displayId } = req.body;
+    
+    const getLocalDateString = () => {
+      const d = new Date();
+      const offset = d.getTimezoneOffset();
+      const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+      return localDate.toISOString().split('T')[0];
+    };
+    const todayStr = getLocalDateString();
+
+    const token = await Token.findOne({ displayId, bookingDate: todayStr });
+    if (!token) {
+      res.status(404);
+      throw new Error(`Token '${displayId}' not found for today's date.`);
+    }
+
+    // Restricted staff check
+    if (req.user && req.user.service && req.user.service.toLowerCase() !== token.service.toLowerCase()) {
+      res.status(403);
+      throw new Error(`Access denied: You are restricted to operating the ${req.user.service} service queue.`);
+    }
+
+    if (token.status === 'completed' || token.status === 'cancelled') {
+      res.status(400);
+      throw new Error(`Token has already been ${token.status}.`);
+    }
+
+    // 1. Mark currently serving token for this service as completed
+    const currentServingToken = await Token.findOne({ service: token.service, status: 'serving', bookingDate: todayStr });
+    if (currentServingToken) {
+      currentServingToken.status = 'completed';
+      currentServingToken.waitTime = 0;
+      await currentServingToken.save();
+    }
+
+    // 2. Set this token to serving
+    token.status = 'serving';
+    token.waitTime = 0;
+    await token.save();
+
+    // 3. Send Socket notification to the specific user being called
+    emitUserNotification(token.userId, {
+      id: Math.random().toString(),
+      title: `Your token ${token.displayId} is now active!`,
+      message: `Please proceed to the counter. Your token is now being served.`,
+      time: 'Just now',
+      read: false,
+      type: 'success',
+    });
+
+    // Emit real-time socket updates for screens/lobby
+    emitTokenCalled(token);
+
+    // 4. Recalculate queue & broadcast changes
+    await recalculateQueue(token.service, todayStr);
+
+    res.status(200).json({
+      success: true,
+      message: `Token ${token.displayId} is now being served.`,
+      data: token
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   callNextToken,
   skipToken,
@@ -534,4 +683,6 @@ module.exports = {
   closeQueue,
   openQueue,
   getAnalytics,
+  verifyScannedToken,
+  serveScannedToken,
 };

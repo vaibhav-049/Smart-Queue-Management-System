@@ -67,8 +67,9 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
       if (profileRef.current && !profileRef.current.contains(e.target)) setShowProfile(false);
       if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifications(false);
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    // Use 'click' not 'mousedown' — on mobile, mousedown fires twice (touch+mouse simulation)
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
   return (
@@ -85,7 +86,7 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
               {isSidebarOpen ? <FiX size={20} /> : <FiMenu size={20} />}
             </button>
           )}
-          <Link to="/" className="navbar-logo">
+          <Link to={user ? (user.role === 'admin' ? '/admin' : '/book-token') : '/'} className="navbar-logo">
             <span className="logo-icon">⚡</span>
             <span className="logo-text">Smart<span className="logo-highlight">Queue</span></span>
           </Link>
@@ -94,19 +95,40 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
         {/* Center: Public Navigation Links */}
         {!isDashboard && (
           <div className={`navbar-links ${mobileMenuOpen ? 'open' : ''}`}>
-            {publicLinks.map(link => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`nav-link ${location.pathname === link.path ? 'active' : ''}`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <Link to="/register" className="nav-cta" onClick={() => setMobileMenuOpen(false)}>
-              Get Started
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  to="/"
+                  className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Home
+                </Link>
+                <Link
+                  to={user.role === 'admin' ? '/admin' : '/book-token'}
+                  className={`nav-link ${location.pathname === (user.role === 'admin' ? '/admin' : '/book-token') ? 'active' : ''}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+              </>
+            ) : (
+              <>
+                {publicLinks.map(link => (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    className={`nav-link ${location.pathname === link.path ? 'active' : ''}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                <Link to="/register" className="nav-cta" onClick={() => setMobileMenuOpen(false)}>
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         )}
 
@@ -134,18 +156,23 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
           </m.button>
 
           {/* Notifications */}
-          {isDashboard && (
+          {(isDashboard || user) && (
             <div className="notif-wrapper" ref={notifRef}>
-              <m.button type="button" whileTap={{ scale: 0.9 }} className="icon-btn" onClick={() => setShowNotifications(!showNotifications)}>
+              <m.button
+                type="button"
+                whileTap={{ scale: 0.9 }}
+                className="icon-btn"
+                onClick={(e) => { e.stopPropagation(); setShowNotifications(n => !n); setShowProfile(false); }}
+              >
                 <FiBell size={18} />
                 {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
               </m.button>
               <AnimatePresence>
                 {showNotifications && (
                   <m.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
                     className="dropdown-panel notif-panel"
                   >
                     <div className="dropdown-header">
@@ -153,6 +180,11 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
                       <span className="notif-count">{unreadCount} new</span>
                     </div>
                     <div className="dropdown-body">
+                      {notifications.length === 0 && (
+                        <div style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                          No notifications yet
+                        </div>
+                      )}
                       {notifications.map(n => (
                         <div key={n.id} className={`notif-item ${!n.read ? 'unread' : ''}`}>
                           <div className={`notif-dot ${n.type}`} />
@@ -171,13 +203,17 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
           )}
 
           {/* Profile Dropdown */}
-          {isDashboard && (
+          {(isDashboard || user) && (
             <div className="profile-wrapper" ref={profileRef}>
-              <button type="button" className="profile-trigger" onClick={() => setShowProfile(!showProfile)}>
+              <button
+                type="button"
+                className="profile-trigger"
+                onClick={(e) => { e.stopPropagation(); setShowProfile(p => !p); setShowNotifications(false); }}
+              >
                 <div className="avatar-sm">
                   {user?.name ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'U'}
                 </div>
-                <span className="profile-name">
+                <span className="profile-name navbar-profile-name">
                   {user?.name ? user.name.split(' ')[0] : 'User'}
                 </span>
                 <FiChevronDown size={14} className={`chevron ${showProfile ? 'rotated' : ''}`} />
@@ -185,9 +221,9 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
               <AnimatePresence>
                 {showProfile && (
                   <m.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
                     className="dropdown-panel profile-panel"
                   >
                     <Link to="/profile" className="dropdown-item" onClick={() => setShowProfile(false)}>
@@ -197,7 +233,11 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
                       <FiSettings size={16} /> <span>Settings</span>
                     </Link>
                     <hr className="dropdown-divider" />
-                    <button type="button" className="dropdown-item logout" onClick={() => { setShowProfile(false); logout(); navigate('/login'); }}>
+                    <button
+                      type="button"
+                      className="dropdown-item logout"
+                      onClick={() => { setShowProfile(false); logout(); navigate('/login'); }}
+                    >
                       <FiLogOut size={16} /> <span>Logout</span>
                     </button>
                   </m.div>
