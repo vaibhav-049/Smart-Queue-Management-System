@@ -106,6 +106,65 @@ const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGODB_URI);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
+    
+    // Drop the old displayId unique index if it exists in the collection
+    try {
+      await mongoose.connection.collection('tokens').dropIndex('displayId_1');
+      console.log('Stale unique index displayId_1 successfully dropped.');
+    } catch (e) {
+      // Ignore if index doesn't exist
+    }
+
+    // Set bookingDate on pre-existing database tokens to today's date so they don't crash validation
+    try {
+      const getLocalDateString = () => {
+        const d = new Date();
+        const offset = d.getTimezoneOffset();
+        const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+        return localDate.toISOString().split('T')[0];
+      };
+      const todayStr = getLocalDateString();
+      
+      const tokens = await mongoose.connection.collection('tokens').find({}).toArray();
+      let migratedCount = 0;
+      for (const token of tokens) {
+        let rawDate = token.bookingDate;
+        let formattedDate = '';
+        
+        if (!rawDate) {
+          const d = token.createdAt ? new Date(token.createdAt) : new Date();
+          const offset = d.getTimezoneOffset();
+          const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+          formattedDate = localDate.toISOString().split('T')[0];
+        } else if (rawDate instanceof Date) {
+          const offset = rawDate.getTimezoneOffset();
+          const localDate = new Date(rawDate.getTime() - (offset * 60 * 1000));
+          formattedDate = localDate.toISOString().split('T')[0];
+        } else if (typeof rawDate === 'string') {
+          if (rawDate.includes('T')) {
+            formattedDate = rawDate.split('T')[0];
+          } else {
+            formattedDate = rawDate.trim();
+          }
+        }
+        
+        if (formattedDate && /^\d{4}-\d{2}-\d{2}$/.test(formattedDate)) {
+          if (token.bookingDate !== formattedDate) {
+            await mongoose.connection.collection('tokens').updateOne(
+              { _id: token._id },
+              { $set: { bookingDate: formattedDate } }
+            );
+            migratedCount++;
+          }
+        }
+      }
+      if (migratedCount > 0) {
+        console.log(`Successfully migrated ${migratedCount} legacy tokens to YYYY-MM-DD bookingDate format.`);
+      }
+    } catch (e) {
+      console.error('Error running legacy token migration:', e);
+    }
+
     // Run seeding
     await seedDatabase();
   } catch (error) {

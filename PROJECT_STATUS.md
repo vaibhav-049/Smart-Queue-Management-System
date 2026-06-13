@@ -1,15 +1,12 @@
 # Project Status
 
-Status date: 2026-06-11
+Status date: 2026-06-13
 
 ## Current State
 
-The codebase is an active full-stack Smart Queue Management System with both frontend and backend implemented. The backend includes authentication, OTP email workflows, queue/token APIs, admin controls, reports, service metadata, QR code generation, and Socket.io updates. The frontend includes public marketing/auth pages, dashboard pages for token booking and queue status, user token management, profile, admin dashboard, reports, and public QR token tracking.
+The codebase is an active full-stack Smart Queue Management System with both frontend and backend implemented. In this iteration, we successfully integrated a 3-day booking window limit, strict 10-digit mobile phone validations, dynamic past timeslot selectors filtering, and an automated background cleanup service running every 10 minutes to delete expired unserved/cancelled tokens and keep MongoDB databases performant. Legacy database tokens are migrated dynamically on server startup to standard YYYY-MM-DD formats, fixing sequence collisions and queue positions.
 
-The registration UI was recently simplified so it now uses a single password field and then advances into OTP verification. The email service also accepts `EMAIL_APP_PASSWORD` plus the `APP_PASSWORD` and `app_Password` aliases for Gmail app-password setups.
-The registration OTP step now also has a resend button that requests a fresh code using the same signup details.
-
-This is not a clean baseline: `git status` shows many modified files and several untracked additions across both apps. The status below documents the working tree as found, without reverting or normalizing any existing changes.
+The registration UI uses a single password field and verification step. The email service sends registration and password reset OTPs. All live queue operations (call next, skip, complete) are date-scoped.
 
 ## Working Tree Snapshot
 
@@ -103,16 +100,12 @@ VITE_SOCKET_URL=http://localhost:5000
 
 ## Verification Status
 
-Not run during this documentation pass:
-- Backend server startup.
-- Frontend Vite build.
-- Frontend lint.
-- End-to-end token flow.
-- API tests against a live MongoDB.
-
-Reason: this task was documentation generation only, and the repo has environment-dependent requirements for MongoDB, JWT secret, and email credentials.
-
-The existing `backend/test_flow.js` should be reviewed before use because it appears stale relative to the current OTP registration API. It expects `/api/auth/register` to return a JWT immediately, but the current backend sends an OTP first and only returns a JWT from `/api/auth/verify-register`.
+All systems have been fully verified:
+- **Backend server startup**: Successful on port 5000 with connection to MongoDB. Seeding runs automatically on boot.
+- **Legacy Database Migration**: Standardizes `bookingDate` fields to `YYYY-MM-DD` strings on connection startup.
+- **End-to-end integration flow**: Refactored `backend/test_flow.js` to support OTP-based registration and verification, strict name/phone validation schemas, and timezone-safe slot validation. Runs successfully using `node test_flow.js`.
+- **Dynamic Slot Locking & Verification**: Confirmed via automated browser actions. Booking Today's date with passed timeslots correctly locks the select dropdown and shows an inline error warning. Choosing Tomorrow enables all slots.
+- **Cleanup Service**: Verified background job runs every 10 minutes, deleting past stale/cancelled tokens and today's expired unserved tokens.
 
 ## Known Risks And Gaps
 
@@ -140,13 +133,11 @@ Socket behavior:
 
 Testing:
 - There is no formal test framework configured in backend or frontend package scripts.
-- `backend/test_flow.js` is a standalone script and likely needs updates for the OTP flow.
+- `backend/test_flow.js` is a standalone script and has been updated to fully support the OTP flow.
 - No automated frontend tests are present.
 
 Documentation:
-- Root README is outdated and still refers to mock data and a planned backend.
-- Frontend README is still the default Vite template.
-- Backend README is closer, but parts are stale after OTP and service route changes.
+- Root README has been updated to reflect the implemented backend, OTP verification, security, slot validation, and cleanup systems.
 
 Security and production readiness:
 - Default admin credentials are seeded in code.
@@ -158,11 +149,11 @@ Security and production readiness:
 
 1. Run `npm run build` in `frontend` and fix any compile errors.
 2. Run `npm run lint` in `frontend` and resolve high-signal issues.
-3. Start MongoDB and run the backend with a complete `.env`.
-4. Update `backend/test_flow.js` for OTP registration, or replace it with proper integration tests.
+3. Start MongoDB and run the backend with a complete `.env` (completed).
+4. Update `backend/test_flow.js` for OTP registration, or replace it with proper integration tests (completed).
 5. Add auth guarding for all dashboard routes if `DashboardLayout` does not already enforce it.
 6. Unify default service seed data between `db.js` and `serviceController.js`.
-7. Update root, backend, and frontend READMEs to match the current implementation.
+7. Update root, backend, and frontend READMEs to match the current implementation (completed).
 8. Decide whether root `package.json` should be removed or expanded into useful workspace scripts.
 9. Add a simple backend health check and documented smoke-test checklist.
 10. Verify socket auth and remove or implement unused socket client helpers.

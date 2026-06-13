@@ -11,6 +11,8 @@ const allowedOrigins = [
   .flatMap(origin => origin.split(',').map(item => item.trim()))
   .filter(Boolean);
 
+const jwt = require('jsonwebtoken');
+
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
@@ -20,8 +22,27 @@ const initSocket = (server) => {
     },
   });
 
+  // Socket authentication middleware (optional token for public trackers, required for private rooms)
+  io.use((socket, next) => {
+    const token = socket.handshake.auth?.token;
+    if (!token) {
+      // Let unauthenticated users connect as guest (needed for public QR token tracking)
+      socket.userId = null;
+      return next();
+    }
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super_secret_key_smart_queue_system_2026_safe');
+      socket.userId = decoded.id;
+      next();
+    } catch (error) {
+      // Token exists but is invalid/expired: reject connection
+      console.error('Socket authentication failed:', error.message);
+      return next(new Error('Authentication error: Invalid or expired token'));
+    }
+  });
+
   io.on('connection', (socket) => {
-    console.log(`Socket client connected: ${socket.id}`);
+    console.log(`Socket client connected: ${socket.id} (User: ${socket.userId || 'Guest'})`);
 
     // Join room based on service type (e.g. 'hospital_queue') for targeted updates
     socket.on('join_service_room', (service) => {
@@ -29,10 +50,14 @@ const initSocket = (server) => {
       console.log(`Socket ${socket.id} joined room: ${service}_queue`);
     });
 
-    // Join room based on userId for personal notifications
+    // Join room based on userId for personal notifications (secured)
     socket.on('join_user_room', (userId) => {
-      socket.join(`user_${userId}`);
-      console.log(`Socket ${socket.id} joined personal room: user_${userId}`);
+      if (socket.userId && socket.userId === userId) {
+        socket.join(`user_${userId}`);
+        console.log(`Socket ${socket.id} joined personal room: user_${userId}`);
+      } else {
+        console.warn(`Unauthorized join_user_room attempt by socket ${socket.id} for userId: ${userId}`);
+      }
     });
 
     socket.on('disconnect', () => {

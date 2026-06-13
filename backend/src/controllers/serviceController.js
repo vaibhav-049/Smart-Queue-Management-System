@@ -16,38 +16,47 @@ const getServices = async (req, res, next) => {
           id: 'hospital',
           name: 'Hospital',
           icon: '🏥',
-          color: '#3B82F6',
-          description: 'General doctor consultation and checkups',
+          color: '#EF4444',
+          description: 'Book tokens for hospital OPD, lab tests, and consultations',
           prefix: 'H',
-          avgServiceTime: 15
+          avgServiceTime: 10,
         },
         {
           id: 'bank',
           name: 'Bank',
           icon: '🏦',
-          color: '#10B981',
-          description: 'Account services and cash deposits',
+          color: '#3B82F6',
+          description: 'Queue for banking services, account operations, and loans',
           prefix: 'B',
-          avgServiceTime: 10
+          avgServiceTime: 12,
         },
         {
-          id: 'restaurant',
-          name: 'Restaurant',
-          icon: '🍽️',
-          color: '#F59E0B',
-          description: 'Table booking and reservations',
-          prefix: 'R',
-          avgServiceTime: 45
+          id: 'college',
+          name: 'College Office',
+          icon: '🎓',
+          color: '#8B5CF6',
+          description: 'Student services, transcript requests, and admissions',
+          prefix: 'C',
+          avgServiceTime: 15,
         },
         {
           id: 'government',
           name: 'Government Office',
           icon: '🏛️',
-          color: '#8B5CF6',
-          description: 'Document processing and queries',
+          color: '#F59E0B',
+          description: 'Government document processing, permits, and licenses',
           prefix: 'G',
-          avgServiceTime: 20
-        }
+          avgServiceTime: 20,
+        },
+        {
+          id: 'salon',
+          name: 'Salon',
+          icon: '💇',
+          color: '#EC4899',
+          description: 'Haircuts, styling, spa, and beauty services',
+          prefix: 'S',
+          avgServiceTime: 25,
+        },
       ];
       await Service.insertMany(defaultServices);
       return res.status(200).json({

@@ -5,7 +5,6 @@ const tokenSchema = new mongoose.Schema(
     displayId: {
       type: String,
       required: [true, 'Token display ID (e.g. A089) is required'],
-      unique: true,
     },
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -30,6 +29,10 @@ const tokenSchema = new mongoose.Schema(
     timeSlot: {
       type: String,
       required: [true, 'Time slot is required'],
+    },
+    bookingDate: {
+      type: String,
+      required: [true, 'Booking date (YYYY-MM-DD) is required'],
     },
     sequenceNumber: {
       type: Number,

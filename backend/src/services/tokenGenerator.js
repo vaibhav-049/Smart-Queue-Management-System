@@ -6,17 +6,11 @@ const Token = require('../models/Token');
  * @param {string} prefix - Service token prefix (e.g., 'A')
  * @returns {Promise<{displayId: string, sequenceNumber: number}>}
  */
-const generateTokenId = async (service, prefix) => {
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-
-  const endOfToday = new Date();
-  endOfToday.setHours(23, 59, 59, 999);
-
-  // Find the token with the highest sequence number for this service created today
+const generateTokenId = async (service, prefix, bookingDate) => {
+  // Find the token with the highest sequence number for this service on this specific booking date
   const lastTokenToday = await Token.findOne({
     service,
-    createdAt: { $gte: startOfToday, $lte: endOfToday },
+    bookingDate,
   })
     .sort({ sequenceNumber: -1 })
     .select('sequenceNumber');

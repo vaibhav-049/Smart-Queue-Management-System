@@ -19,16 +19,21 @@ const PRIORITY_VALUES = {
  * @param {string} priority - Priority tier ('Normal', 'Senior Citizen', 'VIP', 'Normal')
  * @returns {Promise<{position: number, waitTime: number}>}
  */
-const calculateEstimate = async (service, priority = 'Normal') => {
+const calculateEstimate = async (service, priority = 'Normal', bookingDate) => {
   try {
     const serviceInfo = await Service.findOne({ id: service.toLowerCase() });
     const avgServiceTime = serviceInfo ? serviceInfo.avgServiceTime : 10;
 
-    // Fetch all currently waiting tokens
-    const waitingTokens = await Token.find({
+    // Fetch all currently waiting tokens for this specific booking date
+    const query = {
       service: service.toLowerCase(),
       status: 'waiting',
-    });
+    };
+    if (bookingDate) {
+      query.bookingDate = bookingDate;
+    }
+
+    const waitingTokens = await Token.find(query);
 
     const targetPriorityValue = PRIORITY_VALUES[priority] || 1;
 

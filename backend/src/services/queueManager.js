@@ -19,16 +19,26 @@ const PRIORITY_RANKS = {
  * Re-orders, computes positions, calculates wait times, and updates the active queue document for a service.
  * @param {string} service - Service slug (e.g. 'hospital')
  */
-const recalculateQueue = async (service) => {
+const recalculateQueue = async (service, bookingDate) => {
   try {
+    const getLocalDateString = () => {
+      const d = new Date();
+      const offset = d.getTimezoneOffset();
+      const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+      return localDate.toISOString().split('T')[0];
+    };
+    const todayStr = getLocalDateString();
+    const targetDate = bookingDate || todayStr;
+
     // 1. Fetch the service profile to get its average service time
     const serviceInfo = await Service.findOne({ id: service });
     const avgServiceTime = serviceInfo ? serviceInfo.avgServiceTime : 10;
 
-    // 2. Fetch all active tokens (serving or waiting)
+    // 2. Fetch all active tokens (serving or waiting) for the target bookingDate
     const activeTokens = await Token.find({
       service,
       status: { $in: ['serving', 'waiting'] },
+      bookingDate: targetDate,
     });
 
     // 3. Separate serving and waiting tokens
@@ -71,8 +81,8 @@ const recalculateQueue = async (service) => {
         waitTime: token.waitTime,
       });
 
-      // Send a high-priority alert if they are approaching (e.g., 2nd in line)
-      if (pos === 2 && prevWaitTime !== token.waitTime) {
+      // Send a high-priority alert if they are approaching (e.g., 2nd in line) and it is today
+      if (pos === 2 && prevWaitTime !== token.waitTime && targetDate === todayStr) {
         emitUserNotification(token.userId, {
           id: Math.random().toString(),
           title: `Your token ${token.displayId} is approaching`,
@@ -85,30 +95,34 @@ const recalculateQueue = async (service) => {
       pos++;
     }
 
-    // 6. Sync the Queue document for real-time fetch requests
-    const currentServingId = servingTokens.length > 0 ? servingTokens[0].displayId : null;
-    const upcomingIds = waitingTokens.map(t => t.displayId);
+    // 6. Sync the Queue document for real-time fetch requests ONLY if the targetDate is today
+    if (targetDate === todayStr) {
+      const currentServingId = servingTokens.length > 0 ? servingTokens[0].displayId : null;
+      const upcomingIds = waitingTokens.map(t => t.displayId);
 
-    const queueDoc = await Queue.findOneAndUpdate(
-      { service },
-      {
+      const queueDoc = await Queue.findOneAndUpdate(
+        { service },
+        {
+          currentServing: currentServingId,
+          upcoming: upcomingIds,
+          totalInQueue: upcomingIds.length,
+          avgWait: avgServiceTime,
+        },
+        { new: true, upsert: true }
+      );
+
+      // 7. Emit live Socket.io updates to the service room
+      emitQueueUpdate(service, {
         currentServing: currentServingId,
         upcoming: upcomingIds,
         totalInQueue: upcomingIds.length,
         avgWait: avgServiceTime,
-      },
-      { new: true, upsert: true }
-    );
+      });
 
-    // 7. Emit live Socket.io updates to the service room
-    emitQueueUpdate(service, {
-      currentServing: currentServingId,
-      upcoming: upcomingIds,
-      totalInQueue: upcomingIds.length,
-      avgWait: avgServiceTime,
-    });
+      return queueDoc;
+    }
 
-    return queueDoc;
+    return null;
   } catch (error) {
     console.error(`Error recalculating queue for service ${service}:`, error);
     throw error;

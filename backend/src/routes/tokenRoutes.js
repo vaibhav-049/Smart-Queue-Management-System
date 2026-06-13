@@ -9,13 +9,16 @@ const {
 } = require('../controllers/tokenController');
 const { protect } = require('../middleware/authMiddleware');
 
-router.post('/book', protect, bookToken);
+const { publicTrackerLimiter } = require('../middleware/rateLimitMiddleware');
+const { validateBody, bookTokenSchema } = require('../middleware/validationMiddleware');
+
+router.post('/book', protect, validateBody(bookTokenSchema), bookToken);
 router.get('/my-tokens', protect, getMyTokens);
 router.get('/:id', protect, getTokenById);
 router.put('/:id/cancel', protect, cancelToken);
 router.get('/:id/qr', protect, getTokenQR);
 
-// Public route for QR code scanning
-router.get('/track/:displayId', require('../controllers/tokenController').trackToken);
+// Public route for QR code scanning with strict rate limiting
+router.get('/track/:displayId', publicTrackerLimiter, require('../controllers/tokenController').trackToken);
 
 module.exports = router;

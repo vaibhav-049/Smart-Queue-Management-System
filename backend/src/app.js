@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
+const { generalLimiter } = require('./middleware/rateLimitMiddleware');
 const mongoSanitize = require('express-mongo-sanitize');
 
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
@@ -37,17 +37,7 @@ app.use(
 );
 
 // Rate Limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
-  message: {
-    success: false,
-    message: 'Too many requests from this IP, please try again after 15 minutes'
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api', limiter);
+app.use('/api', generalLimiter);
 
 // Data Sanitization against NoSQL injection
 app.use(mongoSanitize());

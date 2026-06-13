@@ -1,6 +1,6 @@
 # Project Context
 
-Last updated: 2026-06-11
+Last updated: 2026-06-13
 
 ## Overview
 
@@ -332,14 +332,16 @@ Note: `backend/src/controllers/serviceController.js` has a fallback service seed
 
 Backend:
 - `backend/src/app.js`: middleware, route mounts, Swagger docs.
-- `backend/src/server.js`: HTTP and Socket.io startup.
-- `backend/src/config/db.js`: MongoDB connection and seed data.
+- `backend/src/server.js`: HTTP and Socket.io startup with cleanup service integration.
+- `backend/src/config/db.js`: MongoDB connection, seed data, and standardizing date migrations.
 - `backend/src/config/socket.js`: Socket.io lifecycle and emit helpers.
 - `backend/src/controllers/authController.js`: OTP registration/login/password reset.
-- `backend/src/controllers/tokenController.js`: booking, lookup, cancellation, QR/tracking.
+- `backend/src/controllers/tokenController.js`: booking with past timeslot guards, lookup, cancellation, QR/tracking.
 - `backend/src/controllers/queueController.js`: public queue state.
-- `backend/src/controllers/adminController.js`: admin queue operations and analytics.
+- `backend/src/controllers/adminController.js`: admin queue operations and analytics scoped to target date.
 - `backend/src/services/queueManager.js`: priority ordering, wait-time recalculation, socket updates.
+- `backend/src/services/cleanupService.js`: background task running every 10 minutes to delete expired unserved and cancelled tokens.
+- `backend/src/utils/dateUtils.js`: timezone-safe date generation and time slot validity validation.
 
 Frontend:
 - `frontend/src/routes/AppRoutes.jsx`: route map and admin guard.
@@ -347,16 +349,15 @@ Frontend:
 - `frontend/src/services/api.js`: Axios setup.
 - `frontend/src/services/socket.js`: Socket.io client setup.
 - `frontend/src/hooks/useServices.js`: service fetching hook.
-- `frontend/src/pages/BookToken/BookToken.jsx`: booking flow.
+- `frontend/src/pages/BookToken/BookToken.jsx`: booking flow with dynamic 3-day select and past-hour slot locking.
 - `frontend/src/pages/QueueStatus/QueueStatus.jsx`: live queue display.
 - `frontend/src/pages/MyTokens/MyTokens.jsx`: user token management.
 - `frontend/src/pages/AdminDashboard/AdminDashboard.jsx`: admin dashboard and queue controls.
 - `frontend/src/pages/Reports/Reports.jsx`: report UI.
-- `frontend/src/pages/TrackToken/TrackToken.jsx`: public token tracking.
+- `frontend/src/pages/TrackToken/TrackToken.jsx`: public token tracking with sorting to ensure latest lookup.
 
 ## Known Documentation Drift
 
-- Root `README.md` still says the backend is planned and frontend services are mock-data based.
-- Backend README route list is useful but not fully current after OTP registration, service routes, and public tracking additions.
-- Frontend README is still the default Vite template.
-- Some source comments and test script assumptions predate the OTP-based registration change.
+- Root `README.md` and `PROJECT_CONTEXT.md` are fully updated to reflect the implemented backend, OTP-based registrations, security validations, and date-based scheduling constraints.
+- Backend and frontend READMEs remain as historical guidelines.
+

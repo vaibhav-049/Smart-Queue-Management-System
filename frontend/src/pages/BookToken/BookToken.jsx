@@ -11,6 +11,25 @@ const timeSlots = [
   '02:00 PM - 03:00 PM',
   '03:00 PM - 04:00 PM'
 ];
+
+const getDateOptions = () => {
+  const options = [];
+  const labels = ['Today', 'Tomorrow', 'Day After Tomorrow'];
+  for (let i = 0; i < 3; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const date = String(d.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${date}`;
+    options.push({
+      value: dateStr,
+      label: `${labels[i]} (${dateStr})`
+    });
+  }
+  return options;
+};
+
 import QRCodeCard from '../../components/QRCodeCard/QRCodeCard';
 import toast from 'react-hot-toast';
 
@@ -22,10 +41,64 @@ export default function BookToken() {
   const { user } = useAuth();
   const { services, loading: servicesLoading } = useServices();
   
+  const dateOptions = getDateOptions();
   const [selectedService, setSelectedService] = useState(null);
-  const [form, setForm] = useState({ name: '', phone: '', serviceType: '', timeSlot: '', priorityType: 'Normal' });
+  const [form, setForm] = useState({
+    name: '',
+    phone: '',
+    serviceType: '',
+    timeSlot: '',
+    priorityType: 'Normal',
+    bookingDate: dateOptions[0].value
+  });
   const [generatedToken, setGeneratedToken] = useState(null);
   const [showQR, setShowQR] = useState(false);
+
+  const getFilteredTimeSlotsForDate = (dateVal) => {
+    const todayStr = dateOptions[0].value;
+    if (dateVal !== todayStr) {
+      return timeSlots;
+    }
+    return timeSlots.filter(slot => {
+      try {
+        const parts = slot.split('-');
+        if (parts.length < 2) return false;
+        const endTimeStr = parts[1].trim(); // e.g. "10:00 AM"
+        
+        const match = endTimeStr.match(/^(\d{2}):(\d{2})\s*(AM|PM)$/i);
+        if (!match) return false;
+        
+        let hours = parseInt(match[1]);
+        const minutes = parseInt(match[2]);
+        const ampm = match[3].toUpperCase();
+        
+        if (ampm === 'PM' && hours !== 12) hours += 12;
+        if (ampm === 'AM' && hours === 12) hours = 0;
+        
+        const now = new Date();
+        const slotEnd = new Date();
+        slotEnd.setHours(hours, minutes, 0, 0);
+        
+        return now < slotEnd;
+      } catch (e) {
+        return false;
+      }
+    });
+  };
+
+  const filteredTimeSlots = getFilteredTimeSlotsForDate(form.bookingDate);
+
+  const handleBookingDateChange = (dateVal) => {
+    setForm(prev => {
+      const validSlots = getFilteredTimeSlotsForDate(dateVal);
+      const updatedSlot = validSlots.includes(prev.timeSlot) ? prev.timeSlot : '';
+      return {
+        ...prev,
+        bookingDate: dateVal,
+        timeSlot: updatedSlot
+      };
+    });
+  };
 
   // Auto-populate fields when user context is available
   useEffect(() => {
@@ -51,7 +124,7 @@ export default function BookToken() {
       toast.error('Please select a service first');
       return;
     }
-    if (!form.name || !form.phone || !form.timeSlot) {
+    if (!form.name || !form.phone || !form.timeSlot || !form.bookingDate) {
       toast.error('Please fill all fields');
       return;
     }
@@ -61,6 +134,9 @@ export default function BookToken() {
         service: selectedService.id,
         timeSlot: form.timeSlot,
         priorityType: form.priorityType || 'Normal',
+        bookingDate: form.bookingDate,
+        name: form.name,
+        phone: form.phone,
       });
 
       if (response.data && response.data.success) {
@@ -171,18 +247,43 @@ export default function BookToken() {
                   />
                 </div>
                 <div className="form-group">
+                  <label htmlFor="bt-date">Booking Date</label>
+                  <select
+                    id="bt-date"
+                    value={form.bookingDate}
+                    onChange={e => handleBookingDateChange(e.target.value)}
+                    required
+                  >
+                    {dateOptions.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group">
                   <label htmlFor="bt-slot">Preferred Time Slot</label>
                   <select
                     id="bt-slot"
                     value={form.timeSlot}
                     onChange={e => setForm({ ...form, timeSlot: e.target.value })}
                     required
+                    disabled={filteredTimeSlots.length === 0}
                   >
-                    <option value="">Select a time slot</option>
-                    {timeSlots.map(slot => (
-                      <option key={slot} value={slot}>{slot}</option>
-                    ))}
+                    {filteredTimeSlots.length === 0 ? (
+                      <option value="">No slots available for today</option>
+                    ) : (
+                      <>
+                        <option value="">Select a time slot</option>
+                        {filteredTimeSlots.map(slot => (
+                          <option key={slot} value={slot}>{slot}</option>
+                        ))}
+                      </>
+                    )}
                   </select>
+                  {filteredTimeSlots.length === 0 && (
+                    <span className="form-help-error" style={{ color: '#EF4444', fontSize: '0.85rem', marginTop: '6px', display: 'block', fontWeight: '500' }}>
+                      ⚠️ All standard work slots for today have passed. Please select Tomorrow or Day After Tomorrow.
+                    </span>
+                  )}
                 </div>
                 <div className="form-group">
                   <label htmlFor="bt-priority">Priority Category</label>
@@ -211,7 +312,7 @@ export default function BookToken() {
             </m.div>
           )}
         </AnimatePresence>
-
+ 
         {/* Generated Token */}
         <AnimatePresence>
           {generatedToken && (
@@ -226,7 +327,7 @@ export default function BookToken() {
                   <span>🎉 Token Generated!</span>
                 </div>
                 <div className="generated-token-body">
-                  <div className="generated-token-number">{generatedToken.id}</div>
+                  <div className="generated-token-number">{generatedToken.displayId || generatedToken.id}</div>
                   <div className="generated-token-details">
                     <div className="gt-detail">
                       <span className="gt-label">Queue Position</span>
@@ -235,6 +336,10 @@ export default function BookToken() {
                     <div className="gt-detail">
                       <span className="gt-label">Estimated Wait</span>
                       <span className="gt-value">{generatedToken.waitTime} min</span>
+                    </div>
+                    <div className="gt-detail">
+                      <span className="gt-label">Booking Date</span>
+                      <span className="gt-value">{generatedToken.bookingDate}</span>
                     </div>
                     <div className="gt-detail">
                       <span className="gt-label">Time Slot</span>

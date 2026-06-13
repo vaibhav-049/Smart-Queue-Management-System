@@ -14,6 +14,30 @@ export default function TrackToken() {
   const [loading, setLoading] = useState(true);
   const [tokenData, setTokenData] = useState(null);
   const [error, setError] = useState(null);
+  const [showAnimation, setShowAnimation] = useState(true);
+  const [typedText, setTypedText] = useState('');
+
+  useEffect(() => {
+    let index = 0;
+    const fullText = tokenId || '174';
+    const interval = setInterval(() => {
+      setTypedText(fullText.slice(0, index + 1));
+      index++;
+      if (index >= fullText.length) {
+        clearInterval(interval);
+      }
+    }, 150);
+
+    const timer = setTimeout(() => {
+      setShowAnimation(false);
+    }, 1500);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timer);
+    };
+  }, [tokenId]);
+
 
   useEffect(() => {
     const fetchTokenDetails = async () => {
@@ -57,6 +81,17 @@ export default function TrackToken() {
       socket.off('queue-updated', handleQueueUpdated);
     };
   }, [tokenData?.service, tokenId]);
+
+  if (showAnimation) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-zinc-50 dark:bg-zinc-950">
+        <h1 className="text-6xl font-black tracking-tight text-zinc-900 dark:text-zinc-100 font-sans select-none">
+          {typedText}
+          <span className="animate-pulse">|</span>
+        </h1>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

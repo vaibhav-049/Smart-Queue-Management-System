@@ -5,6 +5,7 @@ const { generateTokenId } = require('../services/tokenGenerator');
 const { calculateEstimate } = require('../services/waitingTimeCalculator');
 const { generateQR } = require('../services/qrGenerator');
 const { recalculateQueue } = require('../services/queueManager');
+const { getLocalDateString, isTimeSlotPast } = require('../utils/dateUtils');
 
 // Helper to calculate position dynamically based on the Queue document
 const getDynamicPosition = async (token) => {
@@ -41,7 +42,7 @@ const mapIncomingPriority = (priorityType) => {
  */
 const bookToken = async (req, res, next) => {
   try {
-    const { service, priorityType, priority: priorityField } = req.body;
+    const { service, priorityType, priority: priorityField, bookingDate, name, phone } = req.body;
     let { timeSlot } = req.body;
 
     // Accept both 'priority' and 'priorityType' from frontend
@@ -54,6 +55,42 @@ const bookToken = async (req, res, next) => {
 
     if (!timeSlot) {
       timeSlot = '09:00 AM - 10:00 AM';
+    }
+
+    if (!bookingDate) {
+      res.status(400);
+      throw new Error('Please provide a booking date');
+    }
+
+    const todayStr = getLocalDateString();
+    const today = new Date(todayStr);
+    const bookDate = new Date(bookingDate);
+
+    if (isNaN(bookDate.getTime())) {
+      res.status(400);
+      throw new Error('Invalid booking date format');
+    }
+
+    // Reset hours to compare dates only
+    today.setHours(0,0,0,0);
+    bookDate.setHours(0,0,0,0);
+
+    if (bookDate < today) {
+      res.status(400);
+      throw new Error('Cannot book tokens for past dates');
+    }
+
+    if (bookingDate === todayStr && isTimeSlotPast(bookingDate, timeSlot)) {
+      res.status(400);
+      throw new Error('Preferred time slot has already passed for today');
+    }
+
+    const maxFutureDate = new Date(today);
+    maxFutureDate.setDate(today.getDate() + 2); // 3 days window: today, today+1, today+2
+
+    if (bookDate > maxFutureDate) {
+      res.status(400);
+      throw new Error('Booking is only allowed up to 3 days in advance (today, tomorrow, and day after)');
     }
 
     const serviceSlug = service.toLowerCase();
@@ -72,12 +109,12 @@ const bookToken = async (req, res, next) => {
       throw new Error('Queue for this service is currently closed');
     }
 
-    // 3. Generate sequential display ID (resets daily)
-    const { displayId, sequenceNumber } = await generateTokenId(serviceSlug, serviceInfo.prefix);
+    // 3. Generate sequential display ID (resets daily per bookingDate)
+    const { displayId, sequenceNumber } = await generateTokenId(serviceSlug, serviceInfo.prefix, bookingDate);
 
     // 4. Calculate initial estimate
     const priorityTier = mapIncomingPriority(incomingPriority);
-    const { position, waitTime } = await calculateEstimate(serviceSlug, incomingPriority);
+    const { position, waitTime } = await calculateEstimate(serviceSlug, incomingPriority, bookingDate);
 
     // 5. Create token
     const token = new Token({
@@ -87,10 +124,11 @@ const bookToken = async (req, res, next) => {
       status: 'waiting',
       priority: priorityTier,
       timeSlot,
+      bookingDate,
       sequenceNumber,
       waitTime,
-      name: req.user.name,
-      phone: req.user.phone,
+      name: name || req.user.name,
+      phone: phone || req.user.phone,
     });
 
     // 6. Generate QR code
@@ -271,7 +309,7 @@ const getTokenQR = async (req, res, next) => {
 const trackToken = async (req, res, next) => {
   try {
     const { displayId } = req.params;
-    const token = await Token.findOne({ displayId });
+    const token = await Token.findOne({ displayId }).sort({ createdAt: -1 });
 
     if (!token) {
       res.status(404);

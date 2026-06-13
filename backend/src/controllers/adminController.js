@@ -19,15 +19,23 @@ const callNextToken = async (req, res, next) => {
     }
     const service = serviceParam.toLowerCase();
 
-    // 1. Mark currently serving token as completed
-    const currentServingToken = await Token.findOne({ service, status: 'serving' });
+    const getLocalDateString = () => {
+      const d = new Date();
+      const offset = d.getTimezoneOffset();
+      const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+      return localDate.toISOString().split('T')[0];
+    };
+    const todayStr = getLocalDateString();
+
+    // 1. Mark currently serving token as completed for today
+    const currentServingToken = await Token.findOne({ service, status: 'serving', bookingDate: todayStr });
     if (currentServingToken) {
       currentServingToken.status = 'completed';
       currentServingToken.waitTime = 0;
       await currentServingToken.save();
     }
 
-    // 2. Fetch all waiting tokens for this service
+    // 2. Fetch all waiting tokens for this service for today
     const PRIORITY_RANKS = {
       'Emergency': 4,
       'Senior Citizen': 3,
@@ -39,7 +47,7 @@ const callNextToken = async (req, res, next) => {
       vip: 2,
       normal: 1,
     };
-    const waitingTokens = await Token.find({ service, status: 'waiting' });
+    const waitingTokens = await Token.find({ service, status: 'waiting', bookingDate: todayStr });
     
     let nextToken = null;
     if (waitingTokens.length > 0) {
@@ -73,8 +81,8 @@ const callNextToken = async (req, res, next) => {
       emitQueueCompleted(service);
     }
 
-    // 3. Recalculate queue & broadcast changes
-    await recalculateQueue(service);
+    // 3. Recalculate queue & broadcast changes for today
+    await recalculateQueue(service, todayStr);
 
     res.status(200).json({
       success: true,
@@ -101,11 +109,19 @@ const skipToken = async (req, res, next) => {
     const { tokenId } = req.params;
     const { service, tokenNumber } = req.body;
 
+    const getLocalDateString = () => {
+      const d = new Date();
+      const offset = d.getTimezoneOffset();
+      const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+      return localDate.toISOString().split('T')[0];
+    };
+    const todayStr = getLocalDateString();
+
     let token;
     if (tokenId) {
       token = await Token.findById(tokenId);
     } else if (tokenNumber && service) {
-      token = await Token.findOne({ displayId: tokenNumber, service: service.toLowerCase() });
+      token = await Token.findOne({ displayId: tokenNumber, service: service.toLowerCase(), bookingDate: todayStr });
     }
 
     if (!token) {
@@ -134,7 +150,7 @@ const skipToken = async (req, res, next) => {
     });
 
     // Recalculate queue & broadcast
-    await recalculateQueue(token.service);
+    await recalculateQueue(token.service, token.bookingDate);
 
     res.status(200).json({
       success: true,
@@ -159,8 +175,16 @@ const completeToken = async (req, res, next) => {
       throw new Error('Please provide a service');
     }
 
+    const getLocalDateString = () => {
+      const d = new Date();
+      const offset = d.getTimezoneOffset();
+      const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+      return localDate.toISOString().split('T')[0];
+    };
+    const todayStr = getLocalDateString();
+
     const serviceSlug = service.toLowerCase();
-    const query = { service: serviceSlug, status: 'serving' };
+    const query = { service: serviceSlug, status: 'serving', bookingDate: todayStr };
     if (tokenNumber) {
       query.displayId = tokenNumber;
     }
@@ -176,7 +200,7 @@ const completeToken = async (req, res, next) => {
     await token.save();
 
     // Recalculate queue
-    await recalculateQueue(serviceSlug);
+    await recalculateQueue(serviceSlug, token.bookingDate);
 
     res.status(200).json({
       success: true,
