@@ -85,7 +85,7 @@ Frontend runs at `http://localhost:5173/`.
 8. **My Tokens**: User's booked tokens, active wait times, and QR codes.
 9. **Admin Dashboard**: Open/close queues, call next, skip tokens, complete tokens.
 10. **Reports & Analytics**: Admin service usage, busy hours, visitor analytics, CSV/JSON report exporting.
-11. **User Profile**: Manage name, avatar, mobile, and password.
+11. **User Profile**: Manage name, avatar, mobile, and secure password changes backed by email OTP verification.
 12. **Public Token Tracking**: Scan QR codes to monitor positions in real-time.
 13. **QR Verification Scanner**: Admin-only live webcam QR code scan panel with manual search, physical details verification, and immediate queue actions (Serve, Complete, Skip).
 
@@ -99,6 +99,9 @@ Frontend runs at `http://localhost:5173/`.
 - ⏰ **Dynamic Slot Filtering**: Blocks past hours for today's bookings.
 - 🗑️ **Background Cleanup interval**: Deletes expired unserved and cancelled tokens every 10 minutes to maintain database performance.
 - 📷 **Multi-Service QR Verification Scanner**: Admin-only webcam scanner panel using `html5-qrcode` and manual ID verification with physical matching controls.
+- 🛡️ **Session Redirection & Safeguards**: Dynamic redirection of the navbar logo to active dashboards based on user role, and automatic landing page redirection for logged-in users to resolve guest-navbar caching issues.
+- 📷 **Insecure Context Camera Alerts**: Styled warnings banner in the QR Scanner viewport guiding mobile users on bypassing browser restrictions (HTTP over LAN) via Chrome flags.
+- 🔒 **OTP-Verified Password Changes**: Inside the profile page, users/admins/super-admins can securely update their passwords by verifying their identity via email OTP.
 
 ## 👨‍💻 Author
 Vaibhav Patel

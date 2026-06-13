@@ -6,7 +6,9 @@ Status date: 2026-06-13
 
 The codebase is an active full-stack Smart Queue Management System with both frontend and backend implemented. In this iteration, we successfully integrated a 3-day booking window limit, strict 10-digit mobile phone validations, dynamic past timeslot selectors filtering, and an automated background cleanup service running every 10 minutes to delete expired unserved/cancelled tokens and keep MongoDB databases performant. Legacy database tokens are migrated dynamically on server startup to standard YYYY-MM-DD formats, fixing sequence collisions and queue positions.
 
-Additionally, a secure, admin-only **QR Code Scanner Verification** interface has been implemented. Admins can scan user token QRs using a live webcam stream or perform a manual search to verify physical visitor details (Name, Phone, Booking Date, Time Slot, Priority Category) and immediately execute queue actions (Serve, Complete, Skip) with real-time socket lobby updates.
+Additionally, a secure, admin-only **QR Code Scanner Verification** interface has been implemented. Admins can scan user token QRs using a live webcam stream or perform a manual search to verify physical visitor details. To handle insecure contexts (HTTP over LAN) on mobile test phones, the webcam container displays a styled browser camera access warning with bypass configuration instructions.
+
+Furthermore, we resolved navbar logo logout and guest layout discrepancies by introducing role-based logo routing (`/admin` or `/book-token`) and auto-redirections on the home, login, and registration routes. We also implemented a **Change Password** section inside the profile settings that requires secure email OTP verification to update user, admin, or super-admin passwords.
 
 The registration UI uses a single password field and verification step. The email service sends registration and password reset OTPs. All live queue operations (call next, skip, complete, QR serve) are date-scoped.
 
@@ -110,6 +112,8 @@ All systems have been fully verified:
 - **Dynamic Slot Locking & Verification**: Confirmed via automated browser actions. Booking Today's date with passed timeslots correctly locks the select dropdown and shows an inline error warning. Choosing Tomorrow enables all slots.
 - **Cleanup Service**: Verified background job runs every 10 minutes, deleting past stale/cancelled tokens and today's expired unserved tokens.
 - **QR Scanner Verification & Serving**: Verified using automated browser flows. Admins can log in, access the scanner panel, perform manual Display ID lookups, see complete physical verification details, and manage token status controls.
+- **Redirection & Redirection Safeguards**: Confirmed in browser subagent that logo clicks preserve active sessions, and attempting to view the guest landing page `/` while logged in immediately triggers a redirect back to the active dashboard.
+- **Profile Password Change via OTP**: Confirmed in browser subagent that the `/profile` settings card displays the "Change Password" section, and clicking "Send OTP" successfully loads the OTP confirmation and password input fields.
 
 ## Known Risks And Gaps
 
