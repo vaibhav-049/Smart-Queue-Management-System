@@ -77,7 +77,7 @@ const seedDatabase = async () => {
         name: 'Soumya Bansal',
         email: 'soumyabansal184@gmail.com',
         phone: '+91 98765 43210',
-        password: '12345671',
+        password: process.env.ADMIN_SEED_PASSWORD || 'admin123',
         role: 'admin',
         service: null, // Super Admin
       },

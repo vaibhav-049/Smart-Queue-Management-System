@@ -12,7 +12,7 @@ const ipUserKeyGenerator = (req) => {
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
     try {
       const token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super_secret_key_smart_queue_system_2026_safe');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       if (decoded && decoded.id) {
         return `user_${decoded.id}`;
       }
@@ -42,7 +42,7 @@ const generalLimiter = rateLimit({
 // Stricter rate limiter for sensitive authentication & OTP endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 15, // Limit each client to 15 login/OTP attempts per 15 minutes
+  max: 5, // Limit each client to 5 login/OTP attempts per 15 minutes
   keyGenerator: ipUserKeyGenerator,
   message: {
     success: false,

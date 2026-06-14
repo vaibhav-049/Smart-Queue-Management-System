@@ -31,7 +31,7 @@ const initSocket = (server) => {
       return next();
     }
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super_secret_key_smart_queue_system_2026_safe');
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
       socket.userId = decoded.id;
       next();
     } catch (error) {

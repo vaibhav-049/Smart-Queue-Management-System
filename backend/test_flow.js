@@ -8,8 +8,14 @@ let authToken = '';
 let displayId = '';
 let tokenId = '';
 const email = `testuser_${Date.now()}@example.com`;
+const testPassword = process.env.TEST_USER_PASSWORD;
 
 async function testFlow() {
+  if (!testPassword) {
+    console.error('TEST_USER_PASSWORD missing in .env');
+    process.exit(1);
+  }
+
   console.log('--- STARTING COMPLETE PROJECT TEST FLOW ---');
 
   // 0. Connect to DB at startup
@@ -22,7 +28,7 @@ async function testFlow() {
   const registerRes = await fetch(`${API_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: 'Test User', email, phone: '9999988888', password: 'password123' })
+    body: JSON.stringify({ name: 'Test User', email, phone: '9999988888', password: testPassword })
   });
   const registerData = await registerRes.json();
   if (!registerData.success) throw new Error('Registration failed: ' + JSON.stringify(registerData));
@@ -89,7 +95,7 @@ async function testFlow() {
   const loginRes = await fetch(`${API_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password: 'password123' })
+    body: JSON.stringify({ email, password: testPassword })
   });
   const loginData = await loginRes.json();
   authToken = loginData.data.token;

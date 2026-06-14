@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const { generalLimiter } = require('./middleware/rateLimitMiddleware');
 const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
 
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
@@ -57,14 +58,17 @@ app.use('/api', generalLimiter);
 // Data Sanitization against NoSQL injection
 app.use(mongoSanitize());
 
+// Data Sanitization against XSS (Cross-Site Scripting)
+app.use(xss());
+
 // Logging Middleware
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// Body Parser Middlewares
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Body Parser Middlewares with strict payload limits (10kb max)
+app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
 const swaggerUi = require('swagger-ui-express');
 const swaggerDocument = require('./config/swagger.json');

@@ -103,7 +103,8 @@ Frontend runs at `http://localhost:5173/`.
 - 🗑️ **Background Cleanup interval**: Deletes expired unserved and cancelled tokens every 10 minutes.
 - 📷 **Multi-Service QR Verification Scanner**: Admin-only webcam scanner panel using `html5-qrcode`.
 - 🛡️ **Session Redirection & Safeguards**: Dynamic redirection of the navbar logo to active dashboards based on user role.
-- 🔒 **OTP-Verified Password Changes**: Inside the profile page, users/admins/super-admins can securely update their passwords by verifying their identity via email OTP.
+- 🔒 **OTP-Verified Password Changes**: Secure email OTP verification to update user passwords.
+- 🛡️ **Hardened Security Layer**: 10kb strict JSON payload limits, XSS (Cross-Site Scripting) protection, NoSQL injection sanitization, and 5-attempt/15min Auth Rate Limiting. All secrets managed strictly via environment variables.
 
 ## 👨‍💻 Author
 Vaibhav Rajput

@@ -119,8 +119,12 @@ export default function Profile() {
       if (!orderRes.data.success) throw new Error('Order creation failed');
       const order = orderRes.data.data;
 
+      if (!import.meta.env.VITE_RAZORPAY_KEY_ID) {
+        throw new Error('Razorpay configuration is missing in the frontend environment variables');
+      }
+
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_dummy',
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
         amount: order.amount,
         currency: order.currency,
         name: 'SmartQueue',

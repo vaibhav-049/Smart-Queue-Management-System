@@ -259,7 +259,7 @@ Backend:
 - Socket.io for real-time events
 - Nodemailer for email OTP delivery
 - QR code generation with `qrcode`
-- Security middleware: Helmet, CORS, rate limiting, and Mongo sanitize
+- Security middleware: Helmet, CORS, xss-clean, rate limiting, and Mongo sanitize
 - Swagger UI mounted at `/api-docs`
 
 ## Runtime Entry Points
