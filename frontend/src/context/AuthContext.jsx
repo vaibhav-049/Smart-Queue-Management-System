@@ -84,10 +84,10 @@ export function AuthProvider({ children }) {
   };
 
   // Register Function (Step 1: Send OTP)
-  const register = async (name, email, phone, password) => {
+  const register = async (name, email, phone, password, role = 'user', service = null, accessCode = '') => {
     setLoading(true);
     try {
-      const response = await api.post('/auth/register', { name, email, phone, password });
+      const response = await api.post('/auth/register', { name, email, phone, password, role, service, accessCode });
       if (response.data && response.data.success) {
         toast.success(response.data.message || 'OTP sent successfully!');
         return { success: true };

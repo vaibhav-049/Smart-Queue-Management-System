@@ -2,6 +2,7 @@ const Token = require('../models/Token');
 const Queue = require('../models/Queue');
 const Service = require('../models/Service');
 const { emitQueueUpdate, emitTokenUpdate, emitUserNotification } = require('../config/socket');
+const { getLocalDateString } = require('../utils/dateUtils');
 
 const PRIORITY_RANKS = {
   'Emergency': 4,
@@ -21,12 +22,6 @@ const PRIORITY_RANKS = {
  */
 const recalculateQueue = async (service, bookingDate) => {
   try {
-    const getLocalDateString = () => {
-      const d = new Date();
-      const offset = d.getTimezoneOffset();
-      const localDate = new Date(d.getTime() - (offset * 60 * 1000));
-      return localDate.toISOString().split('T')[0];
-    };
     const todayStr = getLocalDateString();
     const targetDate = bookingDate || todayStr;
 

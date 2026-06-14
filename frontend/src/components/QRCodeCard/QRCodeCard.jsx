@@ -64,8 +64,10 @@ export default function QRCodeCard({ token }) {
 
       {/* Ticket Footer */}
       <div className="qr-ticket-footer">
-        <span>Valid for today only</span>
-        <span suppressHydrationWarning>{new Date().toLocaleDateString('en-IN')}</span>
+        <span>Valid only on booking date</span>
+        <span suppressHydrationWarning>
+          {token.bookingDate ? new Date(token.bookingDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : new Date().toLocaleDateString('en-IN')}
+        </span>
       </div>
     </m.div>
   );

@@ -19,6 +19,7 @@ export default function Profile() {
   const [tokenStats, setTokenStats] = useState({ total: 0, completed: 0 });
   const [notifications, setNotifications] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   // Password change states
   const [pwdStep, setPwdStep] = useState(1);
@@ -90,18 +91,13 @@ export default function Profile() {
     }
   }, [user]);
 
-  // Fetch token stats
+  // Fetch profile stats
   useEffect(() => {
     if (user) {
-      api.get('/tokens/my-tokens')
+      api.get('/users/profile-stats')
         .then(res => {
           if (res.data && res.data.success) {
-            const list = res.data.data || [];
-            const completedCount = list.filter(t => t.status === 'completed').length;
-            setTokenStats({
-              total: list.length,
-              completed: completedCount
-            });
+            setTokenStats(res.data.data || { total: 0, completed: 0 });
           }
         })
         .catch(err => console.error('Error fetching profile token stats:', err));
@@ -114,6 +110,57 @@ export default function Profile() {
       name: form.name,
       phone: form.phone,
     });
+  };
+
+  const handleUpgradeVIP = async () => {
+    setPaymentLoading(true);
+    try {
+      const orderRes = await api.post('/payments/create-order');
+      if (!orderRes.data.success) throw new Error('Order creation failed');
+      const order = orderRes.data.data;
+
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_dummy',
+        amount: order.amount,
+        currency: order.currency,
+        name: 'SmartQueue',
+        description: 'VIP Membership (30 Days)',
+        order_id: order.id,
+        handler: async function (response) {
+          try {
+            const verifyRes = await api.post('/payments/verify', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            if (verifyRes.data.success) {
+              toast.success('Successfully upgraded to VIP!');
+              setTimeout(() => window.location.reload(), 1500);
+            }
+          } catch (err) {
+            toast.error(err.response?.data?.message || 'Payment verification failed');
+          }
+        },
+        prefill: {
+          name: user.name,
+          email: user.email,
+          contact: user.phone,
+        },
+        theme: {
+          color: '#8B5CF6',
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on('payment.failed', function (response) {
+        toast.error(response.error.description);
+      });
+      rzp.open();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not initiate payment');
+    } finally {
+      setPaymentLoading(false);
+    }
   };
 
   return (
@@ -144,28 +191,86 @@ export default function Profile() {
               </button>
             </div>
             <h2 className="profile-name">{form.name}</h2>
-            <p className="profile-role">{user?.role === 'admin' ? 'Administrator' : 'User'}</p>
-            <span className="profile-badge">Pro Plan</span>
+            <p className="profile-role">
+              {user?.role === 'admin'
+                ? (!user.service 
+                  ? 'Super Admin' 
+                  : `${user.service === 'college' ? 'College Office' : user.service.charAt(0).toUpperCase() + user.service.slice(1)} Admin`)
+                : 'User'}
+            </p>
+            <span className="profile-badge" style={{ textTransform: 'capitalize' }}>
+              {user?.role === 'admin'
+                ? (!user.service ? 'Platform Admin' : 'Service Provider')
+                : (user?.isVip ? '🌟 VIP Member' : 'Customer Account')}
+            </span>
+            {user?.isVip && user?.vipValidTill && (
+              <p style={{ fontSize: '0.8rem', color: '#10B981', marginTop: '4px', fontWeight: '500' }}>
+                Valid till: {new Date(user.vipValidTill).toLocaleDateString()}
+              </p>
+            )}
           </div>
 
           <div className="profile-stats-row">
             <div className="profile-stat">
-              <span className="profile-stat-value">{tokenStats.total}</span>
-              <span className="profile-stat-label">Tokens</span>
+              <span className="profile-stat-value">{tokenStats.total || 0}</span>
+              <span className="profile-stat-label">{user?.role === 'admin' ? 'Served' : 'Tokens'}</span>
             </div>
             <div className="profile-stat">
-              <span className="profile-stat-value">{tokenStats.completed}</span>
+              <span className="profile-stat-value">{tokenStats.completed || 0}</span>
               <span className="profile-stat-label">Completed</span>
             </div>
-            <div className="profile-stat">
-              <span className="profile-stat-value">4.8</span>
-              <span className="profile-stat-label">Rating</span>
-            </div>
+            {user?.role === 'admin' ? (
+              <div className="profile-stat">
+                <span className="profile-stat-value">{tokenStats.rating ? tokenStats.rating : 'N/A'}</span>
+                <span className="profile-stat-label">Rating</span>
+              </div>
+            ) : (
+              <div className="profile-stat">
+                <span className="profile-stat-value">{tokenStats.cancelled !== undefined ? tokenStats.cancelled : 0}</span>
+                <span className="profile-stat-label">Cancelled</span>
+              </div>
+            )}
           </div>
         </m.div>
 
         {/* Details & Settings */}
         <div className="profile-details-section">
+          {/* VIP Upgrade Banner */}
+          {user?.role === 'user' && !user?.isVip && (
+            <m.div
+              className="profile-details-card"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              style={{
+                background: 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%)',
+                border: '1px solid #FDE68A',
+                marginBottom: '20px'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                  <h3 style={{ color: '#D97706', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '1.2rem' }}>🌟</span> Upgrade to VIP
+                  </h3>
+                  <p style={{ color: '#92400E', fontSize: '0.9rem', marginTop: '4px' }}>
+                    Skip the queue! Get priority tokens automatically for 30 days.
+                  </p>
+                </div>
+                <m.button
+                  type="button"
+                  className="btn-primary"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleUpgradeVIP}
+                  disabled={paymentLoading}
+                  style={{ background: '#D97706', border: 'none' }}
+                >
+                  {paymentLoading ? 'Processing...' : 'Pay ₹99'}
+                </m.button>
+              </div>
+            </m.div>
+          )}
+
           {/* User Details */}
           <m.div
             className="profile-details-card"

@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const Service = require('../models/Service');
 const Queue = require('../models/Queue');
+const { getLocalDateString } = require('../utils/dateUtils');
 
 const seedDatabase = async () => {
   try {
@@ -78,7 +79,7 @@ const seedDatabase = async () => {
         phone: '+91 98765 43210',
         password: 'admin123',
         role: 'admin',
-        service: null,
+        service: null, // Super Admin
       },
       {
         name: 'Hospital Staff',
@@ -86,7 +87,23 @@ const seedDatabase = async () => {
         phone: '+91 98765 43211',
         password: 'admin123',
         role: 'admin',
-        service: 'hospital',
+        service: 'hospital', // Hospital Admin
+      },
+      {
+        name: 'College Staff',
+        email: 'college_staff@example.com',
+        phone: '+91 98765 43212',
+        password: 'admin123',
+        role: 'admin',
+        service: 'college', // College Admin
+      },
+      {
+        name: 'Salon Staff',
+        email: 'salon_staff@example.com',
+        phone: '+91 98765 43213',
+        password: 'admin123',
+        role: 'admin',
+        service: 'salon', // Salon Admin
       },
     ];
 
@@ -119,12 +136,7 @@ const connectDB = async () => {
 
     // Set bookingDate on pre-existing database tokens to today's date so they don't crash validation
     try {
-      const getLocalDateString = () => {
-        const d = new Date();
-        const offset = d.getTimezoneOffset();
-        const localDate = new Date(d.getTime() - (offset * 60 * 1000));
-        return localDate.toISOString().split('T')[0];
-      };
+
       const todayStr = getLocalDateString();
       
       const tokens = await mongoose.connection.collection('tokens').find({}).toArray();

@@ -9,6 +9,39 @@ const statusColors = {
   cancelled: { bg: 'var(--status-cancelled-bg)', text: 'var(--status-cancelled)', label: 'Cancelled' },
 };
 
+const formatBookingDate = (dateStr) => {
+  if (!dateStr) return '';
+  const today = new Date();
+  const getFormat = (d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const date = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${date}`;
+  };
+  const todayStr = getFormat(today);
+  
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowStr = getFormat(tomorrow);
+
+  const dayAfter = new Date();
+  dayAfter.setDate(dayAfter.getDate() + 2);
+  const dayAfterStr = getFormat(dayAfter);
+
+  if (dateStr === todayStr) return 'Today';
+  if (dateStr === tomorrowStr) return 'Tomorrow';
+  if (dateStr === dayAfterStr) return 'Day After Tomorrow';
+  
+  try {
+    const parsed = new Date(dateStr);
+    if (!isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+  } catch (e) {}
+  
+  return dateStr;
+};
+
 export default function TokenCard({ token, onClick, compact = false }) {
   const { darkMode } = useTheme();
   const status = statusColors[token.status] || statusColors.waiting;
@@ -35,7 +68,7 @@ export default function TokenCard({ token, onClick, compact = false }) {
         <div className="token-card-body">
           <div className="token-detail">
             <span className="token-label">Service</span>
-            <span className="token-value">{token.service}</span>
+            <span className="token-value capitalize">{token.service}</span>
           </div>
           <div className="token-detail">
             <span className="token-label">Position</span>
@@ -45,6 +78,12 @@ export default function TokenCard({ token, onClick, compact = false }) {
             <span className="token-label">Wait Time</span>
             <span className="token-value">{token.waitTime} min</span>
           </div>
+          {token.bookingDate && (
+            <div className="token-detail">
+              <span className="token-label">Date</span>
+              <span className="token-value">{formatBookingDate(token.bookingDate)}</span>
+            </div>
+          )}
           {token.timeSlot && (
             <div className="token-detail">
               <span className="token-label">Time Slot</span>

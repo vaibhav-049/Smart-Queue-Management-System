@@ -12,8 +12,10 @@ const downloadReport = async (req, res, next) => {
     // Build filter query
     const filter = {};
 
-    if (service) {
-      filter.service = service;
+    if (req.user && req.user.service) {
+      filter.service = req.user.service.toLowerCase();
+    } else if (service) {
+      filter.service = service.toLowerCase();
     }
 
     if (startDate || endDate) {
@@ -98,9 +100,11 @@ const getDailyReport = async (req, res, next) => {
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
 
-    const totalTokens = await Token.countDocuments({ createdAt: { $gte: startOfToday, $lte: endOfToday } });
-    const completed = await Token.countDocuments({ status: 'completed', updatedAt: { $gte: startOfToday, $lte: endOfToday } });
-    const cancelled = await Token.countDocuments({ status: 'cancelled', updatedAt: { $gte: startOfToday, $lte: endOfToday } });
+    const serviceFilter = req.user && req.user.service ? { service: req.user.service.toLowerCase() } : {};
+
+    const totalTokens = await Token.countDocuments({ ...serviceFilter, createdAt: { $gte: startOfToday, $lte: endOfToday } });
+    const completed = await Token.countDocuments({ ...serviceFilter, status: 'completed', updatedAt: { $gte: startOfToday, $lte: endOfToday } });
+    const cancelled = await Token.countDocuments({ ...serviceFilter, status: 'cancelled', updatedAt: { $gte: startOfToday, $lte: endOfToday } });
 
     res.status(200).json({
       success: true,

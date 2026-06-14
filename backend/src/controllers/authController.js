@@ -21,11 +21,26 @@ const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString()
  */
 const registerUser = async (req, res, next) => {
   try {
-    const { name, email, phone, password } = req.body;
+    const { name, email, phone, password, role, service, accessCode } = req.body;
 
     if (!name || !email || !phone || !password) {
       res.status(400);
       throw new Error('Please enter all required fields');
+    }
+
+    if (role === 'admin') {
+      if (!service) {
+        res.status(400);
+        throw new Error('Please select a service for the administrator account');
+      }
+      if (!['hospital', 'college', 'salon'].includes(service.toLowerCase())) {
+        res.status(400);
+        throw new Error('Invalid service selection');
+      }
+      if (accessCode !== 'admin123') {
+        res.status(400);
+        throw new Error('Invalid administrator registration access code');
+      }
     }
 
     // Check if user already exists
@@ -44,7 +59,7 @@ const registerUser = async (req, res, next) => {
       email,
       otp: otpCode,
       type: 'register',
-      userData: { name, email, phone, password } // Store temporarily
+      userData: { name, email, phone, password, role: role || 'user', service: service || null } // Store temporarily
     });
 
     // Send email
@@ -80,7 +95,7 @@ const verifyOTPAndRegister = async (req, res, next) => {
       throw new Error('Invalid or expired OTP');
     }
 
-    const { name, phone, password } = otpRecord.userData;
+    const { name, phone, password, role, service } = otpRecord.userData;
 
     // Double check user doesn't exist
     const userExists = await User.findOne({ email });
@@ -90,7 +105,14 @@ const verifyOTPAndRegister = async (req, res, next) => {
     }
 
     // Create user
-    const user = await User.create({ name, email, phone, password });
+    const user = await User.create({
+      name,
+      email,
+      phone,
+      password,
+      role: role || 'user',
+      service: service || null
+    });
 
     // Delete the OTP record so it can't be reused
     await OTP.deleteOne({ _id: otpRecord._id });

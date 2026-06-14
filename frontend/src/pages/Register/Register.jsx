@@ -22,7 +22,7 @@ export default function Register() {
     }
   }, [user, navigate]);
   const [showPassword, setShowPassword] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', role: 'user', service: '', accessCode: '' });
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState({});
@@ -37,6 +37,11 @@ export default function Register() {
     else if (!/^\+?[\d\s-]{10,}$/.test(form.phone)) errs.phone = 'Invalid phone number';
     if (!form.password) errs.password = 'Password is required';
     else if (form.password.length < 6) errs.password = 'Password must be at least 6 characters';
+    
+    if (form.role === 'admin') {
+      if (!form.service) errs.service = 'Service assignment is required';
+      if (!form.accessCode) errs.accessCode = 'Admin access code is required';
+    }
     return errs;
   };
 
@@ -46,7 +51,15 @@ export default function Register() {
       const errs = validate();
       setErrors(errs);
       if (Object.keys(errs).length === 0) {
-        const res = await register(form.name, form.email, form.phone, form.password);
+        const res = await register(
+          form.name,
+          form.email,
+          form.phone,
+          form.password,
+          form.role,
+          form.role === 'admin' ? form.service : null,
+          form.role === 'admin' ? form.accessCode : ''
+        );
         if (res.success) {
           setStep(2);
         }
@@ -58,7 +71,11 @@ export default function Register() {
       }
       const res = await verifyRegister(form.email, otp);
       if (res.success) {
-        navigate('/book-token');
+        if (res.user?.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/book-token');
+        }
       }
     }
   };
@@ -66,7 +83,15 @@ export default function Register() {
   const handleResendOtp = async () => {
     setResendingOtp(true);
     try {
-      const res = await register(form.name, form.email, form.phone, form.password);
+      const res = await register(
+        form.name,
+        form.email,
+        form.phone,
+        form.password,
+        form.role,
+        form.role === 'admin' ? form.service : null,
+        form.role === 'admin' ? form.accessCode : ''
+      );
       if (res.success) {
         setOtp('');
       }
@@ -88,7 +113,7 @@ export default function Register() {
           <div className="auth-left-content">
             <span className="auth-logo">⚡</span>
             <h2>Join<br /><span className="gradient-text">SmartQueue</span></h2>
-            <p>Create your account and start managing queues like a pro. Free for individuals.</p>
+            <p>Create your account and start managing queues seamlessly.</p>
             <div className="auth-features-list">
               <div className="auth-feature">
                 <span className="auth-feature-icon">✅</span>
@@ -183,11 +208,81 @@ export default function Register() {
                     {errors.password && <span className="error-text">{errors.password}</span>}
                   </div>
 
+                  {/* Role Selection */}
+                  <div className="form-group">
+                    <label>Account Type</label>
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                      <button
+                        type="button"
+                        className={`filter-tab ${form.role === 'user' ? 'active' : ''}`}
+                        onClick={() => setForm({ ...form, role: 'user' })}
+                        style={{ flex: 1, padding: '10px 14px', fontSize: '0.875rem', borderRadius: '8px', cursor: 'pointer', border: '1px solid var(--border-color)' }}
+                      >
+                        👤 Customer
+                      </button>
+                      <button
+                        type="button"
+                        className={`filter-tab ${form.role === 'admin' ? 'active' : ''}`}
+                        onClick={() => setForm({ ...form, role: 'admin' })}
+                        style={{ flex: 1, padding: '10px 14px', fontSize: '0.875rem', borderRadius: '8px', cursor: 'pointer', border: '1px solid var(--border-color)' }}
+                      >
+                        💼 Service Admin
+                      </button>
+                    </div>
+                  </div>
+
+                  {form.role === 'admin' && (
+                    <>
+                      <div className={`form-group ${errors.service ? 'error' : ''}`}>
+                        <label htmlFor="service">Assign Service Counter</label>
+                        <div className="input-wrapper" style={{ padding: 0 }}>
+                          <select
+                            id="service"
+                            value={form.service}
+                            onChange={e => setForm({ ...form, service: e.target.value })}
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              background: 'var(--input-bg, #1e293b)',
+                              border: '1px solid var(--border-color)',
+                              borderRadius: '8px',
+                              color: 'var(--text)',
+                              fontSize: '1rem',
+                              outline: 'none'
+                            }}
+                          >
+                            <option value="">Select a service</option>
+                            <option value="hospital">🏥 Hospital</option>
+                            <option value="college">🎓 College Office</option>
+                            <option value="salon">💇 Salon</option>
+                          </select>
+                        </div>
+                        {errors.service && <span className="error-text" style={{ color: '#EF4444', fontSize: '0.8rem' }}>{errors.service}</span>}
+                      </div>
+
+                      <div className={`form-group ${errors.accessCode ? 'error' : ''}`}>
+                        <label htmlFor="access-code">Admin Access Verification Code</label>
+                        <div className="input-wrapper">
+                          <FiLock size={18} className="input-icon" />
+                          <input
+                            id="access-code"
+                            type="password"
+                            placeholder="Enter code (e.g. admin123)"
+                            value={form.accessCode}
+                            onChange={e => setForm({ ...form, accessCode: e.target.value })}
+                          />
+                        </div>
+                        {errors.accessCode && <span className="error-text" style={{ color: '#EF4444', fontSize: '0.8rem' }}>{errors.accessCode}</span>}
+                      </div>
+                    </>
+                  )}
+
                   <m.button
                     type="submit"
                     className="btn-primary-full"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    style={{ marginTop: '1.25rem' }}
                   >
                     Send Verification Code
                   </m.button>

@@ -285,6 +285,7 @@ export default function BookToken() {
                     </span>
                   )}
                 </div>
+
                 <div className="form-group">
                   <label htmlFor="bt-priority">Priority Category</label>
                   <select
@@ -294,11 +295,30 @@ export default function BookToken() {
                     required
                   >
                     <option value="Normal">Normal</option>
-                    <option value="Senior Citizen">Senior Citizen (60+)</option>
-                    <option value="VIP">VIP</option>
-                    <option value="Emergency">Emergency</option>
+                    {selectedService.id === 'hospital' && (
+                      <>
+                        <option value="Senior Citizen">Senior Citizen (60+)</option>
+                        <option value="VIP">VIP</option>
+                        <option value="Emergency">Emergency</option>
+                      </>
+                    )}
+                    {selectedService.id === 'salon' && (
+                      <>
+                        <option value="VIP">VIP</option>
+                        <option value="Emergency">Emergency</option>
+                      </>
+                    )}
+                    {selectedService.id === 'college' && (
+                      <>
+                        <option value="VIP">VIP</option>
+                      </>
+                    )}
                   </select>
+                  <span style={{ fontSize: '0.8rem', color: '#6B7280', marginTop: '4px', display: 'block' }}>
+                    Note: You must present valid ID/Proof at the counter for VIP or Senior Citizen priority.
+                  </span>
                 </div>
+
                 <m.button
                   type="submit"
                   className="btn-primary-full"

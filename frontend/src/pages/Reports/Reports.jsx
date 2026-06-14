@@ -3,12 +3,7 @@ import { m } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 import { FiDownload, FiCalendar, FiTrendingUp, FiClock, FiActivity } from 'react-icons/fi';
 
-const weeklyReport = [
-  { week: 'Week 1', tokens: 1250, completed: 1150, cancelled: 100 },
-  { week: 'Week 2', tokens: 1420, completed: 1380, cancelled: 40 },
-  { week: 'Week 3', tokens: 1180, completed: 1100, cancelled: 80 },
-  { week: 'Week 4', tokens: 1560, completed: 1500, cancelled: 60 },
-];
+
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -69,7 +64,11 @@ export default function Reports() {
     );
   }
 
-  const { dashboardStats, hourlyData, monthlyData } = analytics;
+  const { dashboardStats, hourlyData, monthlyData, weeklyReport } = analytics;
+
+  const totalWeeklyTokens = weeklyReport?.reduce((acc, w) => acc + w.tokens, 0) || 1;
+  const totalWeeklyCompleted = weeklyReport?.reduce((acc, w) => acc + w.completed, 0) || 0;
+  const completionRateOverall = ((totalWeeklyCompleted / totalWeeklyTokens) * 100).toFixed(1);
 
   const summaryCards = [
     { label: 'Total Tokens Generated', value: dashboardStats.totalTokens.toLocaleString(), icon: FiActivity, color: '#3B82F6' },
@@ -175,7 +174,7 @@ export default function Reports() {
                           style={{ width: `${(week.completed / week.tokens) * 100}%` }}
                         />
                       </div>
-                      <span>{((week.completed / week.tokens) * 100).toFixed(1)}%</span>
+                      <span>{week.tokens > 0 ? ((week.completed / week.tokens) * 100).toFixed(1) : 0}%</span>
                     </div>
                   </td>
                 </m.tr>
@@ -189,19 +188,19 @@ export default function Reports() {
       <div className="report-extra-grid">
         <m.div className="report-extra-card" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
           <h4>Completion Rate</h4>
-          <p className="report-extra-value">{dashboardStats.satisfactionRate}%</p>
+          <p className="report-extra-value">{completionRateOverall}%</p>
         </m.div>
         <m.div className="report-extra-card" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.65 }}>
           <h4>Cancellation Rate</h4>
-          <p className="report-extra-value text-red">5.5%</p>
+          <p className="report-extra-value text-red">{dashboardStats.cancellationRate}%</p>
         </m.div>
         <m.div className="report-extra-card" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}>
           <h4>Busiest Day</h4>
-          <p className="report-extra-value">Friday</p>
+          <p className="report-extra-value">{dashboardStats.busiestDay}</p>
         </m.div>
         <m.div className="report-extra-card" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.75 }}>
           <h4>Satisfaction</h4>
-          <p className="report-extra-value">4.7/5</p>
+          <p className="report-extra-value">{dashboardStats.avgRating}/5</p>
         </m.div>
       </div>
     </div>

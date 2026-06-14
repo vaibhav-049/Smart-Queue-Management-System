@@ -210,7 +210,7 @@ export default function AdminDashboard() {
       >
         <div>
           <h1>Dashboard</h1>
-          <p>Welcome back, {user?.name || 'Administrator'}! Here's what's happening today.</p>
+          <p>Welcome back, {user?.name || 'Administrator'}! You are logged in as <strong>{user?.service ? `${services.find(s => s.id === user.service.toLowerCase())?.name || user.service} Admin` : 'Super Admin'}</strong>.</p>
         </div>
         <div>
           <Link

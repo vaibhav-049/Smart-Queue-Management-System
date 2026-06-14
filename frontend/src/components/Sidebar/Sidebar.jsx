@@ -26,6 +26,9 @@ export default function Sidebar({ isOpen, onClose }) {
     if (item.path === '/admin' || item.path === '/admin/scanner' || item.path === '/reports') {
       return user?.role === 'admin';
     }
+    if (item.path === '/book-token' || item.path === '/queue-status' || item.path === '/my-tokens') {
+      return user?.role !== 'admin';
+    }
     return true;
   });
 
@@ -93,7 +96,13 @@ export default function Sidebar({ isOpen, onClose }) {
             </div>
             <div className="sidebar-user-info">
               <p className="sidebar-user-name">{user?.name || 'Guest User'}</p>
-              <p className="sidebar-user-role">{user?.role === 'admin' ? 'Administrator' : 'User'}</p>
+              <p className="sidebar-user-role">
+                {user?.role === 'admin'
+                  ? (!user.service 
+                    ? 'Super Admin' 
+                    : `${user.service === 'college' ? 'College Office' : user.service.charAt(0).toUpperCase() + user.service.slice(1)} Admin`)
+                  : 'User'}
+              </p>
             </div>
           </div>
         </div>

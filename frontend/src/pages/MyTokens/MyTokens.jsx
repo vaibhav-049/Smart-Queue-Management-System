@@ -6,6 +6,7 @@ import api from '../../services/api';
 import TokenCard from '../../components/TokenCard/TokenCard';
 import QRCodeCard from '../../components/QRCodeCard/QRCodeCard';
 import toast from 'react-hot-toast';
+import { FiStar } from 'react-icons/fi';
 
 const statusFilters = ['all', 'waiting', 'serving', 'completed', 'cancelled'];
 
@@ -14,6 +15,30 @@ export default function MyTokens() {
   const [filter, setFilter] = useState('all');
   const [selectedToken, setSelectedToken] = useState(null);
   const [myTokens, setMyTokens] = useState([]);
+  const [ratingValue, setRatingValue] = useState(0);
+  const [submittingRating, setSubmittingRating] = useState(false);
+
+  // Submit token rating
+  const handleRateToken = async (tokenId, ratingVal) => {
+    setSubmittingRating(true);
+    try {
+      const response = await api.put(`/tokens/${tokenId}/rate`, { rating: ratingVal });
+      if (response.data && response.data.success) {
+        toast.success('Thank you for rating!');
+        setMyTokens(prev => prev.map(t => {
+          if (t._id === tokenId) {
+            return { ...t, rating: ratingVal };
+          }
+          return t;
+        }));
+        setSelectedToken(prev => ({ ...prev, rating: ratingVal }));
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to submit rating');
+    } finally {
+      setSubmittingRating(false);
+    }
+  };
 
   // Fetch tokens from backend
   const fetchTokens = useCallback(async () => {
@@ -123,7 +148,10 @@ export default function MyTokens() {
             >
               <TokenCard
                 token={token}
-                onClick={() => setSelectedToken(selectedToken?.displayId === token.displayId ? null : token)}
+                onClick={() => {
+                  setSelectedToken(selectedToken?.displayId === token.displayId ? null : token);
+                  setRatingValue(0);
+                }}
               />
             </m.div>
           ))}
@@ -160,6 +188,65 @@ export default function MyTokens() {
               onClick={e => e.stopPropagation()}
             >
               <QRCodeCard token={selectedToken} />
+              
+              {/* Rating Section for Completed Tokens */}
+              {selectedToken.status === 'completed' && (
+                <div style={{
+                  padding: '1.25rem',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: '12px',
+                  background: 'var(--card-bg-hover)',
+                  margin: '1rem 0',
+                  textAlign: 'center'
+                }}>
+                  <h4 style={{ margin: '0 0 0.5rem 0' }}>Rate Your Experience</h4>
+                  {selectedToken.rating ? (
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginBottom: '0.5rem' }}>
+                        {[1, 2, 3, 4, 5].map(star => (
+                          <FiStar
+                            key={star}
+                            size={20}
+                            fill={star <= selectedToken.rating ? '#F59E0B' : 'transparent'}
+                            color="#F59E0B"
+                          />
+                        ))}
+                      </div>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                        You rated this service {selectedToken.rating} / 5 stars.
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '1rem' }}>
+                        {[1, 2, 3, 4, 5].map(star => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setRatingValue(star)}
+                            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}
+                          >
+                            <FiStar
+                              size={26}
+                              fill={star <= ratingValue ? '#F59E0B' : 'transparent'}
+                              color="#F59E0B"
+                            />
+                          </button>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        disabled={ratingValue === 0 || submittingRating}
+                        onClick={() => handleRateToken(selectedToken._id, ratingValue)}
+                        className="btn-primary"
+                        style={{ width: '100%', padding: '10px' }}
+                      >
+                        {submittingRating ? 'Submitting...' : 'Submit Rating'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
               
               {(selectedToken.status === 'waiting' || selectedToken.status === 'serving') && (
                 <button

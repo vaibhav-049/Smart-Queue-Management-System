@@ -53,6 +53,12 @@ const tokenSchema = new mongoose.Schema(
     qrCodeUrl: {
       type: String, // Base64 representation of QR code
     },
+    rating: {
+      type: Number,
+      min: 1,
+      max: 5,
+      default: null,
+    },
   },
   {
     timestamps: true,

@@ -3,9 +3,20 @@ const getLocalDateString = (offsetDays = 0) => {
   if (offsetDays) {
     d.setDate(d.getDate() + offsetDays);
   }
-  const offset = d.getTimezoneOffset();
-  const localDate = new Date(d.getTime() - (offset * 60 * 1000));
-  return localDate.toISOString().split('T')[0];
+  
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  
+  const parts = formatter.formatToParts(d);
+  const year = parts.find(p => p.type === 'year').value;
+  const month = parts.find(p => p.type === 'month').value;
+  const day = parts.find(p => p.type === 'day').value;
+  
+  return `${year}-${month}-${day}`;
 };
 
 const isTimeSlotPast = (bookingDateStr, timeSlotStr) => {
@@ -15,31 +26,44 @@ const isTimeSlotPast = (bookingDateStr, timeSlotStr) => {
     if (bookingDateStr < todayStr) return true;
     if (bookingDateStr > todayStr) return false;
 
-    // If today, parse the end time of the slot (e.g. "09:00 AM - 10:00 AM" -> end time is "10:00 AM")
+    // Parse the slot end time (e.g., "10:00 AM")
     const parts = timeSlotStr.split('-');
     if (parts.length < 2) return false;
     const endTimeStr = parts[1].trim(); // e.g. "10:00 AM"
-    
-    // Parse "10:00 AM" or "02:00 PM"
+
     const match = endTimeStr.match(/^(\d{2}):(\d{2})\s*(AM|PM)$/i);
     if (!match) return false;
-    
-    let hours = parseInt(match[1]);
-    const minutes = parseInt(match[2]);
+
+    let slotHours = parseInt(match[1]);
+    const slotMinutes = parseInt(match[2]);
     const ampm = match[3].toUpperCase();
 
-    if (ampm === 'PM' && hours !== 12) hours += 12;
-    if (ampm === 'AM' && hours === 12) hours = 0;
+    if (ampm === 'PM' && slotHours !== 12) slotHours += 12;
+    if (ampm === 'AM' && slotHours === 12) slotHours = 0;
 
-    // Get today's local date/time
-    const d = new Date();
-    const offset = d.getTimezoneOffset();
-    const localNow = new Date(d.getTime() - (offset * 60 * 1000));
+    // Get current time in Indian Standard Time (IST)
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Kolkata',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: false
+    });
+    
+    const formattedParts = formatter.formatToParts(now);
+    const hoursPart = formattedParts.find(p => p.type === 'hour');
+    const minutesPart = formattedParts.find(p => p.type === 'minute');
+    
+    const currentHours = parseInt(hoursPart.value, 10);
+    const currentMinutes = parseInt(minutesPart.value, 10);
 
-    const slotEnd = new Date(localNow);
-    slotEnd.setHours(hours, minutes, 0, 0);
-
-    return localNow > slotEnd;
+    if (currentHours > slotHours) {
+      return true;
+    }
+    if (currentHours === slotHours && currentMinutes > slotMinutes) {
+      return true;
+    }
+    return false;
   } catch (e) {
     console.error('Error checking time slot:', e);
     return false;

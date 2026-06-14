@@ -15,6 +15,7 @@ const queueRoutes = require('./routes/queueRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
 const allowedOrigins = [
@@ -89,6 +90,7 @@ app.use('/api/queue', queueRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/payments', paymentRoutes);
 
 // Error Handling Middlewares
 app.use(notFound);

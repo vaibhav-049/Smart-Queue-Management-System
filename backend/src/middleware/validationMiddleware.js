@@ -102,7 +102,10 @@ const registerSchema = {
   name: { type: 'string', required: true, minLength: 2, maxLength: 50, sanitize: true },
   email: { type: 'string', required: true, regex: /^\S+@\S+\.\S+$/, message: 'Please provide a valid email address.' },
   phone: { type: 'string', required: true, regex: /^(?:\+91[\s\-]?)?[6-9]\d{9}$/, message: 'Please provide a valid 10-digit mobile number.' },
-  password: { type: 'string', required: true, minLength: 6, maxLength: 100 }
+  password: { type: 'string', required: true, minLength: 6, maxLength: 100 },
+  role: { type: 'string', required: false, enum: ['user', 'admin'] },
+  service: { type: 'string', required: false, enum: ['hospital', 'college', 'salon', null] },
+  accessCode: { type: 'string', required: false }
 };
 
 const verifyRegisterSchema = {

@@ -4,6 +4,7 @@ const Service = require('../models/Service');
 const User = require('../models/User');
 const { recalculateQueue } = require('../services/queueManager');
 const { emitUserNotification, emitQueueUpdate, emitTokenCalled, emitQueueCompleted } = require('../config/socket');
+const { getLocalDateString } = require('../utils/dateUtils');
 
 /**
  * @desc    Call the next token in the queue
@@ -25,12 +26,6 @@ const callNextToken = async (req, res, next) => {
       throw new Error(`Access denied: You are restricted to operating the ${req.user.service} service queue.`);
     }
 
-    const getLocalDateString = () => {
-      const d = new Date();
-      const offset = d.getTimezoneOffset();
-      const localDate = new Date(d.getTime() - (offset * 60 * 1000));
-      return localDate.toISOString().split('T')[0];
-    };
     const todayStr = getLocalDateString();
 
     // 1. Mark currently serving token as completed for today
@@ -115,12 +110,6 @@ const skipToken = async (req, res, next) => {
     const { tokenId } = req.params;
     const { service, tokenNumber } = req.body;
 
-    const getLocalDateString = () => {
-      const d = new Date();
-      const offset = d.getTimezoneOffset();
-      const localDate = new Date(d.getTime() - (offset * 60 * 1000));
-      return localDate.toISOString().split('T')[0];
-    };
     const todayStr = getLocalDateString();
 
     let token;
@@ -187,12 +176,6 @@ const completeToken = async (req, res, next) => {
       throw new Error('Please provide a service');
     }
 
-    const getLocalDateString = () => {
-      const d = new Date();
-      const offset = d.getTimezoneOffset();
-      const localDate = new Date(d.getTime() - (offset * 60 * 1000));
-      return localDate.toISOString().split('T')[0];
-    };
     const todayStr = getLocalDateString();
 
     const serviceSlug = service.toLowerCase();
@@ -367,15 +350,29 @@ const getAnalytics = async (req, res, next) => {
     }
     const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
+    // Real Cancellation Rate & Satisfaction Rate
+    const cancelledCount = await Token.countDocuments({ ...serviceFilter, status: 'cancelled' });
+    const cancellationRate = totalTokens > 0 ? Number(((cancelledCount / totalTokens) * 100).toFixed(1)) : 0;
+
+    const ratedTokens = await Token.find({ ...serviceFilter, status: 'completed', rating: { $ne: null } });
+    let satisfactionRate = 100;
+    let avgRating = 5;
+    if (ratedTokens.length > 0) {
+      const sum = ratedTokens.reduce((acc, t) => acc + t.rating, 0);
+      avgRating = Number((sum / ratedTokens.length).toFixed(1));
+      satisfactionRate = Number(((avgRating / 5) * 100).toFixed(1));
+    }
+
     const dashboardStats = {
       totalTokens,
       activeQueues: activeQueuesCount,
       todaysVisitors,
       avgWaitTime,
       tokensServedToday,
-      peakHour: '10:00 AM - 11:00 AM',
       mostUsedService: capitalize(mostUsedService),
-      satisfactionRate: 94.5,
+      satisfactionRate,
+      cancellationRate,
+      avgRating
     };
 
     // 2. Service Usage Data (percentage split)
@@ -392,53 +389,42 @@ const getAnalytics = async (req, res, next) => {
       fill: colors[item._id] || '#6B7280',
     }));
 
-    // Fill defaults if empty
     if (serviceUsageData.length === 0) {
-      serviceUsageData.push(
-        { name: 'Hospital', value: 45, fill: '#EF4444' },
-        { name: 'College', value: 35, fill: '#8B5CF6' },
-        { name: 'Salon', value: 20, fill: '#EC4899' }
-      );
+      serviceUsageData.push({ name: 'No Data', value: 100, fill: '#D1D5DB' });
     }
 
     // 3. Hourly visitors details for today
     const hourlyAggregate = await Token.aggregate([
-      {
-        $match: {
-          ...serviceFilter,
-          createdAt: { $gte: startOfToday, $lte: endOfToday },
-        },
-      },
-      {
-        $project: {
-          hour: { $hour: '$createdAt' },
-        },
-      },
-      {
-        $group: {
-          _id: '$hour',
-          count: { $sum: 1 },
-        },
-      },
+      { $match: { ...serviceFilter, createdAt: { $gte: startOfToday, $lte: endOfToday } } },
+      { $project: { hour: { $hour: { date: '$createdAt', timezone: 'Asia/Kolkata' } } } },
+      { $group: { _id: '$hour', count: { $sum: 1 } } },
       { $sort: { _id: 1 } },
     ]);
 
     const formatHourLabel = (h) => {
-      const IndianHour = (h + 5) % 24; // Simple timezone adjust if UTC
-      if (IndianHour === 0) return '12AM';
-      if (IndianHour === 12) return '12PM';
-      return IndianHour > 12 ? `${IndianHour - 12}PM` : `${IndianHour}AM`;
+      if (h === 0) return '12AM';
+      if (h === 12) return '12PM';
+      return h > 12 ? `${h - 12}PM` : `${h}AM`;
     };
 
     const hourlyMap = new Map();
+    let maxHourly = -1;
+    let peakHourStr = 'N/A';
     hourlyAggregate.forEach((item) => {
-      hourlyMap.set(formatHourLabel(item._id), item.count);
+      const lbl = formatHourLabel(item._id);
+      hourlyMap.set(lbl, item.count);
+      if (item.count > maxHourly) {
+        maxHourly = item.count;
+        peakHourStr = lbl;
+      }
     });
+
+    dashboardStats.peakHour = maxHourly > 0 ? `${peakHourStr}` : 'N/A';
 
     const standardHours = ['8AM', '9AM', '10AM', '11AM', '12PM', '1PM', '2PM', '3PM', '4PM', '5PM'];
     const hourlyData = standardHours.map((h) => ({
       hour: h,
-      visitors: hourlyMap.get(h) || Math.floor(Math.random() * 10) + 2, // fallback random for visualization
+      visitors: hourlyMap.get(h) || 0,
     }));
 
     // 4. Daily Queue Data (Last 7 Days)
@@ -447,30 +433,27 @@ const getAnalytics = async (req, res, next) => {
     sevenDaysAgo.setHours(0, 0, 0, 0);
 
     const dailyAggregate = await Token.aggregate([
-      {
-        $match: {
-          ...serviceFilter,
-          createdAt: { $gte: sevenDaysAgo, $lte: endOfToday },
-        },
-      },
-      {
-        $project: {
-          dayOfWeek: { $dayOfWeek: '$createdAt' },
-        },
-      },
-      {
-        $group: {
-          _id: '$dayOfWeek',
-          tokens: { $sum: 1 },
-        },
-      },
+      { $match: { ...serviceFilter, createdAt: { $gte: sevenDaysAgo, $lte: endOfToday } } },
+      { $project: { dayOfWeek: { $dayOfWeek: { date: '$createdAt', timezone: 'Asia/Kolkata' } } } },
+      { $group: { _id: '$dayOfWeek', tokens: { $sum: 1 } } },
     ]);
 
     const daysMap = { 1: 'Sun', 2: 'Mon', 3: 'Tue', 4: 'Wed', 5: 'Thu', 6: 'Fri', 7: 'Sat' };
     const dailyMap = new Map();
+    
+    let maxDailyTokens = -1;
+    let busiestDayName = 'N/A';
+
     dailyAggregate.forEach((item) => {
-      dailyMap.set(daysMap[item._id], item.tokens);
+      const dName = daysMap[item._id];
+      dailyMap.set(dName, item.tokens);
+      if (item.tokens > maxDailyTokens) {
+        maxDailyTokens = item.tokens;
+        busiestDayName = dName;
+      }
     });
+
+    dashboardStats.busiestDay = maxDailyTokens > 0 ? busiestDayName : 'N/A';
 
     const dailyQueueData = [];
     for (let i = 6; i >= 0; i--) {
@@ -480,19 +463,59 @@ const getAnalytics = async (req, res, next) => {
       dailyQueueData.push({
         day: dayName,
         tokens: dailyMap.get(dayName) || 0,
-        waitTime: Math.floor(Math.random() * 10) + 10, // still mocking wait time trend slightly
+        waitTime: 0, 
       });
     }
 
-    // 5. Monthly progression (Simplified mock for now, as complex aggregation is not requested)
-    const monthlyData = [
-      { month: 'Jan', tokens: 3200 },
-      { month: 'Feb', tokens: 3800 },
-      { month: 'Mar', tokens: 4100 },
-      { month: 'Apr', tokens: 3900 },
-      { month: 'May', tokens: 4500 },
-      { month: 'Jun', tokens: 4200 },
+    // 5. Monthly progression (Real data for last 6 months)
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
+
+    const monthlyAggregate = await Token.aggregate([
+      { $match: { ...serviceFilter, createdAt: { $gte: sixMonthsAgo } } },
+      { $project: { month: { $month: { date: '$createdAt', timezone: 'Asia/Kolkata' } } } },
+      { $group: { _id: '$month', tokens: { $sum: 1 } } }
+    ]);
+    
+    const monthNamesList = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthlyMap = new Map();
+    monthlyAggregate.forEach(item => monthlyMap.set(item._id, item.tokens));
+    
+    const monthlyData = [];
+    for (let i = 5; i >= 0; i--) {
+       const d = new Date();
+       d.setMonth(d.getMonth() - i);
+       const mId = d.getMonth() + 1;
+       monthlyData.push({
+           month: monthNamesList[d.getMonth()],
+           tokens: monthlyMap.get(mId) || 0
+       });
+    }
+
+    // 6. Weekly Report Summary (Last 4 weeks)
+    const fourWeeksAgo = new Date();
+    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
+    fourWeeksAgo.setHours(0, 0, 0, 0);
+
+    const recentTokensList = await Token.find({ ...serviceFilter, createdAt: { $gte: fourWeeksAgo } });
+    const weeklyReport = [
+       { week: 'Week 1', tokens: 0, completed: 0, cancelled: 0 },
+       { week: 'Week 2', tokens: 0, completed: 0, cancelled: 0 },
+       { week: 'Week 3', tokens: 0, completed: 0, cancelled: 0 },
+       { week: 'Week 4', tokens: 0, completed: 0, cancelled: 0 },
     ];
+    
+    recentTokensList.forEach(t => {
+       const diffTime = Math.abs(t.createdAt - fourWeeksAgo);
+       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+       const weekIdx = Math.min(Math.floor(diffDays / 7), 3);
+       
+       weeklyReport[weekIdx].tokens += 1;
+       if (t.status === 'completed') weeklyReport[weekIdx].completed += 1;
+       if (t.status === 'cancelled') weeklyReport[weekIdx].cancelled += 1;
+    });
 
     // 6. Recent Activity Logs (last 6 tokens)
     const recentTokens = await Token.find(serviceFilter)
@@ -553,6 +576,7 @@ const getAnalytics = async (req, res, next) => {
         hourlyData,
         dailyQueueData,
         monthlyData,
+        weeklyReport,
         recentActivity,
       },
     });
@@ -570,12 +594,6 @@ const verifyScannedToken = async (req, res, next) => {
   try {
     const { displayId } = req.body;
     
-    const getLocalDateString = () => {
-      const d = new Date();
-      const offset = d.getTimezoneOffset();
-      const localDate = new Date(d.getTime() - (offset * 60 * 1000));
-      return localDate.toISOString().split('T')[0];
-    };
     const todayStr = getLocalDateString();
 
     const token = await Token.findOne({ displayId, bookingDate: todayStr });
@@ -610,12 +628,6 @@ const serveScannedToken = async (req, res, next) => {
   try {
     const { displayId } = req.body;
     
-    const getLocalDateString = () => {
-      const d = new Date();
-      const offset = d.getTimezoneOffset();
-      const localDate = new Date(d.getTime() - (offset * 60 * 1000));
-      return localDate.toISOString().split('T')[0];
-    };
     const todayStr = getLocalDateString();
 
     const token = await Token.findOne({ displayId, bookingDate: todayStr });

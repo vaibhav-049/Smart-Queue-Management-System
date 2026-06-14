@@ -43,6 +43,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    isVip: {
+      type: Boolean,
+      default: false,
+    },
+    vipValidTill: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
