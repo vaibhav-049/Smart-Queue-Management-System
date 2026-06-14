@@ -1,10 +1,10 @@
 # Project Status
 
-Status date: 2026-06-13
+Status date: 2026-06-14
 
 ## Current State
 
-The codebase is an active full-stack Smart Queue Management System with both frontend and backend implemented. In this iteration, we successfully integrated a 3-day booking window limit, strict 10-digit mobile phone validations, dynamic past timeslot selectors filtering, and an automated background cleanup service running every 10 minutes to delete expired unserved/cancelled tokens and keep MongoDB databases performant. Legacy database tokens are migrated dynamically on server startup to standard YYYY-MM-DD formats, fixing sequence collisions and queue positions.
+The codebase is an active full-stack Smart Queue Management System with both frontend and backend implemented. In the most recent iteration, we successfully integrated a **Razorpay Payment Gateway** for purchasing VIP memberships, turning the queue into a monetized platform. Users can buy a 30-day VIP pass, and the system automatically enforces VIP queue priority and caps (maximum 2 VIP/Senior tickets per slot, 5 per day) to ensure fair balancing. Additionally, the admin dashboard was secured with scoped **Role-Based Access Control**, isolating service providers to their own queue data, while real **MongoDB Analytics** drive the reporting charts.
 
 Additionally, a secure, admin-only **QR Code Scanner Verification** interface has been implemented. Admins can scan user token QRs using a live webcam stream or perform a manual search to verify physical visitor details. To handle insecure contexts (HTTP over LAN) on mobile test phones, the webcam container displays a styled browser camera access warning with bypass configuration instructions.
 

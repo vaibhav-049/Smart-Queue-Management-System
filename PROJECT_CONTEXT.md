@@ -253,6 +253,7 @@ Frontend:
 Backend:
 - Node.js and Express 4
 - MongoDB with Mongoose
+- Razorpay for VIP payment gateway integration
 - JWT authentication with `jsonwebtoken`
 - Password hashing with `bcryptjs`
 - Socket.io for real-time events
@@ -286,10 +287,13 @@ Backend:
 - `EMAIL_USER`: Gmail account used by Nodemailer.
 - `EMAIL_APP_PASSWORD`: Gmail app password used by Nodemailer.
 - `APP_PASSWORD` / `app_Password`: legacy aliases also accepted by the email service.
+- `RAZORPAY_KEY_ID`: Razorpay API Key ID for processing payments.
+- `RAZORPAY_KEY_SECRET`: Razorpay API Secret for verifying payment signatures.
 
 Frontend:
 - `VITE_API_URL`: backend API base URL, defaults to `http://localhost:5000/api`.
 - `VITE_SOCKET_URL`: Socket.io server URL, defaults to `http://localhost:5000`.
+- `VITE_RAZORPAY_KEY_ID`: Razorpay API Key ID exposed to the frontend checkout script.
 
 ## Backend Architecture
 

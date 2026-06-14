@@ -93,15 +93,17 @@ Frontend runs at `http://localhost:5173/`.
 - 🌓 **Dark/Light Mode**
 - 📱 **Fully Responsive Layouts**
 - 🎨 **Modern Glassmorphic Dashboard Design**
-- 📊 **Peak Hours & Service Aggregations**
-- 🏥 **Multi-service Isolated Resets** (Hospital, Bank, College, Govt, Salon)
+- 💳 **VIP Payment Gateway (Razorpay)**: Users can purchase 30-day VIP priority via Razorpay.
+- 🚦 **Priority Queuing**: Smart automated queuing for VIP and Senior Citizens with daily limits.
+- 👮 **Role-Based Access Control**: Platform Admins (Super Admins) vs Service Providers (scoped access).
+- 📊 **Peak Hours & Service Aggregations**: Real MongoDB aggregate analytics.
+- 🏥 **Multi-service Isolated Resets** (Hospital, College, Salon)
 - 🔒 **Secured WebSockets** (Handshake token signatures and room security)
 - ⏰ **Dynamic Slot Filtering**: Blocks past hours for today's bookings.
-- 🗑️ **Background Cleanup interval**: Deletes expired unserved and cancelled tokens every 10 minutes to maintain database performance.
-- 📷 **Multi-Service QR Verification Scanner**: Admin-only webcam scanner panel using `html5-qrcode` and manual ID verification with physical matching controls.
-- 🛡️ **Session Redirection & Safeguards**: Dynamic redirection of the navbar logo to active dashboards based on user role, and automatic landing page redirection for logged-in users to resolve guest-navbar caching issues.
-- 📷 **Insecure Context Camera Alerts**: Styled warnings banner in the QR Scanner viewport guiding mobile users on bypassing browser restrictions (HTTP over LAN) via Chrome flags.
+- 🗑️ **Background Cleanup interval**: Deletes expired unserved and cancelled tokens every 10 minutes.
+- 📷 **Multi-Service QR Verification Scanner**: Admin-only webcam scanner panel using `html5-qrcode`.
+- 🛡️ **Session Redirection & Safeguards**: Dynamic redirection of the navbar logo to active dashboards based on user role.
 - 🔒 **OTP-Verified Password Changes**: Inside the profile page, users/admins/super-admins can securely update their passwords by verifying their identity via email OTP.
 
 ## 👨‍💻 Author
-Vaibhav Patel
+Vaibhav Rajput
