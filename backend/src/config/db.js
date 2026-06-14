@@ -17,15 +17,6 @@ const seedDatabase = async () => {
         avgServiceTime: 10,
       },
       {
-        id: 'bank',
-        name: 'Bank',
-        icon: '🏦',
-        color: '#3B82F6',
-        description: 'Queue for banking services, account operations, and loans',
-        prefix: 'B',
-        avgServiceTime: 12,
-      },
-      {
         id: 'college',
         name: 'College Office',
         icon: '🎓',
@@ -33,15 +24,6 @@ const seedDatabase = async () => {
         description: 'Student services, transcript requests, and admissions',
         prefix: 'C',
         avgServiceTime: 15,
-      },
-      {
-        id: 'government',
-        name: 'Government Office',
-        icon: '🏛️',
-        color: '#F59E0B',
-        description: 'Government document processing, permits, and licenses',
-        prefix: 'G',
-        avgServiceTime: 20,
       },
       {
         id: 'salon',
@@ -53,6 +35,17 @@ const seedDatabase = async () => {
         avgServiceTime: 25,
       },
     ];
+
+    // Remove legacy/removed services and queues from DB
+    const allowedServiceIds = defaultServices.map(s => s.id);
+    const deleteServicesResult = await Service.deleteMany({ id: { $nin: allowedServiceIds } });
+    if (deleteServicesResult.deletedCount > 0) {
+      console.log(`Removed ${deleteServicesResult.deletedCount} deprecated services from DB.`);
+    }
+    const deleteQueuesResult = await Queue.deleteMany({ service: { $nin: allowedServiceIds } });
+    if (deleteQueuesResult.deletedCount > 0) {
+      console.log(`Removed ${deleteQueuesResult.deletedCount} deprecated queues from DB.`);
+    }
 
     for (const service of defaultServices) {
       const exists = await Service.findOne({ id: service.id });
@@ -94,14 +87,6 @@ const seedDatabase = async () => {
         password: 'admin123',
         role: 'admin',
         service: 'hospital',
-      },
-      {
-        name: 'Bank Staff',
-        email: 'bank_staff@example.com',
-        phone: '+91 98765 43212',
-        password: 'admin123',
-        role: 'admin',
-        service: 'bank',
       },
     ];
 

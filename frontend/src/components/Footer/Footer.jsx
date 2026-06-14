@@ -17,7 +17,7 @@ export default function Footer() {
               <span className="logo-text">Smart<span className="logo-highlight">Queue</span></span>
             </Link>
             <p className="footer-desc">
-              Modern queue management system for hospitals, banks, colleges, government offices, and salons. Reduce wait times, improve efficiency.
+              Modern queue management system for hospitals, colleges, and salons. Reduce wait times, improve efficiency.
             </p>
           </div>
 
@@ -44,9 +44,7 @@ export default function Footer() {
             <div className="footer-col">
               <h4>Services</h4>
               <Link to="/book-token">Hospital</Link>
-              <Link to="/book-token">Bank</Link>
               <Link to="/book-token">College Office</Link>
-              <Link to="/book-token">Government Office</Link>
               <Link to="/book-token">Salon</Link>
             </div>
           )}

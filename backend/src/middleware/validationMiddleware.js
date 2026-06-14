@@ -133,7 +133,7 @@ const updateProfileSchema = {
 };
 
 const bookTokenSchema = {
-  service: { type: 'string', required: true, enum: ['hospital', 'bank', 'college', 'government', 'salon'] },
+  service: { type: 'string', required: true, enum: ['hospital', 'college', 'salon'] },
   priority: { type: 'string', required: false, enum: ['normal', 'senior', 'vip', 'emergency', 'Senior Citizen', 'VIP', 'Emergency', 'Normal'], default: 'normal' },
   priorityType: { type: 'string', required: false, enum: ['normal', 'senior', 'vip', 'emergency', 'Senior Citizen', 'VIP', 'Emergency', 'Normal'] },
   timeSlot: { type: 'string', required: true, maxLength: 100, sanitize: true },

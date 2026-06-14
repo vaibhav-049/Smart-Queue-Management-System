@@ -384,7 +384,7 @@ const getAnalytics = async (req, res, next) => {
       { $group: { _id: '$service', count: { $sum: 1 } } },
     ]);
     const totalUsageCount = usageAggregate.reduce((acc, curr) => acc + curr.count, 0) || 1;
-    const colors = { hospital: '#EF4444', bank: '#3B82F6', college: '#8B5CF6', government: '#F59E0B', salon: '#EC4899' };
+    const colors = { hospital: '#EF4444', college: '#8B5CF6', salon: '#EC4899' };
 
     const serviceUsageData = usageAggregate.map((item) => ({
       name: capitalize(item._id),
@@ -395,11 +395,9 @@ const getAnalytics = async (req, res, next) => {
     // Fill defaults if empty
     if (serviceUsageData.length === 0) {
       serviceUsageData.push(
-        { name: 'Hospital', value: 35, fill: '#EF4444' },
-        { name: 'Bank', value: 25, fill: '#3B82F6' },
-        { name: 'College', value: 20, fill: '#8B5CF6' },
-        { name: 'Government', value: 15, fill: '#F59E0B' },
-        { name: 'Salon', value: 5, fill: '#EC4899' }
+        { name: 'Hospital', value: 45, fill: '#EF4444' },
+        { name: 'College', value: 35, fill: '#8B5CF6' },
+        { name: 'Salon', value: 20, fill: '#EC4899' }
       );
     }
 

@@ -36,7 +36,7 @@ const userSchema = new mongoose.Schema(
     },
     service: {
       type: String,
-      enum: ['hospital', 'bank', 'college', 'government', 'salon', null],
+      enum: ['hospital', 'college', 'salon', null],
       default: null,
     },
     avatar: {

@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Smart Queue Management System API",
-    "description": "Production-ready RESTful backend API documentation for hospital, banking, salon, government and college student service queue operations.",
+    "description": "Production-ready RESTful backend API documentation for hospital, salon, and college student service queue operations.",
     "version": "1.0.0"
   },
   "servers": [

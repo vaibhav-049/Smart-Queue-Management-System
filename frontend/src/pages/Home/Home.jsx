@@ -102,8 +102,8 @@ export default function Home() {
               <span className="hero-gradient-text">Management System</span>
             </h1>
             <p className="hero-subtitle">
-              Eliminate long queues and reduce wait times by up to 40%. Designed for hospitals, banks, colleges,
-              government offices, and salons. Book tokens, track queues, and get served — all digitally.
+              Eliminate long queues and reduce wait times by up to 40%. Designed for hospitals, colleges,
+              and salons. Book tokens, track queues, and get served — all digitally.
             </p>
             <div className="hero-actions">
               {user ? (

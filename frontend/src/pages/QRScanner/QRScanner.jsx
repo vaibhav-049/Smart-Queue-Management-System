@@ -109,7 +109,7 @@ export default function QRScanner() {
     }
 
     // Restricted staff check
-    const servicePrefixes = { hospital: 'H', bank: 'B', college: 'C', government: 'G', salon: 'S' };
+    const servicePrefixes = { hospital: 'H', college: 'C', salon: 'S' };
     if (user?.service) {
       const expectedPrefix = servicePrefixes[user.service.toLowerCase()];
       if (expectedPrefix && !displayId.startsWith(expectedPrefix)) {
@@ -131,7 +131,7 @@ export default function QRScanner() {
     }
 
     // Restricted staff check
-    const servicePrefixes = { hospital: 'H', bank: 'B', college: 'C', government: 'G', salon: 'S' };
+    const servicePrefixes = { hospital: 'H', college: 'C', salon: 'S' };
     if (user?.service) {
       const expectedPrefix = servicePrefixes[user.service.toLowerCase()];
       if (expectedPrefix && !formattedId.startsWith(expectedPrefix)) {
@@ -228,7 +228,7 @@ export default function QRScanner() {
   };
 
   const getServiceColor = (service) => {
-    const colors = { hospital: '#EF4444', bank: '#3B82F6', college: '#8B5CF6', government: '#F59E0B', salon: '#EC4899' };
+    const colors = { hospital: '#EF4444', college: '#8B5CF6', salon: '#EC4899' };
     return colors[service.toLowerCase()] || '#10B981';
   };
 

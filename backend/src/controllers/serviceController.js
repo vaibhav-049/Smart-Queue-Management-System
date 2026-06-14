@@ -22,15 +22,6 @@ const getServices = async (req, res, next) => {
           avgServiceTime: 10,
         },
         {
-          id: 'bank',
-          name: 'Bank',
-          icon: '🏦',
-          color: '#3B82F6',
-          description: 'Queue for banking services, account operations, and loans',
-          prefix: 'B',
-          avgServiceTime: 12,
-        },
-        {
           id: 'college',
           name: 'College Office',
           icon: '🎓',
@@ -38,15 +29,6 @@ const getServices = async (req, res, next) => {
           description: 'Student services, transcript requests, and admissions',
           prefix: 'C',
           avgServiceTime: 15,
-        },
-        {
-          id: 'government',
-          name: 'Government Office',
-          icon: '🏛️',
-          color: '#F59E0B',
-          description: 'Government document processing, permits, and licenses',
-          prefix: 'G',
-          avgServiceTime: 20,
         },
         {
           id: 'salon',
