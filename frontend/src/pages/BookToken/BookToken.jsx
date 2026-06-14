@@ -298,19 +298,19 @@ export default function BookToken() {
                     {selectedService.id === 'hospital' && (
                       <>
                         <option value="Senior Citizen">Senior Citizen (60+)</option>
-                        <option value="VIP">VIP</option>
+                        {user?.isVip && <option value="VIP">VIP</option>}
                         <option value="Emergency">Emergency</option>
                       </>
                     )}
                     {selectedService.id === 'salon' && (
                       <>
-                        <option value="VIP">VIP</option>
+                        {user?.isVip && <option value="VIP">VIP</option>}
                         <option value="Emergency">Emergency</option>
                       </>
                     )}
                     {selectedService.id === 'college' && (
                       <>
-                        <option value="VIP">VIP</option>
+                        {user?.isVip && <option value="VIP">VIP</option>}
                       </>
                     )}
                   </select>
