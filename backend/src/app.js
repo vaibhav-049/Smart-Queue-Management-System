@@ -36,12 +36,12 @@ app.use(
       // Allow requests with no origin (like mobile apps, curl)
       if (!origin) return callback(null, true);
       
-      // In development, allow any origin (e.g. local IP network for mobile testing)
+      // In development, allow any origin
       if (process.env.NODE_ENV === 'development') {
         return callback(null, true);
       }
       
-      if (allowedOrigins.indexOf(origin) !== -1) {
+      if (allowedOrigins.includes('*') || allowedOrigins.indexOf(origin) !== -1 || origin.includes('vercel.app')) {
         return callback(null, true);
       } else {
         return callback(new Error('Not allowed by CORS'));
