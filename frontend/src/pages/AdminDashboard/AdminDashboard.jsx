@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useServices } from '../../hooks/useServices';
 import { initiateSocket, getSocket } from '../../services/socket';
 import api from '../../services/api';
+import { getCached, setCache } from '../../utils/apiCache';
 import StatsCard from '../../components/StatsCard/StatsCard';
 import PriorityBadge from '../../components/PriorityBadge/PriorityBadge';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
@@ -53,14 +54,21 @@ export default function AdminDashboard() {
 
   // Fetch Dashboard Analytics
   const fetchAnalytics = useCallback(async () => {
+    const cachedAnalytics = getCached('admin-analytics');
+    if (cachedAnalytics) {
+      setAnalytics(cachedAnalytics);
+      setLoading(false);
+    }
+
     try {
       const response = await api.get('/admin/analytics');
       if (response.data && response.data.success) {
         setAnalytics(response.data.data);
+        setCache('admin-analytics', response.data.data, 2 * 60 * 1000); // 2 min TTL
       }
     } catch (err) {
       console.error('Error fetching admin analytics:', err);
-      toast.error('Failed to load analytics dashboard');
+      if (!cachedAnalytics) toast.error('Failed to load analytics dashboard');
     } finally {
       setLoading(false);
     }
@@ -69,10 +77,17 @@ export default function AdminDashboard() {
   // Fetch detailed service queue state
   const fetchServiceQueue = useCallback(async () => {
     if (!selectedService) return;
+    const cacheKey = `queue-status-${selectedService}`;
+    const cachedQueue = getCached(cacheKey);
+    if (cachedQueue) {
+      setServiceQueue(cachedQueue);
+    }
+
     try {
       const response = await api.get(`/queues/${selectedService}/status`);
       if (response.data && response.data.success) {
         setServiceQueue(response.data.data);
+        setCache(cacheKey, response.data.data, 2 * 60 * 1000); // 2 min TTL
       }
     } catch (err) {
       console.error('Error fetching service queue details:', err);
