@@ -83,20 +83,10 @@ export default function Home() {
           <div className="hero-shape shape-3" />
         </div>
         <div className="hero-container centered-hero">
-          <m.div
-            className="hero-content"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: 'easeOut' }}
-          >
-            <m.span
-              className="hero-badge"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.3 }}
-            >
+          <div className="hero-content">
+            <span className="hero-badge">
               ⚡ Next-Gen Queue Management
-            </m.span>
+            </span>
             <h1 className="hero-title">
               Smart Queue<br />
               <span className="hero-gradient-text">Management System</span>
@@ -119,38 +109,26 @@ export default function Home() {
                 Learn More
               </a>
             </div>
-          </m.div>
+          </div>
         </div>
       </section>
 
       {/* Features Section */}
       <section className="features-section" id="features">
         <div className="section-container">
-          <m.div
-            className="section-header"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
+          <div className="section-header">
             <span className="section-tag">Features</span>
             <h2 className="section-title">Everything you need to manage queues</h2>
             <p className="section-desc">Powerful features designed to streamline queue management and enhance customer experience.</p>
-          </m.div>
+          </div>
 
           <div className="features-grid">
             {features.map((feature) => (
-              <m.div
-                key={feature.title}
-                className="feature-card"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                whileHover={{ y: -8, boxShadow: '0 20px 60px rgba(0,0,0,0.1)' }}
-              >
+              <div key={feature.title} className="feature-card">
                 <div className="feature-icon">{feature.icon}</div>
                 <h3>{feature.title}</h3>
                 <p>{feature.desc}</p>
-              </m.div>
+              </div>
             ))}
           </div>
         </div>
