@@ -55,6 +55,10 @@ npm run dev
 ```
 Frontend runs at `http://localhost:5173/`.
 
+### Live Deployments
+- **Frontend (Vercel)**: Live React SPA routing and environment variables configured for production.
+- **Backend (Render)**: Live Node.js API with CORS configured to accept the Vercel frontend.
+
 ## 🛠️ Tech Stack
 
 ### Frontend
