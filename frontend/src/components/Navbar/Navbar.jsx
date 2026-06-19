@@ -83,9 +83,11 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
         {/* Left: Logo + Menu Toggle */}
         <div className="navbar-left">
           {isDashboard && (
-            <button type="button" className="sidebar-toggle" onClick={onMenuToggle} aria-label="Toggle sidebar">
-              {isSidebarOpen ? <FiX size={20} /> : <FiMenu size={20} />}
-            </button>
+            <Tooltip text={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}>
+              <button type="button" className="sidebar-toggle" onClick={onMenuToggle} aria-label="Toggle sidebar">
+                {isSidebarOpen ? <FiX size={20} /> : <FiMenu size={20} />}
+              </button>
+            </Tooltip>
           )}
           <Link to={user ? (user.role === 'admin' ? '/admin' : '/book-token') : '/'} className="navbar-logo">
             <span className="logo-icon">⚡</span>
@@ -210,19 +212,21 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
           {/* Profile Dropdown */}
           {(isDashboard || user) && (
             <div className="profile-wrapper" ref={profileRef}>
-              <button
-                type="button"
-                className="profile-trigger"
-                onClick={(e) => { e.stopPropagation(); setShowProfile(p => !p); setShowNotifications(false); }}
-              >
-                <div className="avatar-sm">
-                  {user?.name ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'U'}
-                </div>
-                <span className="profile-name navbar-profile-name">
-                  {user?.name ? user.name.split(' ')[0] : 'User'}
-                </span>
-                <FiChevronDown size={14} className={`chevron ${showProfile ? 'rotated' : ''}`} />
-              </button>
+              <Tooltip text="User Account">
+                <button
+                  type="button"
+                  className="profile-trigger"
+                  onClick={(e) => { e.stopPropagation(); setShowProfile(p => !p); setShowNotifications(false); }}
+                >
+                  <div className="avatar-sm">
+                    {user?.name ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase() : 'U'}
+                  </div>
+                  <span className="profile-name navbar-profile-name">
+                    {user?.name ? user.name.split(' ')[0] : 'User'}
+                  </span>
+                  <FiChevronDown size={14} className={`chevron ${showProfile ? 'rotated' : ''}`} />
+                </button>
+              </Tooltip>
               <AnimatePresence>
                 {showProfile && (
                   <m.div
@@ -253,9 +257,11 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
 
           {/* Mobile Menu Toggle (Public) */}
           {!isDashboard && (
-            <button type="button" className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-              {mobileMenuOpen ? <FiX size={22} /> : <FiMenu size={22} />}
-            </button>
+            <Tooltip text={mobileMenuOpen ? "Close Menu" : "Open Menu"}>
+              <button type="button" className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                {mobileMenuOpen ? <FiX size={22} /> : <FiMenu size={22} />}
+              </button>
+            </Tooltip>
           )}
         </div>
       </div>

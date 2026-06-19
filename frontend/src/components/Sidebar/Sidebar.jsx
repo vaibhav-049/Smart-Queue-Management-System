@@ -2,6 +2,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { m, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import Tooltip from '../common/Tooltip';
 import {
   FiGrid, FiBookOpen, FiList, FiTag, FiBarChart2,
   FiUser, FiActivity, FiX, FiCamera
@@ -53,9 +54,11 @@ export default function Sidebar({ isOpen, onClose }) {
       >
         <div className="sidebar-header">
           <span className="sidebar-title">Navigation</span>
-          <button type="button" className="sidebar-close" onClick={onClose}>
-            <FiX size={20} />
-          </button>
+          <Tooltip text="Close Menu" position="right">
+            <button type="button" className="sidebar-close" onClick={onClose}>
+              <FiX size={20} />
+            </button>
+          </Tooltip>
         </div>
 
         <nav className="sidebar-nav">
