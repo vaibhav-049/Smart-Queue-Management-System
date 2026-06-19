@@ -1938,6 +1938,27 @@ input, select, textarea {
   background: #f1f5f9;
 }
 
+.cta-actions .btn-ghost-lg {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 2rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  color: #fff;
+  background: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.25s ease;
+}
+
+.cta-actions .btn-ghost-lg:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: #fff;
+}
+
 .cta-features {
   display: flex;
   justify-content: center;
