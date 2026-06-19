@@ -85,13 +85,8 @@ const recalculateQueue = async (service, bookingDate) => {
       // Set token's wait time based on accumulated time of tokens ahead
       token.waitTime = accumulatedWait;
       
-      // AI No-Show Probability: Reduce added time for the *next* person if this token has a long wait
-      let noShowProb = 0;
-      if (accumulatedWait > 60) noShowProb = 0.2; // 20% chance they leave
-      if (accumulatedWait > 120) noShowProb = 0.3; // 30% chance they leave
-
-      // Add this token's expected time (discounted by its no-show prob) to the total accumulated wait
-      accumulatedWait += Math.round(avgServiceTime * (1 - noShowProb));
+      // Add this token's expected time to the total accumulated wait
+      accumulatedWait += avgServiceTime;
       
       await token.save();
 
@@ -112,22 +107,6 @@ const recalculateQueue = async (service, bookingDate) => {
           read: false,
           type: 'alert',
         });
-      }
-
-      // "Leave Now" Smart Notification (Time drops <= 30 mins)
-      if (token.waitTime <= 30 && prevWaitTime > 30 && targetDate === todayStr) {
-        emitUserNotification(token.userId, {
-          id: Math.random().toString(),
-          title: 'Time to leave!',
-          message: `Your token ${token.displayId} has an estimated wait of ${token.waitTime} mins. You should start heading to the branch.`,
-          time: 'Just now',
-          read: false,
-          type: 'alert',
-        });
-        
-        // If whatsappService is implemented, we can trigger it here:
-        // const { sendWhatsAppMessage } = require('./whatsappService');
-        // sendWhatsAppMessage(token.phone, `SmartQueue Alert: It's time to leave! Your token ${token.displayId} has an estimated wait of ${token.waitTime} mins.`);
       }
 
       pos++;

@@ -404,9 +404,8 @@ Queue ordering rules:
 - Priority ranking: emergency, senior, VIP, normal.
 - **Dynamic Queue Aging (Anti-Starvation)**: Effective priority rank increases by 1 for every 45 minutes a token has been waiting, preventing normal tokens from starvation.
 - Serving tokens get wait time `0`.
-- Waiting token wait time is iteratively calculated. **No-Show Probability** discounts the expected time of tokens by 20% if the accumulated wait > 60 mins, and 30% if > 120 mins.
+- Waiting token wait time is iteratively calculated based on the accumulated expected service times of tokens ahead in the queue.
 - **Smart Load Balancing (Branch Suggestion)**: The Token Booking UI checks the `/api/queues/recommendation` endpoint to recommend alternative branches saving at least 20 minutes if current branch wait times are too high.
-- **"Leave Now" Smart Alerts**: Emits a high-priority user socket notification and triggers SMS/WhatsApp alerts when a user's estimated wait time falls to `<= 30 mins` to account for travel time.
 - The matching `Queue` document is updated with `currentServing`, `upcoming`, `totalInQueue`, `avgWait`.
 - Socket events notify queue screens and individual users.
 

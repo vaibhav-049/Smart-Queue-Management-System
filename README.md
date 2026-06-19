@@ -107,9 +107,7 @@ Frontend runs at `http://localhost:5173/`.
 - 🛡️ **Hardened Security Layer**: 10kb strict JSON payload limits, XSS (Cross-Site Scripting) protection, NoSQL injection sanitization, and 5-attempt/15min Auth Rate Limiting. All secrets managed strictly via environment variables.
 - 🤖 **Advanced AI Prediction**:
   - **Dynamic Queue Aging (Anti-Starvation)**: Automatically bumps priority for normal tokens waiting significantly longer than expected.
-  - **No-Show Probability Discounting**: Iterative reduction in predicted wait time for later tokens based on drop-off probability of extremely long waits.
   - **Smart Load Balancing**: Automatically recommends less busy branches for the same service if wait times exceed optimal thresholds.
-  - **"Leave Now" Smart Alerts**: Push notifications alerting users when their dynamic wait time drops to standard travel time thresholds.
 
 ## 👨‍💻 Author
 Vaibhav Rajput
