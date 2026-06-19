@@ -9,6 +9,7 @@ const generateToken = (id) => {
 };
 
 const OTP = require('../models/OTP');
+const AdminInviteCode = require('../models/AdminInviteCode');
 const { sendOTPEmail } = require('../services/emailService');
 
 // Helper to generate 6-digit OTP
@@ -37,12 +38,20 @@ const registerUser = async (req, res, next) => {
         res.status(400);
         throw new Error('Invalid service selection');
       }
-      if (!process.env.ADMIN_ACCESS_CODE) {
-        return res.status(500).json({ success: false, message: 'Server configuration error: Admin registration is disabled.' });
-      }
-
-      if (accessCode !== process.env.ADMIN_ACCESS_CODE) {
-        return res.status(401).json({ success: false, message: 'Invalid Admin Access Code' });
+      // Validate access code (check ENV first for Super Admin fallback, else check DB)
+      if (accessCode === process.env.ADMIN_ACCESS_CODE) {
+        // Allowed fallback
+      } else {
+        const inviteCode = await AdminInviteCode.findOne({ code: accessCode, isUsed: false });
+        if (!inviteCode) {
+          return res.status(401).json({ success: false, message: 'Invalid or already used Admin Access Code' });
+        }
+        if (inviteCode.service !== service.toLowerCase()) {
+          return res.status(400).json({ success: false, message: `This invite code is for the ${inviteCode.service} service, not ${service}.` });
+        }
+        if (new Date() > inviteCode.expiresAt) {
+          return res.status(400).json({ success: false, message: 'This invite code has expired.' });
+        }
       }
     }
 
@@ -62,7 +71,7 @@ const registerUser = async (req, res, next) => {
       email,
       otp: otpCode,
       type: 'register',
-      userData: { name, email, phone, password, role: role || 'user', service: service || null } // Store temporarily
+      userData: { name, email, phone, password, role: role || 'user', service: service || null, accessCode } // Store temporarily
     });
 
     // Send email
@@ -98,7 +107,7 @@ const verifyOTPAndRegister = async (req, res, next) => {
       throw new Error('Invalid or expired OTP');
     }
 
-    const { name, phone, password, role, service } = otpRecord.userData;
+    const { name, phone, password, role, service, accessCode } = otpRecord.userData;
 
     // Double check user doesn't exist
     const userExists = await User.findOne({ email });
@@ -116,6 +125,14 @@ const verifyOTPAndRegister = async (req, res, next) => {
       role: role || 'user',
       service: service || null
     });
+
+    // Mark one-time code as used
+    if (role === 'admin' && accessCode && accessCode !== process.env.ADMIN_ACCESS_CODE) {
+      await AdminInviteCode.findOneAndUpdate(
+        { code: accessCode },
+        { isUsed: true, usedBy: user._id }
+      );
+    }
 
     // Delete the OTP record so it can't be reused
     await OTP.deleteOne({ _id: otpRecord._id });

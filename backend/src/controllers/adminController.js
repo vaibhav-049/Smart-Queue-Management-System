@@ -2,6 +2,7 @@ const Token = require('../models/Token');
 const Queue = require('../models/Queue');
 const Service = require('../models/Service');
 const User = require('../models/User');
+const AdminInviteCode = require('../models/AdminInviteCode');
 const { recalculateQueue } = require('../services/queueManager');
 const { sendTokenAlerts } = require('../services/alertService');
 const { emitUserNotification, emitQueueUpdate, emitTokenCalled, emitQueueCompleted } = require('../config/socket');
@@ -694,6 +695,70 @@ const serveScannedToken = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Generate a new one-time Admin Invite Code
+ * @route   POST /api/admin/invite-codes
+ * @access  Private (Super Admin Only)
+ */
+const generateInviteCode = async (req, res, next) => {
+  try {
+    // Only Super Admin can generate codes
+    if (req.user.role !== 'admin' || req.user.service) {
+      res.status(403);
+      throw new Error('Access denied: Only Super Admin can generate invite codes.');
+    }
+
+    const { service } = req.body;
+    if (!service || !['hospital', 'college', 'salon'].includes(service.toLowerCase())) {
+      res.status(400);
+      throw new Error('Please provide a valid service (hospital, college, salon)');
+    }
+
+    // Generate random 6-character code
+    const rawCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const code = `${service.substring(0, 4).toUpperCase()}-${rawCode}`;
+
+    const inviteCode = await AdminInviteCode.create({
+      code,
+      service: service.toLowerCase(),
+      createdBy: req.user._id,
+    });
+
+    res.status(201).json({
+      success: true,
+      data: inviteCode,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get all Admin Invite Codes
+ * @route   GET /api/admin/invite-codes
+ * @access  Private (Super Admin Only)
+ */
+const getInviteCodes = async (req, res, next) => {
+  try {
+    if (req.user.role !== 'admin' || req.user.service) {
+      res.status(403);
+      throw new Error('Access denied: Only Super Admin can view invite codes.');
+    }
+
+    const codes = await AdminInviteCode.find()
+      .populate('usedBy', 'name email')
+      .populate('createdBy', 'name')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      data: codes,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   callNextToken,
   skipToken,
@@ -703,4 +768,6 @@ module.exports = {
   getAnalytics,
   verifyScannedToken,
   serveScannedToken,
+  generateInviteCode,
+  getInviteCodes,
 };

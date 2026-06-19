@@ -12,6 +12,7 @@ import PriorityBadge from '../../components/PriorityBadge/PriorityBadge';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import { FiTag, FiList, FiUsers, FiClock, FiCheckCircle, FiXCircle, FiPlay, FiAlertCircle, FiSettings } from 'react-icons/fi';
 import toast from 'react-hot-toast';
+import InviteCodesPanel from './InviteCodesPanel';
 
 const AdminCharts = lazy(() => import('./AdminCharts'));
 
@@ -508,6 +509,11 @@ export default function AdminDashboard() {
           ))}
         </div>
       </m.div>
+
+      {/* Super Admin Invite Codes Panel */}
+      {!user?.service && (
+        <InviteCodesPanel />
+      )}
     </div>
   );
 }
