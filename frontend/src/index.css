@@ -3529,9 +3529,8 @@ input, select, textarea {
    LOADING SKELETONS
    ================================================================= */
 .skeleton-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 1.5rem;
+  width: 100%;
+  height: 100%;
 }
 .skeleton-card,
 .skeleton-chart,
@@ -3539,20 +3538,23 @@ input, select, textarea {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 1.25rem;
+  padding: 1.5rem;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .skeleton-line {
   background: linear-gradient(
     90deg,
-    var(--bg-secondary) 25%,
+    var(--bg-secondary) 0%,
     var(--border) 50%,
-    var(--bg-secondary) 75%
+    var(--bg-secondary) 100%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
+  animation: shimmer 2s infinite linear;
   border-radius: 6px;
-  gap: 0.5rem;
 }
 
 @keyframes shimmer {
@@ -3604,12 +3606,12 @@ input, select, textarea {
   flex: 1;
   background: linear-gradient(
     90deg,
-    var(--bg-secondary) 25%,
+    var(--bg-secondary) 0%,
     var(--border) 50%,
-    var(--bg-secondary) 75%
+    var(--bg-secondary) 100%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
+  animation: shimmer 2s infinite linear;
   border-radius: 4px 4px 0 0;
 }
 
