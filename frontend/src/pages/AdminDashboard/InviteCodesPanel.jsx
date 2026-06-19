@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { m } from 'framer-motion';
 import { FiPlus, FiCopy, FiCheck, FiKey } from 'react-icons/fi';
 import toast from 'react-hot-toast';
-import api from '../../../services/api';
-import PriorityBadge from '../../../components/PriorityBadge/PriorityBadge';
+import api from '../../services/api';
+import PriorityBadge from '../../components/PriorityBadge/PriorityBadge';
 
 export default function InviteCodesPanel() {
   const [codes, setCodes] = useState([]);
