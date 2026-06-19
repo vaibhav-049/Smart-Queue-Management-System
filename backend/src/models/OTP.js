@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const otpSchema = new mongoose.Schema(
   {
@@ -13,7 +14,7 @@ const otpSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ['register', 'reset_password'],
+      enum: ['register', 'reset_password', 'change_password'],
       required: true,
     },
     // Temporarily store user data during registration
@@ -28,6 +29,21 @@ const otpSchema = new mongoose.Schema(
     },
   }
 );
+
+// Hash OTP before saving
+otpSchema.pre('save', async function (next) {
+  if (!this.isModified('otp')) {
+    return next();
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.otp = await bcrypt.hash(this.otp, salt);
+  next();
+});
+
+// Method to verify OTP
+otpSchema.methods.compareOTP = async function (enteredOTP) {
+  return await bcrypt.compare(enteredOTP, this.otp);
+};
 
 const OTP = mongoose.model('OTP', otpSchema);
 module.exports = OTP;

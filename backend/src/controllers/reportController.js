@@ -125,15 +125,46 @@ const getDailyReport = async (req, res, next) => {
  */
 const getWeeklyReport = async (req, res, next) => {
   try {
-    const dailyQueueData = [
-      { day: 'Mon', tokens: 180, waitTime: 12 },
-      { day: 'Tue', tokens: 220, waitTime: 15 },
-      { day: 'Wed', tokens: 195, waitTime: 11 },
-      { day: 'Thu', tokens: 250, waitTime: 18 },
-      { day: 'Fri', tokens: 310, waitTime: 20 },
-      { day: 'Sat', tokens: 275, waitTime: 16 },
-      { day: 'Sun', tokens: 140, waitTime: 8 },
-    ];
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    const matchStage = {
+      createdAt: { $gte: sevenDaysAgo }
+    };
+    if (req.user && req.user.service) {
+      matchStage.service = req.user.service.toLowerCase();
+    }
+
+    const aggregation = await Token.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: { $dayOfWeek: "$createdAt" },
+          tokens: { $sum: 1 },
+          avgWaitTime: { $avg: "$waitTime" }
+        }
+      }
+    ]);
+
+    // Map dayOfWeek (1=Sun, 2=Mon...7=Sat) to string labels
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const dailyQueueData = [];
+    
+    // Build rolling 7 days ending today
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dayIndex = d.getDay(); // 0-6 (Sun-Sat)
+      
+      // MongoDB $dayOfWeek is 1-7 (1=Sun, 7=Sat)
+      const found = aggregation.find(a => a._id === (dayIndex + 1));
+      dailyQueueData.push({
+        day: days[dayIndex],
+        tokens: found ? found.tokens : 0,
+        waitTime: found && found.avgWaitTime ? Math.round(found.avgWaitTime) : 0
+      });
+    }
 
     res.status(200).json({
       success: true,
@@ -151,14 +182,44 @@ const getWeeklyReport = async (req, res, next) => {
  */
 const getMonthlyReport = async (req, res, next) => {
   try {
-    const monthlyData = [
-      { month: 'Jan', tokens: 3200 },
-      { month: 'Feb', tokens: 3800 },
-      { month: 'Mar', tokens: 4100 },
-      { month: 'Apr', tokens: 3900 },
-      { month: 'May', tokens: 4500 },
-      { month: 'Jun', tokens: 4200 },
-    ];
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+    sixMonthsAgo.setHours(0, 0, 0, 0);
+
+    const matchStage = {
+      createdAt: { $gte: sixMonthsAgo }
+    };
+    if (req.user && req.user.service) {
+      matchStage.service = req.user.service.toLowerCase();
+    }
+
+    const aggregation = await Token.aggregate([
+      { $match: matchStage },
+      {
+        $group: {
+          _id: { month: { $month: "$createdAt" }, year: { $year: "$createdAt" } },
+          tokens: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthlyData = [];
+    
+    // Build rolling 6 months ending this month
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      const monthNum = d.getMonth() + 1; // 1-12
+      const yearNum = d.getFullYear();
+      
+      const found = aggregation.find(a => a._id.month === monthNum && a._id.year === yearNum);
+      monthlyData.push({
+        month: months[monthNum - 1],
+        tokens: found ? found.tokens : 0
+      });
+    }
 
     res.status(200).json({
       success: true,

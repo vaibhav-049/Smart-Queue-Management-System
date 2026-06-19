@@ -101,8 +101,14 @@ const verifyOTPAndRegister = async (req, res, next) => {
     }
 
     // Find the OTP record
-    const otpRecord = await OTP.findOne({ email, otp, type: 'register' });
+    const otpRecord = await OTP.findOne({ email, type: 'register' });
     if (!otpRecord) {
+      res.status(400);
+      throw new Error('Invalid or expired OTP');
+    }
+
+    const isMatch = await otpRecord.compareOTP(otp);
+    if (!isMatch) {
       res.status(400);
       throw new Error('Invalid or expired OTP');
     }
@@ -276,8 +282,14 @@ const resetPassword = async (req, res, next) => {
       throw new Error('Please provide email, OTP, and new password');
     }
 
-    const otpRecord = await OTP.findOne({ email, otp, type: 'reset_password' });
+    const otpRecord = await OTP.findOne({ email, type: 'reset_password' });
     if (!otpRecord) {
+      res.status(400);
+      throw new Error('Invalid or expired OTP');
+    }
+
+    const isMatch = await otpRecord.compareOTP(otp);
+    if (!isMatch) {
       res.status(400);
       throw new Error('Invalid or expired OTP');
     }
