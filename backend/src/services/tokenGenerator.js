@@ -1,24 +1,25 @@
 const Token = require('../models/Token');
 
+const Counter = require('../models/Counter');
+
 /**
  * Generates a unique display ID for a token resetting daily (e.g., A001, A002)
  * @param {string} service - Service slug (e.g., 'hospital')
  * @param {string} prefix - Service token prefix (e.g., 'A')
+ * @param {string} bookingDate - Target date (e.g. '2023-10-15')
  * @returns {Promise<{displayId: string, sequenceNumber: number}>}
  */
 const generateTokenId = async (service, prefix, bookingDate) => {
-  // Find the token with the highest sequence number for this service on this specific booking date
-  const lastTokenToday = await Token.findOne({
-    service,
-    bookingDate,
-  })
-    .sort({ sequenceNumber: -1 })
-    .select('sequenceNumber');
+  // Use atomic counter to prevent race conditions during concurrent bookings
+  const counterId = `token_${service}_${bookingDate}`;
+  
+  const counter = await Counter.findOneAndUpdate(
+    { id: counterId },
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  );
 
-  let nextSequence = 1;
-  if (lastTokenToday && lastTokenToday.sequenceNumber) {
-    nextSequence = lastTokenToday.sequenceNumber + 1;
-  }
+  const nextSequence = counter.seq;
 
   // Format sequence number as 3 digits (e.g. 001, 045, 120)
   const paddedSeq = String(nextSequence).padStart(3, '0');

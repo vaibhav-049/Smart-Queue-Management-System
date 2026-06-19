@@ -152,6 +152,19 @@ const bookToken = async (req, res, next) => {
       priorityTier = 'vip';
     }
 
+    // 2.4 User Level Limit: Prevent Queue Flooding (DoS)
+    const activeTokensCount = await Token.countDocuments({
+      userId: req.user._id,
+      service: serviceSlug,
+      bookingDate,
+      status: 'waiting'
+    });
+
+    if (activeTokensCount >= 2) {
+      res.status(429); // Too Many Requests
+      throw new Error('Anti-Spam Limit: You can only have a maximum of 2 active waiting tokens per service on a given day. Please wait or cancel an existing token.');
+    }
+
     // 2.5 Apply Limits for VIP and Senior Citizen
     if (['vip', 'senior'].includes(priorityTier)) {
       // Exclude cancelled tokens from the count
