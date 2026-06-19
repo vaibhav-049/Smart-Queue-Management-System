@@ -2,15 +2,31 @@ const mongoose = require('mongoose');
 const User = require('../models/User');
 const Service = require('../models/Service');
 const Queue = require('../models/Queue');
+const Branch = require('../models/Branch');
 const { getLocalDateString } = require('../utils/dateUtils');
 
 const seedDatabase = async () => {
   try {
+    // 0. Seed Branches
+    const defaultBranches = [
+      { id: 'main', name: 'Main Campus / Head Office', location: 'City Center' },
+      { id: 'north', name: 'North Branch', location: 'North District' },
+    ];
+
+    for (const branch of defaultBranches) {
+      const exists = await Branch.findOne({ id: branch.id });
+      if (!exists) {
+        await Branch.create(branch);
+        console.log(`Seeded Branch: ${branch.name}`);
+      }
+    }
+
     // 1. Seed Services
     const defaultServices = [
       {
         id: 'hospital',
         name: 'Hospital',
+        branchId: 'main',
         icon: '🏥',
         color: '#EF4444',
         description: 'Book tokens for hospital OPD, lab tests, and consultations',
@@ -20,6 +36,7 @@ const seedDatabase = async () => {
       {
         id: 'college',
         name: 'College Office',
+        branchId: 'main',
         icon: '🎓',
         color: '#8B5CF6',
         description: 'Student services, transcript requests, and admissions',
@@ -29,11 +46,22 @@ const seedDatabase = async () => {
       {
         id: 'salon',
         name: 'Salon',
+        branchId: 'main',
         icon: '💇',
         color: '#EC4899',
         description: 'Haircuts, styling, spa, and beauty services',
         prefix: 'S',
         avgServiceTime: 25,
+      },
+      {
+        id: 'hospital-north',
+        name: 'Hospital (North)',
+        branchId: 'north',
+        icon: '🏥',
+        color: '#3B82F6',
+        description: 'North Branch OPD & Consultations',
+        prefix: 'HN',
+        avgServiceTime: 10,
       },
     ];
 
@@ -85,7 +113,7 @@ const seedDatabase = async () => {
         name: 'Hospital Staff',
         email: 'hospital_staff@example.com',
         phone: '+91 98765 43211',
-        password: 'admin123',
+        password: process.env.ADMIN_SEED_PASSWORD || 'admin123',
         role: 'admin',
         service: 'hospital', // Hospital Admin
       },
@@ -93,7 +121,7 @@ const seedDatabase = async () => {
         name: 'College Staff',
         email: 'college_staff@example.com',
         phone: '+91 98765 43212',
-        password: 'admin123',
+        password: process.env.ADMIN_SEED_PASSWORD || 'admin123',
         role: 'admin',
         service: 'college', // College Admin
       },
@@ -101,7 +129,7 @@ const seedDatabase = async () => {
         name: 'Salon Staff',
         email: 'salon_staff@example.com',
         phone: '+91 98765 43213',
-        password: 'admin123',
+        password: process.env.ADMIN_SEED_PASSWORD || 'admin123',
         role: 'admin',
         service: 'salon', // Salon Admin
       },

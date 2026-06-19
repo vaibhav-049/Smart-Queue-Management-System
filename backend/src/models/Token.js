@@ -59,6 +59,18 @@ const tokenSchema = new mongoose.Schema(
       max: 5,
       default: null,
     },
+    branchId: {
+      type: String,
+      default: 'main',
+    },
+    servedAt: {
+      type: Date,
+      default: null,
+    },
+    completedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

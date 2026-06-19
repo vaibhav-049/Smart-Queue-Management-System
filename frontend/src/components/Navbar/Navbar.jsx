@@ -5,6 +5,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { getSocket } from '../../services/socket';
 import { FiSun, FiMoon, FiBell, FiMenu, FiX, FiUser, FiLogOut, FiSettings, FiChevronDown } from 'react-icons/fi';
+import Tooltip from '../common/Tooltip';
 import toast from 'react-hot-toast';
 
 const publicLinks = [
@@ -135,29 +136,32 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
         {/* Right: Actions */}
         <div className="navbar-right">
           {/* Theme Toggle */}
-          <m.button
-            type="button"
-            whileTap={{ scale: 0.9 }}
-            className="icon-btn"
-            onClick={toggleDarkMode}
-            aria-label="Toggle dark mode"
-          >
-            <AnimatePresence mode="wait">
-              {darkMode ? (
-                <m.div key="sun" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
-                  <FiSun size={18} />
-                </m.div>
-              ) : (
-                <m.div key="moon" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.2 }}>
-                  <FiMoon size={18} />
-                </m.div>
-              )}
-            </AnimatePresence>
-          </m.button>
+          <Tooltip text={darkMode ? 'Light Mode' : 'Dark Mode'}>
+            <m.button
+              type="button"
+              whileTap={{ scale: 0.9 }}
+              className="icon-btn"
+              onClick={toggleDarkMode}
+              aria-label="Toggle dark mode"
+            >
+              <AnimatePresence mode="wait">
+                {darkMode ? (
+                  <m.div key="sun" initial={{ rotate: -90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: 90, opacity: 0 }} transition={{ duration: 0.2 }}>
+                    <FiSun size={18} />
+                  </m.div>
+                ) : (
+                  <m.div key="moon" initial={{ rotate: 90, opacity: 0 }} animate={{ rotate: 0, opacity: 1 }} exit={{ rotate: -90, opacity: 0 }} transition={{ duration: 0.2 }}>
+                    <FiMoon size={18} />
+                  </m.div>
+                )}
+              </AnimatePresence>
+            </m.button>
+          </Tooltip>
 
           {/* Notifications */}
           {(isDashboard || user) && (
             <div className="notif-wrapper" ref={notifRef}>
+            <Tooltip text="Notifications">
               <m.button
                 type="button"
                 whileTap={{ scale: 0.9 }}
@@ -167,6 +171,7 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
                 <FiBell size={18} />
                 {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
               </m.button>
+            </Tooltip>
               <AnimatePresence>
                 {showNotifications && (
                   <m.div

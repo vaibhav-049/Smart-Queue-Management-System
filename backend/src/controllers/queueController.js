@@ -139,9 +139,74 @@ const getPublicStats = async (req, res, next) => {
   }
 };
 
+/**
+ * @desc    Get alternative branch recommendation for load balancing
+ * @route   GET /api/queues/recommendation?serviceId=xxx
+ * @access  Public
+ */
+const getBranchRecommendation = async (req, res, next) => {
+  try {
+    const { serviceId } = req.query;
+    if (!serviceId) {
+      return res.status(400).json({ success: false, message: 'serviceId is required' });
+    }
+
+    const currentService = await Service.findOne({ id: serviceId });
+    if (!currentService) {
+      return res.status(404).json({ success: false, message: 'Service not found' });
+    }
+
+    // Find other services with the exact same name but different branch
+    const alternativeServices = await Service.find({ 
+      name: currentService.name, 
+      id: { $ne: currentService.id } 
+    });
+
+    if (alternativeServices.length === 0) {
+      return res.status(200).json({ success: true, data: null });
+    }
+
+    // Fetch queue wait times for all alternative services
+    const serviceIds = alternativeServices.map(s => s.id);
+    const queues = await Queue.find({ service: { $in: serviceIds } });
+
+    // Current service wait time
+    const currentQueue = await Queue.findOne({ service: currentService.id });
+    const currentWait = currentQueue ? (currentQueue.totalInQueue * currentQueue.avgWait) : 0;
+
+    let bestAlternative = null;
+    let lowestWait = currentWait;
+
+    for (const altService of alternativeServices) {
+      const q = queues.find(q => q.service === altService.id);
+      const altWait = q ? (q.totalInQueue * q.avgWait) : 0;
+      
+      // If the alternative has at least 20 mins less waiting time, consider it a better option
+      if (altWait < lowestWait - 20) {
+        lowestWait = altWait;
+        bestAlternative = {
+          serviceId: altService.id,
+          branchId: altService.branchId,
+          waitTime: altWait,
+          timeSaved: currentWait - altWait
+        };
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      data: bestAlternative
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getQueuesStatus,
   getServiceQueueStatus,
   getLiveQueue,
   getPublicStats,
+  getBranchRecommendation,
 };

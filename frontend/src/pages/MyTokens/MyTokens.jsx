@@ -5,6 +5,7 @@ import { getSocket } from '../../services/socket';
 import api from '../../services/api';
 import TokenCard from '../../components/TokenCard/TokenCard';
 import QRCodeCard from '../../components/QRCodeCard/QRCodeCard';
+import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import toast from 'react-hot-toast';
 import { FiStar } from 'react-icons/fi';
 
@@ -17,23 +18,23 @@ export default function MyTokens() {
   const [myTokens, setMyTokens] = useState([]);
   const [ratingValue, setRatingValue] = useState(0);
   const [submittingRating, setSubmittingRating] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Submit token rating
   const handleRateToken = async (tokenId, ratingVal) => {
     setSubmittingRating(true);
+    // Optimistic update
+    const prevTokens = [...myTokens];
+    setMyTokens(prev => prev.map(t => t._id === tokenId ? { ...t, rating: ratingVal } : t));
+    setSelectedToken(prev => prev ? { ...prev, rating: ratingVal } : prev);
     try {
       const response = await api.put(`/tokens/${tokenId}/rate`, { rating: ratingVal });
       if (response.data && response.data.success) {
         toast.success('Thank you for rating!');
-        setMyTokens(prev => prev.map(t => {
-          if (t._id === tokenId) {
-            return { ...t, rating: ratingVal };
-          }
-          return t;
-        }));
-        setSelectedToken(prev => ({ ...prev, rating: ratingVal }));
       }
     } catch (err) {
+      // Revert on failure
+      setMyTokens(prevTokens);
       toast.error(err.response?.data?.message || 'Failed to submit rating');
     } finally {
       setSubmittingRating(false);
@@ -54,6 +55,8 @@ export default function MyTokens() {
     } catch (err) {
       console.error('Error fetching tokens:', err);
       toast.error('Failed to load your tokens');
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -89,14 +92,19 @@ export default function MyTokens() {
   // Cancel token booking handler
   const handleCancelToken = async (tokenId) => {
     if (!window.confirm('Are you sure you want to cancel this token booking?')) return;
+    // Optimistic update
+    const prevTokens = [...myTokens];
+    setMyTokens(prev => prev.map(t => t._id === tokenId ? { ...t, status: 'cancelled' } : t));
+    setSelectedToken(null);
     try {
       const response = await api.put(`/tokens/${tokenId}/cancel`);
       if (response.data && response.data.success) {
         toast.success('Token cancelled successfully');
-        setSelectedToken(null);
-        fetchTokens();
+        fetchTokens(); // Full refresh to get updated positions
       }
     } catch (err) {
+      // Revert on failure
+      setMyTokens(prevTokens);
       const errMsg = err.response?.data?.message || 'Failed to cancel token';
       toast.error(errMsg);
     }
@@ -136,6 +144,9 @@ export default function MyTokens() {
 
       {/* Tokens Grid */}
       <div className="tokens-grid">
+        {loading ? (
+          <LoadingSkeleton type="card" count={3} />
+        ) : (
         <AnimatePresence mode="popLayout">
           {filteredTokens.map((token, index) => (
             <m.div
@@ -156,6 +167,7 @@ export default function MyTokens() {
             </m.div>
           ))}
         </AnimatePresence>
+        )}
       </div>
 
       {filteredTokens.length === 0 && (

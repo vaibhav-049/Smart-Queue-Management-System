@@ -3,6 +3,7 @@ const Queue = require('../models/Queue');
 const Service = require('../models/Service');
 const { emitQueueUpdate, emitTokenUpdate, emitUserNotification } = require('../config/socket');
 const { getLocalDateString } = require('../utils/dateUtils');
+const { predictAvgServiceTime } = require('./waitingTimePredictor');
 
 const PRIORITY_RANKS = {
   'Emergency': 4,
@@ -25,9 +26,12 @@ const recalculateQueue = async (service, bookingDate) => {
     const todayStr = getLocalDateString();
     const targetDate = bookingDate || todayStr;
 
-    // 1. Fetch the service profile to get its average service time
+    // 1. Fetch the service profile to get its default average service time
     const serviceInfo = await Service.findOne({ id: service });
-    const avgServiceTime = serviceInfo ? serviceInfo.avgServiceTime : 10;
+    const defaultAvg = serviceInfo ? serviceInfo.avgServiceTime : 10;
+
+    // AI Prediction
+    const avgServiceTime = await predictAvgServiceTime(service, defaultAvg);
 
     // 2. Fetch all active tokens (serving or waiting) for the target bookingDate
     const activeTokens = await Token.find({
@@ -40,12 +44,22 @@ const recalculateQueue = async (service, bookingDate) => {
     const servingTokens = activeTokens.filter(t => t.status === 'serving');
     const waitingTokens = activeTokens.filter(t => t.status === 'waiting');
 
+    // Helper to calculate dynamic effective rank (Anti-Starvation)
+    // Every 45 mins of waiting increases priority rank by 1 (max cap at 4 - Emergency)
+    const calculateEffectiveRank = (token) => {
+      let baseRank = PRIORITY_RANKS[token.priority] || 1;
+      const waitedMinutes = (Date.now() - new Date(token.createdAt).getTime()) / 60000;
+      if (waitedMinutes > 45) baseRank += 1;
+      if (waitedMinutes > 90) baseRank += 1;
+      return Math.min(baseRank, 4);
+    };
+
     // Sort waiting tokens by:
-    // a. Priority Rank descending (Emergency > Senior Citizen > VIP > Normal)
+    // a. Effective Priority Rank descending (Aging applied)
     // b. CreatedAt ascending (FIFO for same priority tier)
     waitingTokens.sort((a, b) => {
-      const rankA = PRIORITY_RANKS[a.priority] || 1;
-      const rankB = PRIORITY_RANKS[b.priority] || 1;
+      const rankA = calculateEffectiveRank(a);
+      const rankB = calculateEffectiveRank(b);
 
       if (rankA !== rankB) {
         return rankB - rankA; // Higher rank first
@@ -63,9 +77,21 @@ const recalculateQueue = async (service, bookingDate) => {
     // 5. Update waiting tokens in the database with their positions and waiting times
     // Position starts from 1 for the first waiting token
     let pos = 1;
+    let accumulatedWait = 0; // Iterative wait time tracker for No-Show probability
+
     for (const token of waitingTokens) {
       const prevWaitTime = token.waitTime;
-      token.waitTime = (pos - 1) * avgServiceTime;
+      
+      // Set token's wait time based on accumulated time of tokens ahead
+      token.waitTime = accumulatedWait;
+      
+      // AI No-Show Probability: Reduce added time for the *next* person if this token has a long wait
+      let noShowProb = 0;
+      if (accumulatedWait > 60) noShowProb = 0.2; // 20% chance they leave
+      if (accumulatedWait > 120) noShowProb = 0.3; // 30% chance they leave
+
+      // Add this token's expected time (discounted by its no-show prob) to the total accumulated wait
+      accumulatedWait += Math.round(avgServiceTime * (1 - noShowProb));
       
       await token.save();
 
@@ -87,6 +113,23 @@ const recalculateQueue = async (service, bookingDate) => {
           type: 'alert',
         });
       }
+
+      // "Leave Now" Smart Notification (Time drops <= 30 mins)
+      if (token.waitTime <= 30 && prevWaitTime > 30 && targetDate === todayStr) {
+        emitUserNotification(token.userId, {
+          id: Math.random().toString(),
+          title: 'Time to leave!',
+          message: `Your token ${token.displayId} has an estimated wait of ${token.waitTime} mins. You should start heading to the branch.`,
+          time: 'Just now',
+          read: false,
+          type: 'alert',
+        });
+        
+        // If whatsappService is implemented, we can trigger it here:
+        // const { sendWhatsAppMessage } = require('./whatsappService');
+        // sendWhatsAppMessage(token.phone, `SmartQueue Alert: It's time to leave! Your token ${token.displayId} has an estimated wait of ${token.waitTime} mins.`);
+      }
+
       pos++;
     }
 

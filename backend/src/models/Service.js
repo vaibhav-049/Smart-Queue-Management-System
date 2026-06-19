@@ -9,6 +9,11 @@ const serviceSchema = new mongoose.Schema(
       trim: true,
       lowercase: true,
     },
+    branchId: {
+      type: String,
+      required: [true, 'Branch ID is required'],
+      lowercase: true,
+    },
     name: {
       type: String,
       required: [true, 'Service name is required'],

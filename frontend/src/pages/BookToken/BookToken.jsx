@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { m, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 import { useServices } from '../../hooks/useServices';
+import { useBranches } from '../../hooks/useBranches';
+import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 
 const timeSlots = [
   '09:00 AM - 10:00 AM',
@@ -39,9 +41,11 @@ import api from '../../services/api';
 export default function BookToken() {
   const { darkMode } = useTheme();
   const { user } = useAuth();
+  const { branches, loading: branchesLoading } = useBranches();
   const { services, loading: servicesLoading } = useServices();
   
   const dateOptions = getDateOptions();
+  const [selectedBranch, setSelectedBranch] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
   const [form, setForm] = useState({
     name: '',
@@ -53,6 +57,7 @@ export default function BookToken() {
   });
   const [generatedToken, setGeneratedToken] = useState(null);
   const [showQR, setShowQR] = useState(false);
+  const [recommendation, setRecommendation] = useState(null);
 
   const getFilteredTimeSlotsForDate = (dateVal) => {
     const todayStr = dateOptions[0].value;
@@ -116,6 +121,16 @@ export default function BookToken() {
     setForm({ ...form, serviceType: service.id });
     setGeneratedToken(null);
     setShowQR(false);
+    setRecommendation(null);
+    
+    // Check for branch recommendations
+    api.get(`/queues/recommendation?serviceId=${service.id}`)
+      .then(res => {
+        if (res.data && res.data.success && res.data.data) {
+          setRecommendation(res.data.data);
+        }
+      })
+      .catch(err => console.error('Error fetching recommendation:', err));
   };
 
   const handleSubmit = async (e) => {
@@ -161,14 +176,57 @@ export default function BookToken() {
         <p>Select a service and fill in your details to get a queue token</p>
       </m.div>
 
-      {/* Service Selection */}
-      <div className="service-selection">
-        <h2 className="section-label">Select Service</h2>
+      {/* Branch Selection */}
+      <div className="service-selection" style={{ marginBottom: '2rem' }}>
+        <h2 className="section-label">1. Select Branch</h2>
         <div className="service-grid">
-          {servicesLoading ? (
-            <p>Loading services...</p>
+          {branchesLoading ? (
+            <LoadingSkeleton type="card" count={2} />
           ) : (
-            services.map((service, index) => (
+            branches.map((branch, index) => (
+              <m.div
+                key={branch.id}
+                className={`service-card ${selectedBranch?.id === branch.id ? 'selected' : ''}`}
+                onClick={() => {
+                  setSelectedBranch(branch);
+                  setSelectedService(null);
+                }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ y: -6, boxShadow: '0 12px 40px rgba(0,0,0,0.1)' }}
+                style={{ '--service-color': '#10B981' }}
+              >
+                <div className="service-card-icon" style={{ background: `#10B98115`, color: '#10B981' }}>
+                  <span style={{ fontSize: '2rem' }}>🏢</span>
+                </div>
+                <h3>{branch.name}</h3>
+                <p>{branch.location}</p>
+                {selectedBranch?.id === branch.id && (
+                  <m.div
+                    className="service-check"
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    style={{ background: '#10B981' }}
+                  >
+                    ✓
+                  </m.div>
+                )}
+              </m.div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Service Selection */}
+      {selectedBranch && (
+        <div className="service-selection">
+          <h2 className="section-label">2. Select Service</h2>
+          <div className="service-grid">
+          {servicesLoading ? (
+            <LoadingSkeleton type="card" count={3} />
+          ) : (
+            services.filter(s => s.branchId === selectedBranch.id).map((service, index) => (
               <m.div
                 key={service.id}
                 className={`service-card ${selectedService?.id === service.id ? 'selected' : ''}`}
@@ -199,6 +257,53 @@ export default function BookToken() {
           )}
         </div>
       </div>
+      )}
+      
+      {/* Smart Load Balancing Recommendation Alert */}
+      {selectedService && recommendation && (
+        <m.div 
+          className="recommendation-alert"
+          initial={{ opacity: 0, y: 10, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          style={{
+            background: 'var(--status-waiting-bg)',
+            border: '1px solid var(--status-waiting)',
+            padding: '1rem',
+            borderRadius: 'var(--radius-md)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            marginTop: '1rem',
+            marginBottom: '1rem'
+          }}
+        >
+          <div>
+            <h4 style={{ color: '#b45309', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>💡</span> High Wait Time Detected
+            </h4>
+            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.9rem', color: '#92400e' }}>
+              This branch is currently busy. You can save <strong>~{recommendation.timeSaved} mins</strong> by booking at the recommended branch instead.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="btn-primary"
+            style={{ whiteSpace: 'nowrap', backgroundColor: '#d97706' }}
+            onClick={() => {
+              const newBranch = branches.find(b => b.id === recommendation.branchId);
+              const newService = services.find(s => s.id === recommendation.serviceId);
+              if (newBranch && newService) {
+                setSelectedBranch(newBranch);
+                handleServiceSelect(newService);
+                toast.success(`Switched to ${newBranch.name} to save time!`);
+              }
+            }}
+          >
+            Switch Branch
+          </button>
+        </m.div>
+      )}
 
       {/* Booking Form + Generated Token */}
       <div className="booking-layout">

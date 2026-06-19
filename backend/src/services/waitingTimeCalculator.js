@@ -1,5 +1,6 @@
 const Token = require('../models/Token');
 const Service = require('../models/Service');
+const { predictAvgServiceTime } = require('./waitingTimePredictor');
 
 const PRIORITY_VALUES = {
   'Emergency': 4,
@@ -22,7 +23,8 @@ const PRIORITY_VALUES = {
 const calculateEstimate = async (service, priority = 'Normal', bookingDate) => {
   try {
     const serviceInfo = await Service.findOne({ id: service.toLowerCase() });
-    const avgServiceTime = serviceInfo ? serviceInfo.avgServiceTime : 10;
+    const defaultAvg = serviceInfo ? serviceInfo.avgServiceTime : 10;
+    const avgServiceTime = await predictAvgServiceTime(service.toLowerCase(), defaultAvg);
 
     // Fetch all currently waiting tokens for this specific booking date
     const query = {

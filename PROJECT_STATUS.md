@@ -14,6 +14,12 @@ Furthermore, we resolved navbar logo logout and guest layout discrepancies by in
 
 The registration UI uses a single password field and verification step. The email service sends registration and password reset OTPs. All live queue operations (call next, skip, complete, QR serve) are date-scoped.
 
+Finally, we have successfully implemented a suite of **Advanced AI Prediction** features to optimize queue flow:
+- **Dynamic Queue Aging (Anti-Starvation):** Normal tokens automatically get priority bumps if they wait 45+ minutes, preventing starvation from VIP influx.
+- **No-Show Probability:** Long wait times dynamically discount the expected wait for subsequent users, drastically improving prediction accuracy for long queues.
+- **Smart Load Balancing:** The Token Booking UI now checks backend recommendation APIs and prompts users to switch to an alternative branch if the selected branch is overly crowded.
+- **"Leave Now" Smart Alerts:** High-priority notifications are emitted when a user's estimated wait time drops to standard travel limits (e.g., 30 mins).
+
 ## Working Tree Snapshot
 
 Modified files observed:
