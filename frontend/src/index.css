@@ -2842,7 +2842,9 @@ input, select, textarea {
   color: var(--text-secondary);
   white-space: nowrap;
   transition: var(--transition);
+  flex-shrink: 0;
 }
+
 
 .filter-tab.active {
   border-color: var(--primary);
