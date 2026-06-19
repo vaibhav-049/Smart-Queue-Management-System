@@ -37,9 +37,12 @@ const registerUser = async (req, res, next) => {
         res.status(400);
         throw new Error('Invalid service selection');
       }
-      if (accessCode !== (process.env.ADMIN_ACCESS_CODE || 'admin123')) {
-        res.status(400);
-        throw new Error('Invalid administrator registration access code');
+      if (!process.env.ADMIN_ACCESS_CODE) {
+        return res.status(500).json({ success: false, message: 'Server configuration error: Admin registration is disabled.' });
+      }
+
+      if (accessCode !== process.env.ADMIN_ACCESS_CODE) {
+        return res.status(401).json({ success: false, message: 'Invalid Admin Access Code' });
       }
     }
 

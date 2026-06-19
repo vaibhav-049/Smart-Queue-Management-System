@@ -105,7 +105,7 @@ const seedDatabase = async () => {
         name: 'Soumya Bansal',
         email: 'soumyabansal184@gmail.com',
         phone: '+91 98765 43210',
-        password: process.env.ADMIN_SEED_PASSWORD || 'admin123',
+        password: process.env.ADMIN_SEED_PASSWORD || (Math.random().toString(36).slice(-10) + 'A1!'),
         role: 'admin',
         service: null, // Super Admin
       },
@@ -113,7 +113,7 @@ const seedDatabase = async () => {
         name: 'Hospital Staff',
         email: 'hospital_staff@example.com',
         phone: '+91 98765 43211',
-        password: process.env.ADMIN_SEED_PASSWORD || 'admin123',
+        password: process.env.ADMIN_SEED_PASSWORD || (Math.random().toString(36).slice(-10) + 'A1!'),
         role: 'admin',
         service: 'hospital', // Hospital Admin
       },
@@ -121,7 +121,7 @@ const seedDatabase = async () => {
         name: 'College Staff',
         email: 'college_staff@example.com',
         phone: '+91 98765 43212',
-        password: process.env.ADMIN_SEED_PASSWORD || 'admin123',
+        password: process.env.ADMIN_SEED_PASSWORD || (Math.random().toString(36).slice(-10) + 'A1!'),
         role: 'admin',
         service: 'college', // College Admin
       },
@@ -129,7 +129,7 @@ const seedDatabase = async () => {
         name: 'Salon Staff',
         email: 'salon_staff@example.com',
         phone: '+91 98765 43213',
-        password: process.env.ADMIN_SEED_PASSWORD || 'admin123',
+        password: process.env.ADMIN_SEED_PASSWORD || (Math.random().toString(36).slice(-10) + 'A1!'),
         role: 'admin',
         service: 'salon', // Salon Admin
       },

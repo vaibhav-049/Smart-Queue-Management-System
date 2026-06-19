@@ -268,7 +268,7 @@ export default function Register() {
                           <input
                             id="access-code"
                             type="password"
-                            placeholder="Enter code (e.g. admin123)"
+                            placeholder="Enter Admin Access Code"
                             value={form.accessCode}
                             onChange={e => setForm({ ...form, accessCode: e.target.value })}
                           />
