@@ -18,6 +18,13 @@ Finally, we have successfully implemented a suite of **Advanced AI Prediction** 
 - **Dynamic Queue Aging (Anti-Starvation):** Normal tokens automatically get priority bumps if they wait 45+ minutes, preventing starvation from VIP influx.
 - **Smart Load Balancing:** The Token Booking UI now checks backend recommendation APIs and prompts users to switch to an alternative branch if the selected branch is overly crowded.
 
+**Final Deployment & Polish Updates:**
+- Both the frontend (Vercel) and backend (Render) are fully deployed and connected.
+- CORS policies and SPA routing fallback configurations (`vercel.json`) have been correctly applied.
+- OTPs are now securely hashed using `bcryptjs` before storage in the database.
+- Admin analytics (weekly/monthly reports) are now powered by live MongoDB `$group` aggregation pipelines instead of dummy data.
+- UI/UX polish has been applied including responsive CSS-grid-based Skeleton Loaders, touch-aware Tooltips, and resolved interceptor issues to prevent false-positive "Session Expired" toasts on login.
+
 ## Working Tree Snapshot
 
 Modified files observed:
@@ -124,40 +131,18 @@ All systems have been fully verified:
 ## Known Risks And Gaps
 
 Authentication and route protection:
-- Dashboard routes such as `/book-token`, `/queue-status`, `/my-tokens`, and `/profile` are under `DashboardLayout`, but only admin routes have an explicit guard in `AppRoutes.jsx`. If `DashboardLayout` does not enforce auth internally, unauthenticated users may reach pages that then fail at API call time.
 - `AuthProvider` uses React 19's `use(AuthContext)` pattern. That matches React 19 dependencies, but it should be verified by build/lint because most existing examples use `useContext`.
 
-Registration and email:
-- Registration now depends on email delivery. Local development needs valid Gmail app credentials or a test mail transport.
-- OTP values are stored as plain strings in MongoDB. This may be acceptable for a student/demo project but would need hashing/rate controls for production.
-
 Queue and service consistency:
-- `db.js` seeds hospital, bank, college, government, and salon.
-- `serviceController.js` fallback seed uses hospital, bank, restaurant, and government. These lists should be unified.
 - Service prefixes in backend README are stale in at least one place; `db.js` is the current source of truth.
-
-Reports and analytics:
-- Daily report reads live data.
-- Weekly and monthly report endpoints currently return static sample data.
-- `Report` model exists but does not appear to be central to report generation yet.
-
-Socket behavior:
-- The frontend sends a token in Socket.io auth, but the backend socket setup does not currently verify socket auth.
-- `emitAdminAction` exists in the frontend socket service, but the backend does not define an `admin-action` listener in `socket.js`.
 
 Testing:
 - There is no formal test framework configured in backend or frontend package scripts.
 - `backend/test_flow.js` is a standalone script and has been updated to fully support the OTP flow.
 - No automated frontend tests are present.
 
-Documentation:
-- Root README has been updated to reflect the implemented backend, OTP verification, security, slot validation, and cleanup systems.
-
 Security and production readiness:
 - Default admin credentials are seeded in code.
-- CORS defaults to `*` when `CORS_ORIGIN` is missing.
-- Rate limiting is global for `/api`, but OTP-specific abuse controls are not obvious.
-- Email errors currently block OTP flows, so a missing email config will break registration/password reset.
 
 ## Recommended Next Steps
 

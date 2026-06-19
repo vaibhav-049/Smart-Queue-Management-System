@@ -389,10 +389,10 @@ Services:
 - Priority values: `normal`, `senior`, `vip`, `emergency`.
 
 `OTP`:
-- Stores email, OTP, type (`register` or `reset_password`), optional temporary registration data, and a 10-minute TTL.
+- Stores email, OTP (hashed via bcrypt), type (`register`, `reset_password`, or `change_password`), optional temporary registration data, and a 10-minute TTL.
 
 `Report`:
-- Defines daily report-like aggregate fields, though most report endpoints currently calculate directly from `Token` or return static sample data.
+- Defines daily report-like aggregate fields, though most report endpoints currently calculate directly from `Token` using live MongoDB aggregation pipelines (`$group`, `$match`).
 
 ## Queue Logic
 
