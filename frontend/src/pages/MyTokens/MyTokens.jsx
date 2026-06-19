@@ -3,6 +3,7 @@ import { m, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 import { getSocket } from '../../services/socket';
 import api from '../../services/api';
+import { getCached, setCache } from '../../utils/apiCache';
 import TokenCard from '../../components/TokenCard/TokenCard';
 import QRCodeCard from '../../components/QRCodeCard/QRCodeCard';
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
@@ -43,6 +44,12 @@ export default function MyTokens() {
 
   // Fetch tokens from backend
   const fetchTokens = useCallback(async () => {
+    const cachedTokens = getCached('my-tokens');
+    if (cachedTokens) {
+      setMyTokens(cachedTokens);
+      setLoading(false);
+    }
+
     try {
       const response = await api.get('/tokens/my-tokens');
       if (response.data && response.data.success) {
@@ -51,10 +58,12 @@ export default function MyTokens() {
           id: t.displayId, // ensures compatibility with TokenCard.id
         }));
         setMyTokens(mapped);
+        setCache('my-tokens', mapped, 2 * 60 * 1000); // 2 min TTL
       }
     } catch (err) {
       console.error('Error fetching tokens:', err);
-      toast.error('Failed to load your tokens');
+      // Only show error if we don't have cached data to show
+      if (!cachedTokens) toast.error('Failed to load your tokens');
     } finally {
       setLoading(false);
     }
