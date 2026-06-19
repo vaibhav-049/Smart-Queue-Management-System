@@ -176,57 +176,14 @@ export default function BookToken() {
         <p>Select a service and fill in your details to get a queue token</p>
       </m.div>
 
-      {/* Branch Selection */}
-      <div className="service-selection" style={{ marginBottom: '2rem' }}>
-        <h2 className="section-label">1. Select Branch</h2>
-        <div className="service-grid">
-          {branchesLoading ? (
-            <LoadingSkeleton type="card" count={2} />
-          ) : (
-            branches.map((branch, index) => (
-              <m.div
-                key={branch.id}
-                className={`service-card ${selectedBranch?.id === branch.id ? 'selected' : ''}`}
-                onClick={() => {
-                  setSelectedBranch(branch);
-                  setSelectedService(null);
-                }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                whileHover={{ y: -6, boxShadow: '0 12px 40px rgba(0,0,0,0.1)' }}
-                style={{ '--service-color': '#10B981' }}
-              >
-                <div className="service-card-icon" style={{ background: `#10B98115`, color: '#10B981' }}>
-                  <span style={{ fontSize: '2rem' }}>🏢</span>
-                </div>
-                <h3>{branch.name}</h3>
-                <p>{branch.location}</p>
-                {selectedBranch?.id === branch.id && (
-                  <m.div
-                    className="service-check"
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    style={{ background: '#10B981' }}
-                  >
-                    ✓
-                  </m.div>
-                )}
-              </m.div>
-            ))
-          )}
-        </div>
-      </div>
-
       {/* Service Selection */}
-      {selectedBranch && (
-        <div className="service-selection">
-          <h2 className="section-label">2. Select Service</h2>
+      <div className="service-selection">
+          <h2 className="section-label">1. Select Service</h2>
           <div className="service-grid">
           {servicesLoading ? (
             <LoadingSkeleton type="card" count={3} />
           ) : (
-            services.filter(s => s.branchId === selectedBranch.id).map((service, index) => (
+            services.map((service, index) => (
               <m.div
                 key={service.id}
                 className={`service-card ${selectedService?.id === service.id ? 'selected' : ''}`}
@@ -257,7 +214,6 @@ export default function BookToken() {
           )}
         </div>
       </div>
-      )}
       
       {/* Smart Load Balancing Recommendation Alert */}
       {selectedService && recommendation && (
