@@ -85,6 +85,8 @@ app.get('/', (req, res) => {
 // Swagger UI Docs Route
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
+const branchRoutes = require('./routes/branchRoutes');
+
 // Mounting API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -95,6 +97,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/branches', branchRoutes);
 
 // Error Handling Middlewares
 app.use(notFound);

@@ -243,12 +243,13 @@ export default function Register() {
                             style={{
                               width: '100%',
                               padding: '12px 16px',
-                              background: 'var(--input-bg, #1e293b)',
-                              border: '1px solid var(--border-color)',
+                              background: 'var(--surface)',
+                              border: '1px solid var(--border)',
                               borderRadius: '8px',
                               color: 'var(--text)',
                               fontSize: '1rem',
-                              outline: 'none'
+                              outline: 'none',
+                              cursor: 'pointer'
                             }}
                           >
                             <option value="">Select a service</option>

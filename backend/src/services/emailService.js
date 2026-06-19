@@ -92,7 +92,83 @@ const sendOTPEmail = async (to, otp, type) => {
   }
 };
 
+/**
+ * Send Queue Status Alert Email
+ * @param {string} to - Recipient email
+ * @param {Object} token - Token details object
+ * @param {string} type - 'booked', 'turn_alert', 'completed', 'cancelled'
+ */
+const sendQueueAlertEmail = async (to, token, type) => {
+  try {
+    let subject = '';
+    let title = '';
+    let message = '';
+    let color = '#3B82F6';
+
+    const { displayId, service, position, waitTime, timeSlot, bookingDate } = token;
+    const dateStr = bookingDate ? new Date(bookingDate).toLocaleDateString() : 'Today';
+
+    switch (type) {
+      case 'booked':
+        subject = `Token Booked - ${displayId} (${service.toUpperCase()})`;
+        title = 'Token Successfully Booked! 🎉';
+        message = `Your token <strong>${displayId}</strong> for the ${service} department has been booked for ${dateStr}${timeSlot ? ' at ' + timeSlot : ''}.<br><br>Your current position is <strong>#${position}</strong> and estimated wait time is <strong>${waitTime} mins</strong>.`;
+        color = '#10B981'; // Green
+        break;
+      case 'turn_alert':
+        subject = `Your turn is NEXT - ${displayId}`;
+        title = 'Get Ready! ⏰';
+        message = `Your token <strong>${displayId}</strong> is next in line for the ${service} department.<br><br>Please proceed to the waiting area or counter immediately.`;
+        color = '#F59E0B'; // Yellow/Orange
+        break;
+      case 'completed':
+        subject = `Service Completed - ${displayId}`;
+        title = 'Thank you for visiting! ✅';
+        message = `Your service for token <strong>${displayId}</strong> has been completed. We hope you had a great experience.<br><br>Have a wonderful day!`;
+        color = '#3B82F6'; // Blue
+        break;
+      case 'cancelled':
+        subject = `Token Cancelled - ${displayId}`;
+        title = 'Token Cancelled ❌';
+        message = `Your token <strong>${displayId}</strong> has been cancelled. If you still need service, please book a new token.`;
+        color = '#EF4444'; // Red
+        break;
+      default:
+        return;
+    }
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+        <h2 style="color: ${color}; text-align: center;">${title}</h2>
+        <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${color};">
+          <p style="margin-top: 0; font-size: 16px; color: #334155; line-height: 1.5;">${message}</p>
+        </div>
+        <p style="color: #64748b; font-size: 14px; text-align: center;">Track your live queue status anytime from the SmartQueue dashboard.</p>
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="${process.env.CORS_ORIGIN === '*' ? 'http://localhost:5173' : process.env.CORS_ORIGIN}/my-tokens" style="background-color: ${color}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">View Live Status</a>
+        </div>
+      </div>
+    `;
+
+    const mailOptions = {
+      from: `"SmartQueue System" <${getEmailConfig().user}>`,
+      to,
+      subject,
+      html,
+    };
+
+    const transporter = createTransporter();
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`Queue Alert Email sent to ${to}: ${info.messageId}`);
+    return true;
+  } catch (error) {
+    console.error('Error sending queue alert email:', error);
+    // Non-blocking error for queue flow
+  }
+};
+
 module.exports = {
   sendOTPEmail,
+  sendQueueAlertEmail,
   verifyEmailConfig,
 };

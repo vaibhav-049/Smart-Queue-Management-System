@@ -23,6 +23,7 @@
     "razorpay": "^2.9.6",
     "socket.io": "^4.7.5",
     "swagger-ui-express": "^5.0.1",
+    "twilio": "^6.0.2",
     "xss-clean": "^0.1.4"
   },
   "devDependencies": {

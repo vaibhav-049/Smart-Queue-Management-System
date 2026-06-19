@@ -19,6 +19,7 @@ import TrackToken from '../pages/TrackToken/TrackToken';
 import ForgotPassword from '../pages/ForgotPassword/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword/ResetPassword';
 import QRScanner from '../pages/QRScanner/QRScanner';
+import TVDisplay from '../pages/TVDisplay/TVDisplay';
 
 function AdminRoute() {
   const { user, loading } = useAuth();
@@ -44,6 +45,9 @@ export default function AppRoutes() {
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/track/:tokenId" element={<TrackToken />} />
         </Route>
+
+        {/* TV Display Route (Fullscreen, no layout) */}
+        <Route path="/tv-display/:service" element={<TVDisplay />} />
 
         {/* Dashboard Routes */}
         <Route element={<DashboardLayout />}>
