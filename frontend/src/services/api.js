@@ -34,10 +34,13 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Clear token and reload or redirect if session is expired
-      clearAuthToken();
-      // Dispatch custom event so AuthProvider can intercept and logout the user
-      window.dispatchEvent(new Event('auth-logout'));
+      // Only trigger session-expired logout if the user was already logged in
+      // (i.e. had a token). Don't trigger on login page wrong-password attempts.
+      const token = getPersistedToken();
+      if (token) {
+        clearAuthToken();
+        window.dispatchEvent(new Event('auth-logout'));
+      }
     }
     return Promise.reject(error);
   }
