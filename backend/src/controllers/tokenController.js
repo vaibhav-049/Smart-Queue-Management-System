@@ -5,6 +5,7 @@ const { generateTokenId } = require('../services/tokenGenerator');
 const { calculateEstimate } = require('../services/waitingTimeCalculator');
 const { generateQR } = require('../services/qrGenerator');
 const { recalculateQueue } = require('../services/queueManager');
+const { predictAvgServiceTime } = require('../services/waitingTimePredictor');
 const { getLocalDateString, isTimeSlotPast } = require('../utils/dateUtils');
 
 // Helper to calculate position dynamically based on the Queue document
@@ -192,6 +193,7 @@ const bookToken = async (req, res, next) => {
       displayId,
       userId: req.user._id,
       service: serviceSlug,
+      branchId: serviceInfo.branchId,
       status: 'waiting',
       priority: priorityTier,
       timeSlot,
@@ -213,9 +215,10 @@ const bookToken = async (req, res, next) => {
     const updatedToken = await Token.findById(token._id);
     const finalPosition = await getDynamicPosition(updatedToken);
     
-    // Waiting Time = People Ahead * Average Service Time
+    // Waiting Time = People Ahead * Predicted Service Time
     const peopleAhead = Math.max(0, finalPosition - 1);
-    const finalWaitTime = peopleAhead * (serviceInfo.avgServiceTime || 10);
+    const predictedAvg = await predictAvgServiceTime(serviceSlug, serviceInfo.avgServiceTime || 10);
+    const finalWaitTime = peopleAhead * predictedAvg;
 
     const { emitTokenCreated } = require('../config/socket');
     emitTokenCreated({
@@ -224,13 +227,23 @@ const bookToken = async (req, res, next) => {
       estimatedWaitTime: `${finalWaitTime} minutes`,
     });
 
+    const tokenObj = {
+      ...updatedToken.toObject(),
+      position: finalPosition,
+      waitTime: finalWaitTime,
+    };
+
+    // Send Alerts (non-blocking)
+    const { sendQueueAlertEmail } = require('../services/emailService');
+    const { sendWhatsAppAlert } = require('../services/whatsappService');
+    sendQueueAlertEmail(req.user.email, tokenObj, 'booked').catch(console.error);
+    if (req.user.phone) {
+      sendWhatsAppAlert(req.user.phone, tokenObj, 'booked').catch(console.error);
+    }
+
     res.status(201).json({
       success: true,
-      data: {
-        ...updatedToken.toObject(),
-        position: finalPosition,
-        waitTime: finalWaitTime,
-      },
+      data: tokenObj,
     });
   } catch (error) {
     next(error);

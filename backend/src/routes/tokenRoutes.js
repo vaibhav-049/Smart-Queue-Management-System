@@ -12,8 +12,9 @@ const { protect } = require('../middleware/authMiddleware');
 
 const { publicTrackerLimiter } = require('../middleware/rateLimitMiddleware');
 const { validateBody, bookTokenSchema } = require('../middleware/validationMiddleware');
+const { validateTokenBooking } = require('../middleware/inputValidator');
 
-router.post('/book', protect, validateBody(bookTokenSchema), bookToken);
+router.post('/book', protect, validateTokenBooking, validateBody(bookTokenSchema), bookToken);
 router.get('/my-tokens', protect, getMyTokens);
 router.get('/:id', protect, getTokenById);
 router.put('/:id/cancel', protect, cancelToken);

@@ -6,13 +6,14 @@ import { joinServiceRoom, getSocket } from '../../services/socket';
 import api from '../../services/api';
 import PriorityBadge from '../../components/PriorityBadge/PriorityBadge';
 import WaitingTimeCard from '../../components/WaitingTimeCard/WaitingTimeCard';
+import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import toast from 'react-hot-toast';
 
 function QueueStatusDetails({ selectedService, queueInfo, darkMode }) {
   if (!queueInfo) {
     return (
-      <div className="empty-state">
-        <p>Loading queue data...</p>
+      <div className="queue-status-layout">
+        <LoadingSkeleton type="card" count={3} />
       </div>
     );
   }
@@ -206,7 +207,7 @@ export default function QueueStatus() {
       {/* Service Tabs */}
       <div className="service-filters">
         {servicesLoading ? (
-          <p>Loading services...</p>
+          <LoadingSkeleton type="stats" count={3} />
         ) : (
           services.map((s) => (
             <button

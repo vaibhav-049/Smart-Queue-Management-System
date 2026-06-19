@@ -3,6 +3,7 @@ const Queue = require('../models/Queue');
 const Service = require('../models/Service');
 const User = require('../models/User');
 const { recalculateQueue } = require('../services/queueManager');
+const { sendTokenAlerts } = require('../services/alertService');
 const { emitUserNotification, emitQueueUpdate, emitTokenCalled, emitQueueCompleted } = require('../config/socket');
 const { getLocalDateString } = require('../utils/dateUtils');
 
@@ -33,7 +34,9 @@ const callNextToken = async (req, res, next) => {
     if (currentServingToken) {
       currentServingToken.status = 'completed';
       currentServingToken.waitTime = 0;
+      currentServingToken.completedAt = new Date();
       await currentServingToken.save();
+      sendTokenAlerts(currentServingToken._id, 'completed').catch(console.error);
     }
 
     // 2. Fetch all waiting tokens for this service for today
@@ -62,6 +65,7 @@ const callNextToken = async (req, res, next) => {
 
       nextToken = waitingTokens[0];
       nextToken.status = 'serving';
+      nextToken.servedAt = new Date();
       nextToken.waitTime = 0;
       await nextToken.save();
 
@@ -138,7 +142,9 @@ const skipToken = async (req, res, next) => {
     // Skip sets status to cancelled
     token.status = 'cancelled';
     token.waitTime = 0;
+    token.completedAt = new Date(); // Using completedAt to mark end of lifecycle
     await token.save();
+    sendTokenAlerts(token._id, 'cancelled').catch(console.error);
 
     // Alert the user that they were skipped
     emitUserNotification(token.userId, {
@@ -199,7 +205,9 @@ const completeToken = async (req, res, next) => {
 
     token.status = 'completed';
     token.waitTime = 0;
+    token.completedAt = new Date();
     await token.save();
+    sendTokenAlerts(token._id, 'completed').catch(console.error);
 
     // Recalculate queue
     await recalculateQueue(serviceSlug, token.bookingDate);

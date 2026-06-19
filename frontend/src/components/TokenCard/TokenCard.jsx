@@ -72,11 +72,11 @@ export default function TokenCard({ token, onClick, compact = false }) {
           </div>
           <div className="token-detail">
             <span className="token-label">Position</span>
-            <span className="token-value">#{token.position}</span>
+            <span className="token-value">{token.position > 0 ? `#${token.position}` : '—'}</span>
           </div>
           <div className="token-detail">
             <span className="token-label">Wait Time</span>
-            <span className="token-value">{token.waitTime} min</span>
+            <span className="token-value">{token.position > 0 ? `${token.waitTime} min` : '—'}</span>
           </div>
           {token.bookingDate && (
             <div className="token-detail">
@@ -95,8 +95,8 @@ export default function TokenCard({ token, onClick, compact = false }) {
 
       {compact && (
         <div className="token-card-compact">
-          <span>Position: #{token.position}</span>
-          <span>{token.waitTime} min wait</span>
+          <span>{token.position > 0 ? `Position: #${token.position}` : 'Completed/Cancelled'}</span>
+          <span>{token.position > 0 ? `${token.waitTime} min wait` : '—'}</span>
         </div>
       )}
     </m.div>

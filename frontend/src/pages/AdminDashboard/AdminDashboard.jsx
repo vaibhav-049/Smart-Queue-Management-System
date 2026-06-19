@@ -380,6 +380,27 @@ export default function AdminDashboard() {
                 >
                   {serviceQueue.isActive ? '🔴 Close Bookings (Pause)' : '🟢 Open Bookings (Resume)'}
                 </button>
+
+                <Link 
+                  to={`/tv-display/${selectedService}`} 
+                  target="_blank" 
+                  className="btn-outline" 
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderColor: 'var(--border-color)',
+                    color: 'var(--text-color)',
+                    background: 'transparent',
+                    fontWeight: 'bold',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    textDecoration: 'none'
+                  }}
+                >
+                  📺 Open TV Display (New Tab)
+                </Link>
               </div>
             </div>
 
