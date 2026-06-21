@@ -320,7 +320,7 @@ export default function QRScanner() {
                     textAlign: 'left',
                     lineHeight: '1.4'
                   }}>
-                    <strong>Tip:</strong> If testing on your phone's Chrome browser, go to <code>chrome:
+                    <strong>Tip:</strong> If testing on your phone's Chrome browser, go to <code>chrome://flags</code> and enable "Insecure origins treated as secure".
                   </div>
                 )}
               </div>
