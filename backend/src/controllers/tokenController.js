@@ -8,7 +8,7 @@ const { recalculateQueue } = require('../services/queueManager');
 const { predictAvgServiceTime } = require('../services/waitingTimePredictor');
 const { getLocalDateString, isTimeSlotPast } = require('../utils/dateUtils');
 
-// Helper to calculate position dynamically based on the Queue document
+
 const getDynamicPosition = async (token) => {
   if (token.status === 'serving') return 0;
   if (token.status !== 'waiting') return -1;
@@ -22,7 +22,7 @@ const getDynamicPosition = async (token) => {
     const index = queue.upcoming.indexOf(token.displayId);
     return index !== -1 ? index + 1 : -1;
   } else {
-    // For future dates, calculate position among all waiting tokens for that date
+    
     const waitingTokens = await Token.find({
       service: token.service,
       bookingDate: token.bookingDate,
@@ -56,11 +56,7 @@ const getDynamicPosition = async (token) => {
   }
 };
 
-/**
- * @desc    Book a new token
- * @route   POST /api/tokens/book
- * @access  Private
- */
+
 const mapIncomingPriority = (priorityType) => {
   const mapping = {
     'Emergency': 'emergency',
@@ -71,17 +67,13 @@ const mapIncomingPriority = (priorityType) => {
   return mapping[priorityType] || (priorityType ? priorityType.toLowerCase() : 'normal');
 };
 
-/**
- * @desc    Book a new token
- * @route   POST /api/tokens/book
- * @access  Private
- */
+
 const bookToken = async (req, res, next) => {
   try {
     const { service, priorityType, priority: priorityField, bookingDate, name, phone } = req.body;
     let { timeSlot } = req.body;
 
-    // Accept both 'priority' and 'priorityType' from frontend
+    
     const incomingPriority = priorityType || priorityField || 'Normal';
 
     if (!service) {
@@ -107,7 +99,7 @@ const bookToken = async (req, res, next) => {
       throw new Error('Invalid booking date format');
     }
 
-    // Reset hours to compare dates only
+    
     today.setHours(0,0,0,0);
     bookDate.setHours(0,0,0,0);
 
@@ -122,7 +114,7 @@ const bookToken = async (req, res, next) => {
     }
 
     const maxFutureDate = new Date(today);
-    maxFutureDate.setDate(today.getDate() + 2); // 3 days window: today, today+1, today+2
+    maxFutureDate.setDate(today.getDate() + 2); 
 
     if (bookDate > maxFutureDate) {
       res.status(400);
@@ -131,14 +123,14 @@ const bookToken = async (req, res, next) => {
 
     const serviceSlug = service.toLowerCase();
 
-    // 1. Verify if the service exists
+    
     const serviceInfo = await Service.findOne({ id: serviceSlug });
     if (!serviceInfo) {
       res.status(404);
       throw new Error(`Service '${service}' not found`);
     }
 
-    // 2. Check if the service queue is active
+    
     const queueInfo = await Queue.findOne({ service: serviceSlug });
     if (queueInfo && !queueInfo.isActive) {
       res.status(400);
@@ -147,12 +139,12 @@ const bookToken = async (req, res, next) => {
 
     let priorityTier = mapIncomingPriority(incomingPriority);
     
-    // Auto-assign VIP if user has an active VIP membership
+    
     if (req.user.isVip && req.user.vipValidTill && new Date(req.user.vipValidTill) > new Date()) {
       priorityTier = 'vip';
     }
 
-    // 2.4 User Level Limit: Prevent Queue Flooding (DoS)
+    
     const activeTokensCount = await Token.countDocuments({
       userId: req.user._id,
       service: serviceSlug,
@@ -161,13 +153,13 @@ const bookToken = async (req, res, next) => {
     });
 
     if (activeTokensCount >= 2) {
-      res.status(429); // Too Many Requests
+      res.status(429); 
       throw new Error('Anti-Spam Limit: You can only have a maximum of 2 active waiting tokens per service on a given day. Please wait or cancel an existing token.');
     }
 
-    // 2.5 Apply Limits for VIP and Senior Citizen
+    
     if (['vip', 'senior'].includes(priorityTier)) {
-      // Exclude cancelled tokens from the count
+      
       const dailySpecialCount = await Token.countDocuments({
         service: serviceSlug,
         bookingDate,
@@ -194,14 +186,14 @@ const bookToken = async (req, res, next) => {
       }
     }
 
-    // 3. Generate sequential display ID (resets daily per bookingDate)
+    
     const { displayId, sequenceNumber } = await generateTokenId(serviceSlug, serviceInfo.prefix, bookingDate);
 
-    // 4. Calculate initial estimate
+    
 
     const { position, waitTime } = await calculateEstimate(serviceSlug, incomingPriority, bookingDate);
 
-    // 5. Create token
+    
     const token = new Token({
       displayId,
       userId: req.user._id,
@@ -217,18 +209,18 @@ const bookToken = async (req, res, next) => {
       phone: phone || req.user.phone,
     });
 
-    // 6. Generate QR code
+    
     token.qrCodeUrl = await generateQR(token, position);
     await token.save();
 
-    // 7. Recalculate queue sorting and notify clients
+    
     await recalculateQueue(serviceSlug, bookingDate);
 
-    // Reload token to get updated values
+    
     const updatedToken = await Token.findById(token._id);
     const finalPosition = await getDynamicPosition(updatedToken);
     
-    // Waiting Time = People Ahead * Predicted Service Time
+    
     const peopleAhead = Math.max(0, finalPosition - 1);
     const predictedAvg = await predictAvgServiceTime(serviceSlug, serviceInfo.avgServiceTime || 10);
     const finalWaitTime = peopleAhead * predictedAvg;
@@ -246,7 +238,7 @@ const bookToken = async (req, res, next) => {
       waitTime: finalWaitTime,
     };
 
-    // Send Alerts (non-blocking)
+    
     const { sendQueueAlertEmail } = require('../services/emailService');
     const { sendWhatsAppAlert } = require('../services/whatsappService');
     sendQueueAlertEmail(req.user.email, tokenObj, 'booked').catch(console.error);
@@ -263,11 +255,7 @@ const bookToken = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Get user's tokens
- * @route   GET /api/tokens/my-tokens
- * @access  Private
- */
+
 const getMyTokens = async (req, res, next) => {
   try {
     const tokens = await Token.find({ userId: req.user._id }).sort({ createdAt: -1 });
@@ -291,11 +279,7 @@ const getMyTokens = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Get token details by ID
- * @route   GET /api/tokens/:id
- * @access  Private
- */
+
 const getTokenById = async (req, res, next) => {
   try {
     const token = await Token.findById(req.params.id);
@@ -305,7 +289,7 @@ const getTokenById = async (req, res, next) => {
       throw new Error('Token not found');
     }
 
-    // Users can only view their own token unless they are an admin
+    
     if (token.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       res.status(403);
       throw new Error('Not authorized to access this token');
@@ -325,11 +309,7 @@ const getTokenById = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Cancel a token
- * @route   PUT /api/tokens/:id/cancel
- * @access  Private
- */
+
 const cancelToken = async (req, res, next) => {
   try {
     const token = await Token.findById(req.params.id);
@@ -339,7 +319,7 @@ const cancelToken = async (req, res, next) => {
       throw new Error('Token not found');
     }
 
-    // Confirm authorization
+    
     if (token.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
       res.status(403);
       throw new Error('Not authorized to cancel this token');
@@ -354,7 +334,7 @@ const cancelToken = async (req, res, next) => {
     token.waitTime = 0;
     await token.save();
 
-    // Re-adjust queue positions & notify rooms
+    
     await recalculateQueue(token.service);
 
     res.status(200).json({
@@ -367,11 +347,7 @@ const cancelToken = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Get QR code of token
- * @route   GET /api/tokens/:id/qr
- * @access  Private
- */
+
 const getTokenQR = async (req, res, next) => {
   try {
     const token = await Token.findById(req.params.id).select('qrCodeUrl displayId userId');
@@ -398,11 +374,7 @@ const getTokenQR = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Get public token tracking details by display ID
- * @route   GET /api/tokens/track/:displayId
- * @access  Public
- */
+
 const trackToken = async (req, res, next) => {
   try {
     const { displayId } = req.params;
@@ -432,11 +404,7 @@ const trackToken = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Submit a feedback rating for a completed token
- * @route   PUT /api/tokens/:id/rate
- * @access  Private
- */
+
 const rateToken = async (req, res, next) => {
   try {
     const { rating } = req.body;
@@ -458,7 +426,7 @@ const rateToken = async (req, res, next) => {
       throw new Error('Token not found');
     }
     
-    // Check if this token belongs to the requesting user
+    
     if (token.userId.toString() !== req.user._id.toString()) {
       res.status(403);
       throw new Error('Unauthorized to rate this token');

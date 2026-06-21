@@ -1,10 +1,6 @@
 const User = require('../models/User');
 
-/**
- * @desc    Get user profile
- * @route   GET /api/users/profile
- * @access  Private
- */
+
 const getUserProfile = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
@@ -31,11 +27,7 @@ const getUserProfile = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Update user profile
- * @route   PUT /api/users/profile
- * @access  Private
- */
+
 const updateUserProfile = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
@@ -74,11 +66,7 @@ const updateUserProfile = async (req, res, next) => {
 
 const Token = require('../models/Token');
 
-/**
- * @desc    Get user profile statistics (tokens, completed, cancelled/rating)
- * @route   GET /api/users/profile-stats
- * @access  Private
- */
+
 const getUserProfileStats = async (req, res, next) => {
   try {
     const user = req.user;
@@ -89,14 +77,14 @@ const getUserProfileStats = async (req, res, next) => {
       const total = await Token.countDocuments(serviceFilter);
       const completed = await Token.countDocuments({ ...serviceFilter, status: 'completed' });
       
-      // Calculate average rating
+      
       const ratedTokens = await Token.find({ ...serviceFilter, status: 'completed', rating: { $ne: null } });
       let rating = 0;
       if (ratedTokens.length > 0) {
         const totalRating = ratedTokens.reduce((acc, t) => acc + t.rating, 0);
         rating = Number((totalRating / ratedTokens.length).toFixed(1));
       } else {
-        rating = 0; // 0 indicates no ratings yet
+        rating = 0; 
       }
 
       return res.status(200).json({
@@ -108,7 +96,7 @@ const getUserProfileStats = async (req, res, next) => {
         }
       });
     } else {
-      // Normal Customer
+      
       const total = await Token.countDocuments({ userId: user._id });
       const completed = await Token.countDocuments({ userId: user._id, status: 'completed' });
       const cancelled = await Token.countDocuments({ userId: user._id, status: 'cancelled' });

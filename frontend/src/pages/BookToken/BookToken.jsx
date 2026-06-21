@@ -68,7 +68,7 @@ export default function BookToken() {
       try {
         const parts = slot.split('-');
         if (parts.length < 2) return false;
-        const endTimeStr = parts[1].trim(); // e.g. "10:00 AM"
+        const endTimeStr = parts[1].trim(); 
         
         const match = endTimeStr.match(/^(\d{2}):(\d{2})\s*(AM|PM)$/i);
         if (!match) return false;
@@ -176,7 +176,7 @@ export default function BookToken() {
         <p>Select a service and fill in your details to get a queue token</p>
       </m.div>
 
-      {/* Service Selection */}
+      {}
       <div className="service-selection">
           <h2 className="section-label">1. Select Service</h2>
           <div className="service-grid">
@@ -215,7 +215,7 @@ export default function BookToken() {
         </div>
       </div>
       
-      {/* Smart Load Balancing Recommendation Alert */}
+      {}
       {selectedService && recommendation && (
         <m.div 
           className="recommendation-alert"
@@ -261,7 +261,7 @@ export default function BookToken() {
         </m.div>
       )}
 
-      {/* Booking Form + Generated Token */}
+      {}
       <div className="booking-layout">
         <AnimatePresence mode="wait">
           {selectedService && (
@@ -394,7 +394,7 @@ export default function BookToken() {
           )}
         </AnimatePresence>
  
-        {/* Generated Token */}
+        {}
         <AnimatePresence>
           {generatedToken && (
             <m.div

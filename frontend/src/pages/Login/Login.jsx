@@ -55,7 +55,7 @@ export default function Login() {
   return (
     <div className={`auth-page ${darkMode ? 'dark' : ''}`}>
       <div className="auth-container">
-        {/* Left Panel */}
+        {}
         <m.div
           className="auth-left"
           initial={{ opacity: 0, x: -30 }}
@@ -83,7 +83,7 @@ export default function Login() {
           </div>
         </m.div>
 
-        {/* Right Panel - Form */}
+        {}
         <m.div
           className="auth-right"
           initial={{ opacity: 0, x: 30 }}
@@ -94,7 +94,7 @@ export default function Login() {
             <h2 className="auth-title">Sign In</h2>
             <p className="auth-subtitle">Enter your credentials to access your account</p>
 
-            {/* Social Login */}
+            {}
             <div className="social-login-buttons">
               <button type="button" className="social-btn" onClick={() => toast('Google login coming soon!')}>
                 <FcGoogle size={20} /> <span>Google</span>

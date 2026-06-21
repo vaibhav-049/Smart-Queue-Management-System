@@ -179,7 +179,7 @@ export default function Profile() {
       </m.div>
 
       <div className="profile-layout">
-        {/* Profile Card */}
+        {}
         <m.div
           className="profile-card"
           initial={{ opacity: 0, x: -20 }}
@@ -237,9 +237,9 @@ export default function Profile() {
           </div>
         </m.div>
 
-        {/* Details & Settings */}
+        {}
         <div className="profile-details-section">
-          {/* VIP Upgrade Banner */}
+          {}
           {user?.role === 'user' && !user?.isVip && (
             <m.div
               className="profile-details-card"
@@ -275,7 +275,7 @@ export default function Profile() {
             </m.div>
           )}
 
-          {/* User Details */}
+          {}
           <m.div
             className="profile-details-card"
             initial={{ opacity: 0, x: 20 }}
@@ -329,7 +329,7 @@ export default function Profile() {
             </div>
           </m.div>
 
-          {/* Settings */}
+          {}
           <m.div
             className="profile-settings-card"
             initial={{ opacity: 0, x: 20 }}
@@ -380,7 +380,7 @@ export default function Profile() {
             </div>
           </m.div>
 
-          {/* Change Password Card */}
+          {}
           <m.div
             className="profile-settings-card"
             initial={{ opacity: 0, x: 20 }}

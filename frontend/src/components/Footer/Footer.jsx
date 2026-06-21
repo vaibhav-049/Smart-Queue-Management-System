@@ -10,7 +10,7 @@ export default function Footer() {
     <footer className={`footer ${darkMode ? 'dark' : ''}`}>
       <div className="footer-inner">
         <div className="footer-grid">
-          {/* Brand */}
+          {}
           <div className="footer-brand">
             <Link to="/" className="footer-logo">
               <span className="logo-icon">⚡</span>
@@ -21,7 +21,7 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Quick Links */}
+          {}
           <div className="footer-col">
             <h4>Quick Links</h4>
             <Link to="/">Home</Link>
@@ -39,7 +39,7 @@ export default function Footer() {
             )}
           </div>
 
-          {/* Services */}
+          {}
           {user && (
             <div className="footer-col">
               <h4>Services</h4>
@@ -49,7 +49,7 @@ export default function Footer() {
             </div>
           )}
 
-          {/* Contact */}
+          {}
           <div className="footer-col">
             <h4>Contact</h4>
             <p><a href="mailto:rvaibhav403@gmail.com">rvaibhav403@gmail.com</a></p>

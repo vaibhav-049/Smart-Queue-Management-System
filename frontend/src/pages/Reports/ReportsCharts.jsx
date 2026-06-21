@@ -7,7 +7,7 @@ import {
 export default function ReportsCharts({ hourlyData, monthlyData, darkMode }) {
   return (
     <div className="charts-grid">
-      {/* Hourly Traffic */}
+      {}
       <m.div
         className="chart-card"
         initial={{ opacity: 0, y: 20 }}
@@ -37,7 +37,7 @@ export default function ReportsCharts({ hourlyData, monthlyData, darkMode }) {
         </ResponsiveContainer>
       </m.div>
 
-      {/* Monthly Trend */}
+      {}
       <m.div
         className="chart-card"
         initial={{ opacity: 0, y: 20 }}

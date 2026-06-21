@@ -15,7 +15,7 @@ const api = axios.create({
   },
 });
 
-// Request Interceptor: Attach JWT Token if it exists
+
 api.interceptors.request.use(
   (config) => {
     const token = getPersistedToken();
@@ -29,13 +29,13 @@ api.interceptors.request.use(
   }
 );
 
-// Response Interceptor: Handle global errors like expired tokens
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      // Only trigger session-expired logout if the user was already logged in
-      // (i.e. had a token). Don't trigger on login page wrong-password attempts.
+      
+      
       const token = getPersistedToken();
       if (token) {
         clearAuthToken();

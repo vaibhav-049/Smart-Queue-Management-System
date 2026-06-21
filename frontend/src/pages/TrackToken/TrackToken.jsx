@@ -60,10 +60,10 @@ export default function TrackToken() {
     const socket = getSocket();
     if (!socket || !tokenData) return;
 
-    // Listen to queue updates for the service this token belongs to
+    
     const handleQueueUpdated = (payload) => {
       if (payload.service === tokenData.service) {
-        // Trigger a re-fetch of token to get updated position
+        
         api.get(`/tokens/track/${tokenId}`).then(res => {
           if (res.data && res.data.success) {
             setTokenData(res.data.data);
@@ -74,7 +74,7 @@ export default function TrackToken() {
 
     socket.on('queue-updated', handleQueueUpdated);
 
-    // Also try joining the service room to get live updates
+    
     socket.emit('join_service_room', tokenData.service);
 
     return () => {
@@ -137,7 +137,7 @@ export default function TrackToken() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          {/* Status Banner */}
+          {}
           <div className={`absolute top-0 left-0 w-full p-2 text-center text-white font-bold tracking-wider uppercase text-sm
             ${isServing ? 'bg-amber-500' : ''}
             ${isWaiting ? 'bg-blue-500' : ''}

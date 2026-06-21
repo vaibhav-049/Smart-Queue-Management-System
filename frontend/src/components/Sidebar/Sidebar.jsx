@@ -35,7 +35,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
   return (
     <>
-      {/* Overlay for mobile */}
+      {}
       <AnimatePresence>
         {isOpen && (
           <m.div

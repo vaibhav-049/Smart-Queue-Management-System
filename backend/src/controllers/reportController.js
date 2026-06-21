@@ -1,15 +1,11 @@
 const Token = require('../models/Token');
 
-/**
- * @desc    Generate and download queue analytical reports (CSV or JSON)
- * @route   GET /api/reports/download
- * @access  Private (Admin Only)
- */
+
 const downloadReport = async (req, res, next) => {
   try {
     const { format, service, startDate, endDate } = req.query;
 
-    // Build filter query
+    
     const filter = {};
 
     if (req.user && req.user.service) {
@@ -30,11 +26,11 @@ const downloadReport = async (req, res, next) => {
       }
     }
 
-    // Fetch tokens sorting by date
+    
     const tokens = await Token.find(filter).sort({ createdAt: -1 });
 
     if (format === 'csv') {
-      // Create CSV Headers
+      
       const headers = [
         'Token ID',
         'Customer Name',
@@ -47,7 +43,7 @@ const downloadReport = async (req, res, next) => {
         'Created At',
       ];
 
-      // Format CSV lines
+      
       const csvRows = [headers.join(',')];
 
       for (const token of tokens) {
@@ -67,7 +63,7 @@ const downloadReport = async (req, res, next) => {
 
       const csvContent = csvRows.join('\n');
 
-      // Send CSV file
+      
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader(
         'Content-Disposition',
@@ -76,7 +72,7 @@ const downloadReport = async (req, res, next) => {
       return res.status(200).send(csvContent);
     }
 
-    // Default to JSON response
+    
     res.status(200).json({
       success: true,
       count: tokens.length,
@@ -87,11 +83,7 @@ const downloadReport = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Get daily report summary
- * @route   GET /api/reports/daily
- * @access  Private (Admin Only)
- */
+
 const getDailyReport = async (req, res, next) => {
   try {
     const startOfToday = new Date();
@@ -118,11 +110,7 @@ const getDailyReport = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Get weekly report summary
- * @route   GET /api/reports/weekly
- * @access  Private (Admin Only)
- */
+
 const getWeeklyReport = async (req, res, next) => {
   try {
     const sevenDaysAgo = new Date();
@@ -147,17 +135,17 @@ const getWeeklyReport = async (req, res, next) => {
       }
     ]);
 
-    // Map dayOfWeek (1=Sun, 2=Mon...7=Sat) to string labels
+    
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const dailyQueueData = [];
     
-    // Build rolling 7 days ending today
+    
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const dayIndex = d.getDay(); // 0-6 (Sun-Sat)
+      const dayIndex = d.getDay(); 
       
-      // MongoDB $dayOfWeek is 1-7 (1=Sun, 7=Sat)
+      
       const found = aggregation.find(a => a._id === (dayIndex + 1));
       dailyQueueData.push({
         day: days[dayIndex],
@@ -175,11 +163,7 @@ const getWeeklyReport = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Get monthly report summary
- * @route   GET /api/reports/monthly
- * @access  Private (Admin Only)
- */
+
 const getMonthlyReport = async (req, res, next) => {
   try {
     const sixMonthsAgo = new Date();
@@ -207,11 +191,11 @@ const getMonthlyReport = async (req, res, next) => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const monthlyData = [];
     
-    // Build rolling 6 months ending this month
+    
     for (let i = 5; i >= 0; i--) {
       const d = new Date();
       d.setMonth(d.getMonth() - i);
-      const monthNum = d.getMonth() + 1; // 1-12
+      const monthNum = d.getMonth() + 1; 
       const yearNum = d.getFullYear();
       
       const found = aggregation.find(a => a._id.month === monthNum && a._id.year === yearNum);

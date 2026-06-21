@@ -7,7 +7,7 @@ const { getLocalDateString } = require('../utils/dateUtils');
 
 const seedDatabase = async () => {
   try {
-    // 0. Seed Branches
+    
     const defaultBranches = [
       { id: 'main', name: 'Main Campus / Head Office', location: 'City Center' },
       { id: 'north', name: 'North Branch', location: 'North District' },
@@ -21,7 +21,7 @@ const seedDatabase = async () => {
       }
     }
 
-    // 1. Seed Services
+    
     const defaultServices = [
       {
         id: 'hospital',
@@ -65,7 +65,7 @@ const seedDatabase = async () => {
       },
     ];
 
-    // Remove legacy/removed services and queues from DB
+    
     const allowedServiceIds = defaultServices.map(s => s.id);
     const deleteServicesResult = await Service.deleteMany({ id: { $nin: allowedServiceIds } });
     if (deleteServicesResult.deletedCount > 0) {
@@ -84,7 +84,7 @@ const seedDatabase = async () => {
       }
     }
 
-    // 2. Seed Default Queues for Services
+    
     for (const service of defaultServices) {
       const exists = await Queue.findOne({ service: service.id });
       if (!exists) {
@@ -99,7 +99,7 @@ const seedDatabase = async () => {
       }
     }
 
-    // 3. Seed Users (Admin only)
+    
     const defaultUsers = [
       {
         name: 'Soumya Bansal',
@@ -107,7 +107,7 @@ const seedDatabase = async () => {
         phone: '+91 98765 43210',
         password: process.env.ADMIN_SEED_PASSWORD || (Math.random().toString(36).slice(-10) + 'A1!'),
         role: 'admin',
-        service: null, // Super Admin
+        service: null, 
       },
       {
         name: 'Hospital Staff',
@@ -115,7 +115,7 @@ const seedDatabase = async () => {
         phone: '+91 98765 43211',
         password: process.env.ADMIN_SEED_PASSWORD || (Math.random().toString(36).slice(-10) + 'A1!'),
         role: 'admin',
-        service: 'hospital', // Hospital Admin
+        service: 'hospital', 
       },
       {
         name: 'College Staff',
@@ -123,7 +123,7 @@ const seedDatabase = async () => {
         phone: '+91 98765 43212',
         password: process.env.ADMIN_SEED_PASSWORD || (Math.random().toString(36).slice(-10) + 'A1!'),
         role: 'admin',
-        service: 'college', // College Admin
+        service: 'college', 
       },
       {
         name: 'Salon Staff',
@@ -131,7 +131,7 @@ const seedDatabase = async () => {
         phone: '+91 98765 43213',
         password: process.env.ADMIN_SEED_PASSWORD || (Math.random().toString(36).slice(-10) + 'A1!'),
         role: 'admin',
-        service: 'salon', // Salon Admin
+        service: 'salon', 
       },
     ];
 
@@ -154,15 +154,15 @@ const connectDB = async () => {
     const conn = await mongoose.connect(process.env.MONGODB_URI);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
     
-    // Drop the old displayId unique index if it exists in the collection
+    
     try {
       await mongoose.connection.collection('tokens').dropIndex('displayId_1');
       console.log('Stale unique index displayId_1 successfully dropped.');
     } catch (e) {
-      // Ignore if index doesn't exist
+      
     }
 
-    // Set bookingDate on pre-existing database tokens to today's date so they don't crash validation
+    
     try {
 
       const todayStr = getLocalDateString();
@@ -207,7 +207,7 @@ const connectDB = async () => {
       console.error('Error running legacy token migration:', e);
     }
 
-    // Run seeding
+    
     await seedDatabase();
   } catch (error) {
     console.error(`MongoDB connection error: ${error.message}`);

@@ -14,7 +14,7 @@ export default function QRCodeCard({ token }) {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ type: 'spring', stiffness: 200 }}
     >
-      {/* Ticket Header */}
+      {}
       <div className="qr-ticket-header">
         <div className="qr-ticket-logo">
           <span className="logo-icon">⚡</span>
@@ -23,10 +23,10 @@ export default function QRCodeCard({ token }) {
         <span className="qr-ticket-type">E-Token</span>
       </div>
 
-      {/* Perforated edge */}
+      {}
       <div className="qr-ticket-perforation" />
 
-      {/* Token Info */}
+      {}
       <div className="qr-ticket-body">
         <div className="qr-token-number">{tokenNumber}</div>
         <div className="qr-ticket-details">
@@ -48,7 +48,7 @@ export default function QRCodeCard({ token }) {
           </div>
         </div>
 
-        {/* QR Code */}
+        {}
         <div className="qr-code-wrapper">
           <QRCodeSVG
             value={qrValue}
@@ -62,7 +62,7 @@ export default function QRCodeCard({ token }) {
         <p className="qr-scan-text">Scan this QR code at the service counter</p>
       </div>
 
-      {/* Ticket Footer */}
+      {}
       <div className="qr-ticket-footer">
         <span>Valid only on booking date</span>
         <span suppressHydrationWarning>

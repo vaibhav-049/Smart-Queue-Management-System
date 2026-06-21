@@ -20,12 +20,12 @@ function QueueStatusDetails({ selectedService, queueInfo, darkMode }) {
 
   const { currentServing, upcoming = [], totalInQueue = 0, avgWait = 10, activeTokens = [] } = queueInfo;
 
-  // Find the token currently serving
+  
   const servingToken = activeTokens.find(t => t.displayId === currentServing);
 
   return (
     <div className="queue-status-layout">
-      {/* Current Serving */}
+      {}
       <m.div
         className="current-serving-card"
         key={currentServing || 'idle'}
@@ -52,14 +52,14 @@ function QueueStatusDetails({ selectedService, queueInfo, darkMode }) {
         )}
       </m.div>
 
-      {/* Waiting Time */}
+      {}
       <WaitingTimeCard
         waitTime={avgWait}
         position={currentServing ? 2 : 1}
         total={totalInQueue}
       />
 
-      {/* Upcoming Tokens */}
+      {}
       <div className="upcoming-section">
         <h3 className="section-label">Upcoming Tokens</h3>
         <div className="upcoming-list">
@@ -99,7 +99,7 @@ function QueueStatusDetails({ selectedService, queueInfo, darkMode }) {
         </div>
       </div>
 
-      {/* Queue Progress */}
+      {}
       <div className="queue-progress-section">
         <h3 className="section-label">Queue Progress</h3>
         <div className="queue-progress-visual">
@@ -168,20 +168,20 @@ export default function QueueStatus() {
     }
   }, [selectedService]);
 
-  // Join service room and fetch details on load/change
+  
   useEffect(() => {
     if (!selectedService) return;
     joinServiceRoom(selectedService);
     fetchQueueStatus();
   }, [selectedService, fetchQueueStatus]);
 
-  // Listen for socket queue-updated notifications
+  
   useEffect(() => {
     const socket = getSocket();
     if (!socket) return;
 
     const handleQueueUpdated = (payload) => {
-      // payload: { service, data }
+      
       if (payload.service === selectedService) {
         fetchQueueStatus();
       }
@@ -204,7 +204,7 @@ export default function QueueStatus() {
         <p>Track queue progress in real-time</p>
       </m.div>
 
-      {/* Service Tabs */}
+      {}
       <div className="service-filters">
         {servicesLoading ? (
           <LoadingSkeleton type="stats" count={3} />

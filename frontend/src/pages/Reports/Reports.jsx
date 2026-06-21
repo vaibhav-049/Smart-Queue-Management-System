@@ -24,7 +24,7 @@ const handleExportReport = async () => {
     document.body.appendChild(link);
     link.click();
     
-    // Cleanup
+    
     link.parentNode.removeChild(link);
     window.URL.revokeObjectURL(url);
     
@@ -99,7 +99,7 @@ export default function Reports() {
         </m.button>
       </m.div>
 
-      {/* Summary Cards */}
+      {}
       <div className="stats-grid">
         {summaryCards.map((card, index) => {
           const Icon = card.icon;
@@ -123,7 +123,7 @@ export default function Reports() {
         })}
       </div>
 
-      {/* Charts Row */}
+      {}
       <Suspense fallback={<LoadingSkeleton type="chart" count={2} />}>
         <ReportsCharts
           hourlyData={hourlyData}
@@ -132,7 +132,7 @@ export default function Reports() {
         />
       </Suspense>
 
-      {/* Weekly Report Table */}
+      {}
       <m.div
         className="report-table-card"
         initial={{ opacity: 0, y: 20 }}
@@ -184,7 +184,7 @@ export default function Reports() {
         </div>
       </m.div>
 
-      {/* Additional Stats */}
+      {}
       <div className="report-extra-grid">
         <m.div className="report-extra-card" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}>
           <h4>Completion Rate</h4>

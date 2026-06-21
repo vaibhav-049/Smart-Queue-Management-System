@@ -61,15 +61,15 @@ export default function TVDisplay() {
           }));
         }
       });
-      // also listen to legacy 'queue-updated' if emitted
+      
       socket.on('queue-updated', (data) => {
         if (data && data.service === service) {
-           fetchQueueStatus(); // fallback if payload is missing full data
+           fetchQueueStatus(); 
         }
       });
     }
 
-    // Refresh data every 30 seconds as fallback
+    
     const interval = setInterval(fetchQueueStatus, 30000);
 
     return () => {
@@ -80,29 +80,29 @@ export default function TVDisplay() {
         socket.emit('leave_service_room', service);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [service]);
 
-  // Audio Announcement (Text-to-Speech)
+  
   useEffect(() => {
     const currentTokenId = typeof queueData.currentServing === 'string' ? queueData.currentServing : queueData.currentServing?.displayId;
     
     if (currentTokenId && currentTokenId !== lastAnnouncedRef.current) {
       lastAnnouncedRef.current = currentTokenId;
       
-      // We check if SpeechSynthesis is supported
+      
       if ('speechSynthesis' in window) {
-        // Stop any currently playing speech to avoid overlap
+        
         window.speechSynthesis.cancel();
 
-        // Create a polite chime/bell effect followed by speech
+        
         const message = new SpeechSynthesisUtterance(
           `Token number ${currentTokenId}. Please proceed to the counter.`
         );
-        message.rate = 0.9; // Slightly slower for clarity
+        message.rate = 0.9; 
         message.pitch = 1;
         
-        // Wait a slight delay so UI updates first
+        
         setTimeout(() => {
           window.speechSynthesis.speak(message);
         }, 500);
@@ -123,7 +123,7 @@ export default function TVDisplay() {
 
   return (
     <div className="tv-container">
-      {/* Header */}
+      {}
       <header className="tv-header">
         <div className="tv-logo">
           <span className="logo-icon">Q</span>
@@ -137,9 +137,9 @@ export default function TVDisplay() {
         </div>
       </header>
 
-      {/* Main Content */}
+      {}
       <main className="tv-main">
-        {/* Left Side: Now Serving */}
+        {}
         <section className="tv-now-serving">
           <div className="tv-card serving-card">
             <h2>NOW SERVING</h2>
@@ -174,7 +174,7 @@ export default function TVDisplay() {
           </div>
         </section>
 
-        {/* Right Side: Next In Line */}
+        {}
         <section className="tv-next-in-line">
           <div className="tv-card upcoming-card">
             <h2>NEXT IN LINE</h2>
@@ -208,7 +208,7 @@ export default function TVDisplay() {
         </section>
       </main>
 
-      {/* Footer Ticker */}
+      {}
       <footer className="tv-footer">
         <div className="tv-ticker-wrap">
           <div className="tv-ticker">

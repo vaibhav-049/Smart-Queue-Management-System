@@ -2,17 +2,13 @@ const Queue = require('../models/Queue');
 const Service = require('../models/Service');
 const Token = require('../models/Token');
 
-/**
- * @desc    Get live status of all service queues
- * @route   GET /api/queues/status
- * @access  Public
- */
+
 const getQueuesStatus = async (req, res, next) => {
   try {
     const queues = await Queue.find({});
     const services = await Service.find({});
 
-    // Mapped response matching the frontend's expected mockData structure
+    
     const statusMap = {};
 
     for (const service of services) {
@@ -39,11 +35,7 @@ const getQueuesStatus = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Get detailed queue status for a specific service
- * @route   GET /api/queues/:service/status
- * @access  Public
- */
+
 const getServiceQueueStatus = async (req, res, next) => {
   try {
     const { service } = req.params;
@@ -56,11 +48,11 @@ const getServiceQueueStatus = async (req, res, next) => {
 
     const queueDoc = await Queue.findOne({ service });
     
-    // Fetch detailed tokens currently active (serving or waiting) for lobby displays
+    
     const activeTokens = await Token.find({
       service,
       status: { $in: ['serving', 'waiting'] },
-    }).sort({ status: -1, waitTime: 1, createdAt: 1 }); // serving first, then by wait time/createdAt
+    }).sort({ status: -1, waitTime: 1, createdAt: 1 }); 
 
     res.status(200).json({
       success: true,
@@ -79,11 +71,7 @@ const getServiceQueueStatus = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Get live tracking for a specific service
- * @route   GET /api/queue/live
- * @access  Public
- */
+
 const getLiveQueue = async (req, res, next) => {
   try {
     const serviceName = req.query.service || 'Hospital';
@@ -139,11 +127,7 @@ const getPublicStats = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Get alternative branch recommendation for load balancing
- * @route   GET /api/queues/recommendation?serviceId=xxx
- * @access  Public
- */
+
 const getBranchRecommendation = async (req, res, next) => {
   try {
     const { serviceId } = req.query;
@@ -156,7 +140,7 @@ const getBranchRecommendation = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Service not found' });
     }
 
-    // Find other services with the exact same name but different branch
+    
     const alternativeServices = await Service.find({ 
       name: currentService.name, 
       id: { $ne: currentService.id } 
@@ -166,11 +150,11 @@ const getBranchRecommendation = async (req, res, next) => {
       return res.status(200).json({ success: true, data: null });
     }
 
-    // Fetch queue wait times for all alternative services
+    
     const serviceIds = alternativeServices.map(s => s.id);
     const queues = await Queue.find({ service: { $in: serviceIds } });
 
-    // Current service wait time
+    
     const currentQueue = await Queue.findOne({ service: currentService.id });
     const currentWait = currentQueue ? (currentQueue.totalInQueue * currentQueue.avgWait) : 0;
 
@@ -181,7 +165,7 @@ const getBranchRecommendation = async (req, res, next) => {
       const q = queues.find(q => q.service === altService.id);
       const altWait = q ? (q.totalInQueue * q.avgWait) : 0;
       
-      // If the alternative has at least 20 mins less waiting time, consider it a better option
+      
       if (altWait < lowestWait - 20) {
         lowestWait = altWait;
         bestAlternative = {

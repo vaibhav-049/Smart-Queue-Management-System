@@ -1,15 +1,11 @@
 const Service = require('../models/Service');
 
-/**
- * @desc    Get all active services
- * @route   GET /api/services
- * @access  Public
- */
+
 const getServices = async (req, res, next) => {
   try {
     const services = await Service.find({});
     
-    // If no services in DB, create some defaults just so the app works out of the box
+    
     if (services.length === 0) {
       const defaultServices = [
         {

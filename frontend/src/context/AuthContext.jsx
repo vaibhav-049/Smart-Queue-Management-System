@@ -11,7 +11,7 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => getPersistedToken());
   const [loading, setLoading] = useState(() => !!getPersistedToken());
 
-  // Logout Function
+  
   const logout = useCallback(() => {
     clearAuthToken();
     setUser(null);
@@ -20,14 +20,14 @@ export function AuthProvider({ children }) {
     toast.success('Logged out successfully');
   }, []);
 
-  // Fetch logged-in user profile details
+  
   const fetchCurrentUser = useCallback(async (tokenValue) => {
     try {
       const response = await api.get('/auth/me');
       if (response.data && response.data.success) {
         const userVal = response.data.data;
         setUser(userVal);
-        // Connect socket when user gets loaded
+        
         const socket = initiateSocket(tokenValue);
         joinUserRoom(userVal._id || userVal.id);
       } else {
@@ -41,14 +41,14 @@ export function AuthProvider({ children }) {
     }
   }, [logout]);
 
-  // Load user on startup if token exists
+  
   useEffect(() => {
     if (token) {
       fetchCurrentUser(token);
     }
   }, [token, fetchCurrentUser]);
 
-  // Handle unauthorized global event (dispatched from Axios response interceptor)
+  
   useEffect(() => {
     const handleAuthLogout = () => {
       logout();
@@ -58,7 +58,7 @@ export function AuthProvider({ children }) {
     return () => window.removeEventListener('auth-logout', handleAuthLogout);
   }, [logout]);
 
-  // Login Function
+  
   const login = async (email, password, rememberMe = false) => {
     setLoading(true);
     try {
@@ -83,7 +83,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Register Function (Step 1: Send OTP)
+  
   const register = async (name, email, phone, password, role = 'user', service = null, accessCode = '') => {
     setLoading(true);
     try {
@@ -102,7 +102,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Verify OTP and Complete Registration
+  
   const verifyRegister = async (email, otp) => {
     setLoading(true);
     try {
@@ -127,7 +127,7 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Update Profile Function
+  
   const updateProfile = async (profileData) => {
     try {
       const response = await api.put('/users/profile', profileData);

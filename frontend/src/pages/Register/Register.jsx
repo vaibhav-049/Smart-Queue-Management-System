@@ -208,7 +208,7 @@ export default function Register() {
                     {errors.password && <span className="error-text">{errors.password}</span>}
                   </div>
 
-                  {/* Role Selection */}
+                  {}
                   <div className="form-group">
                     <label>Account Type</label>
                     <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>

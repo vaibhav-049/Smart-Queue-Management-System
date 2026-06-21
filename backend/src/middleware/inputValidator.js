@@ -1,8 +1,3 @@
-/**
- * Input Validation & Sanitization Middleware
- * Validates and sanitizes user inputs before they reach controllers.
- * Rejects oversized, malformed, or suspicious payloads.
- */
 
 const sanitizeString = (str, maxLen = 200) => {
   if (typeof str !== 'string') return '';
@@ -23,29 +18,26 @@ const VALID_TIME_SLOTS = [
   '03:00 PM - 04:00 PM',
 ];
 
-/**
- * Validate token booking input
- */
 const validateTokenBooking = (req, res, next) => {
   const { service, name, phone, priority, timeSlot, bookingDate } = req.body;
 
   const errors = [];
 
-  // Service
+  
   if (!service || typeof service !== 'string') {
     errors.push('Service is required');
   } else if (!VALID_SERVICES.includes(service.toLowerCase())) {
     errors.push(`Invalid service: '${sanitizeString(service, 30)}'`);
   }
 
-  // Name
+  
   if (!name || typeof name !== 'string') {
     errors.push('Name is required');
   } else if (name.trim().length < 2 || name.trim().length > 100) {
     errors.push('Name must be between 2 and 100 characters');
   }
 
-  // Phone
+  
   if (!phone || typeof phone !== 'string') {
     errors.push('Phone number is required');
   } else {
@@ -55,17 +47,17 @@ const validateTokenBooking = (req, res, next) => {
     }
   }
 
-  // Priority
+  
   if (priority && !VALID_PRIORITIES.includes(priority)) {
     errors.push(`Invalid priority: '${sanitizeString(priority, 30)}'`);
   }
 
-  // Time Slot
+  
   if (!timeSlot || !VALID_TIME_SLOTS.includes(timeSlot)) {
     errors.push('Invalid or missing time slot');
   }
 
-  // Booking Date (YYYY-MM-DD)
+  
   if (!bookingDate || !/^\d{4}-\d{2}-\d{2}$/.test(bookingDate)) {
     errors.push('Invalid booking date format (expected YYYY-MM-DD)');
   }
@@ -77,7 +69,7 @@ const validateTokenBooking = (req, res, next) => {
     });
   }
 
-  // Sanitize body fields
+  
   req.body.service = sanitizeString(service, 50).toLowerCase();
   req.body.name = sanitizeString(name, 100);
   req.body.phone = sanitizeString(phone, 20);
@@ -86,9 +78,6 @@ const validateTokenBooking = (req, res, next) => {
   next();
 };
 
-/**
- * Validate auth registration input
- */
 const validateRegistration = (req, res, next) => {
   const { name, email, phone, password } = req.body;
   const errors = [];

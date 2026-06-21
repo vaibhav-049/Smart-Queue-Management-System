@@ -38,7 +38,7 @@ export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState(null);
   
   
-  // Service Queue Control states
+  
   const { services, loading: servicesLoading } = useServices();
   const [selectedService, setSelectedService] = useState('');
   const [serviceQueue, setServiceQueue] = useState(null);
@@ -65,7 +65,7 @@ export default function AdminDashboard() {
       const response = await api.get('/admin/analytics');
       if (response.data && response.data.success) {
         setAnalytics(response.data.data);
-        setCache('admin-analytics', response.data.data, 2 * 60 * 1000); // 2 min TTL
+        setCache('admin-analytics', response.data.data, 2 * 60 * 1000); 
       }
     } catch (err) {
       console.error('Error fetching admin analytics:', err);
@@ -75,7 +75,7 @@ export default function AdminDashboard() {
     }
   }, []);
 
-  // Fetch detailed service queue state
+  
   const fetchServiceQueue = useCallback(async () => {
     if (!selectedService) return;
     const cacheKey = `queue-status-${selectedService}`;
@@ -88,14 +88,14 @@ export default function AdminDashboard() {
       const response = await api.get(`/queues/${selectedService}/status`);
       if (response.data && response.data.success) {
         setServiceQueue(response.data.data);
-        setCache(cacheKey, response.data.data, 2 * 60 * 1000); // 2 min TTL
+        setCache(cacheKey, response.data.data, 2 * 60 * 1000); 
       }
     } catch (err) {
       console.error('Error fetching service queue details:', err);
     }
   }, [selectedService]);
 
-  // Load Initial Data
+  
   useEffect(() => {
     fetchAnalytics();
   }, [fetchAnalytics]);
@@ -104,13 +104,13 @@ export default function AdminDashboard() {
     fetchServiceQueue();
   }, [fetchServiceQueue]);
 
-  // Handle Socket Live Events
+  
   useEffect(() => {
     const socket = getSocket();
     if (!socket) return;
 
     const handleQueueUpdated = (payload) => {
-      // Re-fetch analytics & details to update totals
+      
       fetchAnalytics();
       if (payload.service === selectedService) {
         fetchServiceQueue();
@@ -123,7 +123,7 @@ export default function AdminDashboard() {
     };
   }, [selectedService, fetchAnalytics, fetchServiceQueue]);
 
-  // Admin Actions
+  
   const handleCallNext = async () => {
     setActionLoading(true);
     try {
@@ -250,7 +250,7 @@ export default function AdminDashboard() {
         </div>
       </m.div>
 
-      {/* Stats Row */}
+      {}
       <div className="stats-grid">
         <StatsCard
           title="Total Tokens"
@@ -287,7 +287,7 @@ export default function AdminDashboard() {
         />
       </div>
 
-      {/* Charts */}
+      {}
       <Suspense fallback={<LoadingSkeleton type="chart" count={2} />}>
         <AdminCharts
           dailyQueueData={dailyQueueData}
@@ -296,7 +296,7 @@ export default function AdminDashboard() {
         />
       </Suspense>
 
-      {/* Queue Control Panel Console */}
+      {}
       <m.div
         className="activity-card"
         initial={{ opacity: 0, y: 20 }}
@@ -334,10 +334,10 @@ export default function AdminDashboard() {
 
         {serviceQueue && (
           <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {/* Status overview and quick buttons */}
+            {}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
               
-              {/* Active Serving Token Details */}
+              {}
               <div style={{ border: '1px solid var(--border-color)', borderRadius: '12px', padding: '1.25rem', background: 'var(--card-bg)' }}>
                 <span style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--text-muted)' }}>Currently Serving</span>
                 <h2 style={{ fontSize: '2.5rem', margin: '0.5rem 0', color: currentServing ? 'var(--status-serving)' : 'var(--text-muted)' }}>
@@ -355,7 +355,7 @@ export default function AdminDashboard() {
                 )}
               </div>
 
-              {/* Action Buttons Box */}
+              {}
               <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '1rem' }}>
                 <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <button
@@ -420,7 +420,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            {/* Upcoming queue list */}
+            {}
             <div>
               <h4 style={{ marginBottom: '0.75rem' }}>Upcoming Customers in Line ({upcomingTokens.length})</h4>
               <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '12px' }}>
@@ -478,7 +478,7 @@ export default function AdminDashboard() {
         )}
       </m.div>
 
-      {/* Recent Activity */}
+      {}
       <m.div
         className="activity-card"
         initial={{ opacity: 0, y: 20 }}
@@ -510,7 +510,7 @@ export default function AdminDashboard() {
         </div>
       </m.div>
 
-      {/* Super Admin Invite Codes Panel */}
+      {}
       {!user?.service && (
         <InviteCodesPanel />
       )}

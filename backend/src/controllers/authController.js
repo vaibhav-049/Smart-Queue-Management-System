@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// Helper to generate JWT token
+
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '30d',
@@ -12,14 +12,10 @@ const OTP = require('../models/OTP');
 const AdminInviteCode = require('../models/AdminInviteCode');
 const { sendOTPEmail } = require('../services/emailService');
 
-// Helper to generate 6-digit OTP
+
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-/**
- * @desc    Send OTP for new user registration
- * @route   POST /api/auth/register
- * @access  Public
- */
+
 const registerUser = async (req, res, next) => {
   try {
     const { name, email, phone, password, role, service, accessCode } = req.body;
@@ -38,9 +34,9 @@ const registerUser = async (req, res, next) => {
         res.status(400);
         throw new Error('Invalid service selection');
       }
-      // Validate access code (check ENV first for Super Admin fallback, else check DB)
+      
       if (accessCode === process.env.ADMIN_ACCESS_CODE) {
-        // Allowed fallback
+        
       } else {
         const inviteCode = await AdminInviteCode.findOne({ code: accessCode, isUsed: false });
         if (!inviteCode) {
@@ -55,26 +51,26 @@ const registerUser = async (req, res, next) => {
       }
     }
 
-    // Check if user already exists
+    
     const userExists = await User.findOne({ email });
     if (userExists) {
       res.status(400);
       throw new Error('User already exists with this email');
     }
 
-    // Delete any existing register OTPs for this email
+    
     await OTP.deleteMany({ email, type: 'register' });
 
-    // Generate and save new OTP
+    
     const otpCode = generateOTP();
     await OTP.create({
       email,
       otp: otpCode,
       type: 'register',
-      userData: { name, email, phone, password, role: role || 'user', service: service || null, accessCode } // Store temporarily
+      userData: { name, email, phone, password, role: role || 'user', service: service || null, accessCode } 
     });
 
-    // Send email
+    
     await sendOTPEmail(email, otpCode, 'register');
 
     res.status(200).json({
@@ -86,11 +82,7 @@ const registerUser = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Verify OTP and finalize registration
- * @route   POST /api/auth/verify-register
- * @access  Public
- */
+
 const verifyOTPAndRegister = async (req, res, next) => {
   try {
     const { email, otp } = req.body;
@@ -100,7 +92,7 @@ const verifyOTPAndRegister = async (req, res, next) => {
       throw new Error('Please provide email and OTP');
     }
 
-    // Find the OTP record
+    
     const otpRecord = await OTP.findOne({ email, type: 'register' });
     if (!otpRecord) {
       res.status(400);
@@ -115,14 +107,14 @@ const verifyOTPAndRegister = async (req, res, next) => {
 
     const { name, phone, password, role, service, accessCode } = otpRecord.userData;
 
-    // Double check user doesn't exist
+    
     const userExists = await User.findOne({ email });
     if (userExists) {
       res.status(400);
       throw new Error('User already exists');
     }
 
-    // Create user
+    
     const user = await User.create({
       name,
       email,
@@ -132,7 +124,7 @@ const verifyOTPAndRegister = async (req, res, next) => {
       service: service || null
     });
 
-    // Mark one-time code as used
+    
     if (role === 'admin' && accessCode && accessCode !== process.env.ADMIN_ACCESS_CODE) {
       await AdminInviteCode.findOneAndUpdate(
         { code: accessCode },
@@ -140,7 +132,7 @@ const verifyOTPAndRegister = async (req, res, next) => {
       );
     }
 
-    // Delete the OTP record so it can't be reused
+    
     await OTP.deleteOne({ _id: otpRecord._id });
 
     if (user) {
@@ -169,11 +161,7 @@ const verifyOTPAndRegister = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Authenticate user & get token
- * @route   POST /api/auth/login
- * @access  Public
- */
+
 const loginUser = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -183,14 +171,14 @@ const loginUser = async (req, res, next) => {
       throw new Error('Please enter email and password');
     }
 
-    // Check for user
+    
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
       res.status(401);
       throw new Error('Invalid credentials');
     }
 
-    // Compare password
+    
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
       res.status(401);
@@ -218,11 +206,7 @@ const loginUser = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Get current user profile
- * @route   GET /api/auth/me
- * @access  Private
- */
+
 const getMe = async (req, res, next) => {
   try {
     res.status(200).json({
@@ -234,11 +218,7 @@ const getMe = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Request Password Reset OTP
- * @route   POST /api/auth/forgot-password
- * @access  Public
- */
+
 const forgotPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
@@ -268,11 +248,7 @@ const forgotPassword = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Verify OTP and Reset Password
- * @route   POST /api/auth/reset-password
- * @access  Public
- */
+
 const resetPassword = async (req, res, next) => {
   try {
     const { email, otp, newPassword } = req.body;

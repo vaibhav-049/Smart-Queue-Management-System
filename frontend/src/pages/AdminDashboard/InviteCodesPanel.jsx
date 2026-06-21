@@ -37,7 +37,7 @@ export default function InviteCodesPanel() {
       const res = await api.post('/admin/invite-codes', { service: selectedService });
       if (res.data.success) {
         toast.success(`Generated code for ${selectedService}`);
-        fetchCodes(); // Refresh list
+        fetchCodes(); 
       }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to generate code');

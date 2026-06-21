@@ -68,7 +68,7 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
       if (profileRef.current && !profileRef.current.contains(e.target)) setShowProfile(false);
       if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifications(false);
     }
-    // Use 'click' not 'mousedown' — on mobile, mousedown fires twice (touch+mouse simulation)
+    
     document.addEventListener('click', handleClickOutside);
     return () => document.removeEventListener('click', handleClickOutside);
   }, []);
@@ -80,7 +80,7 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
       className={`navbar ${darkMode ? 'dark' : ''}`}
     >
       <div className="navbar-inner">
-        {/* Left: Logo + Menu Toggle */}
+        {}
         <div className="navbar-left">
           {isDashboard && (
             <Tooltip text={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}>
@@ -95,7 +95,7 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
           </Link>
         </div>
 
-        {/* Center: Public Navigation Links */}
+        {}
         {!isDashboard && (
           <div className={`navbar-links ${mobileMenuOpen ? 'open' : ''}`}>
             {user ? (
@@ -135,9 +135,9 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
           </div>
         )}
 
-        {/* Right: Actions */}
+        {}
         <div className="navbar-right">
-          {/* Theme Toggle */}
+          {}
           <Tooltip text={darkMode ? 'Light Mode' : 'Dark Mode'}>
             <m.button
               type="button"
@@ -160,7 +160,7 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
             </m.button>
           </Tooltip>
 
-          {/* Notifications */}
+          {}
           {(isDashboard || user) && (
             <div className="notif-wrapper" ref={notifRef}>
             <Tooltip text="Notifications">
@@ -209,7 +209,7 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
             </div>
           )}
 
-          {/* Profile Dropdown */}
+          {}
           {(isDashboard || user) && (
             <div className="profile-wrapper" ref={profileRef}>
               <Tooltip text="User Account">
@@ -255,7 +255,7 @@ export default function Navbar({ onMenuToggle, isSidebarOpen }) {
             </div>
           )}
 
-          {/* Mobile Menu Toggle (Public) */}
+          {}
           {!isDashboard && (
             <Tooltip text={mobileMenuOpen ? "Close Menu" : "Open Menu"}>
               <button type="button" className="mobile-menu-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>

@@ -2,7 +2,7 @@ const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const User = require('../models/User');
 
-// Initialize Razorpay instance safely (checking for env vars)
+
 let razorpayInstance = null;
 try {
   if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
@@ -15,11 +15,6 @@ try {
   console.warn('Razorpay could not be initialized. Missing or invalid credentials.');
 }
 
-/**
- * @desc    Create a Razorpay order for VIP Upgrade
- * @route   POST /api/payments/create-order
- * @access  Private
- */
 const createOrder = async (req, res, next) => {
   try {
     if (!razorpayInstance) {
@@ -27,12 +22,12 @@ const createOrder = async (req, res, next) => {
       throw new Error('Payment gateway is not configured. Please add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to .env');
     }
 
-    // VIP Plan price: 99 INR
+    
     const options = {
-      amount: 99 * 100, // amount in smallest currency unit (paise)
+      amount: 99 * 100, 
       currency: 'INR',
       receipt: `receipt_order_${req.user._id}_${Date.now()}`,
-      payment_capture: 1, // Auto capture
+      payment_capture: 1, 
     };
 
     const order = await razorpayInstance.orders.create(options);
@@ -46,11 +41,6 @@ const createOrder = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Verify Razorpay payment and upgrade user to VIP
- * @route   POST /api/payments/verify
- * @access  Private
- */
 const verifyPayment = async (req, res, next) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
@@ -65,7 +55,7 @@ const verifyPayment = async (req, res, next) => {
       throw new Error('Payment gateway secret key is missing');
     }
 
-    // Verify signature
+    
     const body = razorpay_order_id + '|' + razorpay_payment_id;
     const expectedSignature = crypto
       .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
@@ -75,7 +65,7 @@ const verifyPayment = async (req, res, next) => {
     const isAuthentic = expectedSignature === razorpay_signature;
 
     if (isAuthentic) {
-      // Payment is successful, upgrade user to VIP for 30 days
+      
       const user = await User.findById(req.user._id);
       if (!user) {
         res.status(404);
@@ -83,7 +73,7 @@ const verifyPayment = async (req, res, next) => {
       }
 
       const expiryDate = new Date();
-      expiryDate.setDate(expiryDate.getDate() + 30); // Valid for 30 days
+      expiryDate.setDate(expiryDate.getDate() + 30); 
 
       user.isVip = true;
       user.vipValidTill = expiryDate;

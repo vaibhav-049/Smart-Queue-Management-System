@@ -36,7 +36,7 @@ export default function AppRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        {/* Public Routes */}
+        {}
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -46,17 +46,17 @@ export default function AppRoutes() {
           <Route path="/track/:tokenId" element={<TrackToken />} />
         </Route>
 
-        {/* TV Display Route (Fullscreen, no layout) */}
+        {}
         <Route path="/tv-display/:service" element={<TVDisplay />} />
 
-        {/* Dashboard Routes */}
+        {}
         <Route element={<DashboardLayout />}>
           <Route path="/book-token" element={<BookToken />} />
           <Route path="/queue-status" element={<QueueStatus />} />
           <Route path="/my-tokens" element={<MyTokens />} />
           <Route path="/profile" element={<Profile />} />
           
-          {/* Admin Routes */}
+          {}
           <Route element={<AdminRoute />}>
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/admin/scanner" element={<QRScanner />} />

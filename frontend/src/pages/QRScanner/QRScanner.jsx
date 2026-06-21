@@ -25,7 +25,7 @@ export default function QRScanner() {
     const scanner = new Html5Qrcode('scanner-view');
     setScannerInstance(scanner);
 
-    // Get available cameras
+    
     Html5Qrcode.getCameras()
       .then(devices => {
         if (devices && devices.length > 0) {
@@ -69,7 +69,7 @@ export default function QRScanner() {
           handleQRCodeScanned(decodedText);
         },
         () => {
-          // Frame match failure - silent
+          
         }
       );
     } catch (err) {
@@ -93,8 +93,8 @@ export default function QRScanner() {
   const handleQRCodeScanned = async (text) => {
     await stopScanning();
 
-    // Parse displayId from scanned URL
-    // e.g. "http://localhost:5173/track/H003" or just "H003"
+    
+    
     let displayId = text.trim();
     if (text.includes('/track/')) {
       const parts = text.split('/track/');
@@ -108,7 +108,7 @@ export default function QRScanner() {
       return;
     }
 
-    // Restricted staff check
+    
     const servicePrefixes = { hospital: 'H', college: 'C', salon: 'S' };
     if (user?.service) {
       const expectedPrefix = servicePrefixes[user.service.toLowerCase()];
@@ -130,7 +130,7 @@ export default function QRScanner() {
       return;
     }
 
-    // Restricted staff check
+    
     const servicePrefixes = { hospital: 'H', college: 'C', salon: 'S' };
     if (user?.service) {
       const expectedPrefix = servicePrefixes[user.service.toLowerCase()];
@@ -245,7 +245,7 @@ export default function QRScanner() {
 
       <div className="scanner-layout">
         <div className="scanner-camera-section">
-          {/* Camera Controls */}
+          {}
           {cameras.length > 0 && (
             <div className="camera-selector-panel">
               <label htmlFor="camera-select">Choose Camera</label>
@@ -289,7 +289,7 @@ export default function QRScanner() {
             </div>
           )}
 
-          {/* Webcam Viewport */}
+          {}
           <div className="scanner-viewport-wrapper">
             {cameraError ? (
               <div className="scanner-placeholder camera-error-view" style={{
@@ -320,7 +320,7 @@ export default function QRScanner() {
                     textAlign: 'left',
                     lineHeight: '1.4'
                   }}>
-                    <strong>Tip:</strong> If testing on your phone's Chrome browser, go to <code>chrome://flags/#unsafely-treat-insecure-origin-as-secure</code>, add <code>{window.location.origin}</code>, enable the flag, and relaunch Chrome.
+                    <strong>Tip:</strong> If testing on your phone's Chrome browser, go to <code>chrome:
                   </div>
                 )}
               </div>
@@ -337,7 +337,7 @@ export default function QRScanner() {
             )}
           </div>
 
-          {/* Manual Input Fallback */}
+          {}
           <div className="scanner-manual-panel">
             <h3>Manual Display ID Search</h3>
             <form onSubmit={handleManualSearch} className="scanner-manual-form">
@@ -356,7 +356,7 @@ export default function QRScanner() {
           </div>
         </div>
 
-        {/* Verification & Details Display Panel */}
+        {}
         <div className="scanner-results-section">
           <AnimatePresence mode="wait">
             {isLoading && (

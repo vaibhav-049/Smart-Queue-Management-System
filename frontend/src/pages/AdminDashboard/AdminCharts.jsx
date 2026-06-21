@@ -7,7 +7,7 @@ import {
 export default function AdminCharts({ dailyQueueData, serviceUsageData, darkMode }) {
   return (
     <div className="charts-grid">
-      {/* Daily Queue Analysis */}
+      {}
       <m.div
         className="chart-card"
         initial={{ opacity: 0, y: 20 }}
@@ -49,7 +49,7 @@ export default function AdminCharts({ dailyQueueData, serviceUsageData, darkMode
         </ResponsiveContainer>
       </m.div>
 
-      {/* Service Usage */}
+      {}
       <m.div
         className="chart-card"
         initial={{ opacity: 0, y: 20 }}

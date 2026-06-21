@@ -8,11 +8,7 @@ const { sendTokenAlerts } = require('../services/alertService');
 const { emitUserNotification, emitQueueUpdate, emitTokenCalled, emitQueueCompleted } = require('../config/socket');
 const { getLocalDateString } = require('../utils/dateUtils');
 
-/**
- * @desc    Call the next token in the queue
- * @route   POST /api/admin/queues/:service/next
- * @access  Private (Admin Only)
- */
+
 const callNextToken = async (req, res, next) => {
   try {
     const serviceParam = req.params.service || req.body.service;
@@ -22,7 +18,7 @@ const callNextToken = async (req, res, next) => {
     }
     const service = serviceParam.toLowerCase();
 
-    // Restricted staff check
+    
     if (req.user && req.user.service && req.user.service.toLowerCase() !== service) {
       res.status(403);
       throw new Error(`Access denied: You are restricted to operating the ${req.user.service} service queue.`);
@@ -30,7 +26,7 @@ const callNextToken = async (req, res, next) => {
 
     const todayStr = getLocalDateString();
 
-    // 1. Mark currently serving token as completed for today
+    
     const currentServingToken = await Token.findOne({ service, status: 'serving', bookingDate: todayStr });
     if (currentServingToken) {
       currentServingToken.status = 'completed';
@@ -40,7 +36,7 @@ const callNextToken = async (req, res, next) => {
       sendTokenAlerts(currentServingToken._id, 'completed').catch(console.error);
     }
 
-    // 2. Fetch all waiting tokens for this service for today
+    
     const PRIORITY_RANKS = {
       'Emergency': 4,
       'Senior Citizen': 3,
@@ -56,7 +52,7 @@ const callNextToken = async (req, res, next) => {
     
     let nextToken = null;
     if (waitingTokens.length > 0) {
-      // Sort in memory to find the exact next token matching queueManager logic
+      
       waitingTokens.sort((a, b) => {
         const rankA = PRIORITY_RANKS[a.priority] || 1;
         const rankB = PRIORITY_RANKS[b.priority] || 1;
@@ -70,7 +66,7 @@ const callNextToken = async (req, res, next) => {
       nextToken.waitTime = 0;
       await nextToken.save();
 
-      // Send Socket notification to the specific user being called
+      
       emitUserNotification(nextToken.userId, {
         id: Math.random().toString(),
         title: `Your token ${nextToken.displayId} is now active!`,
@@ -80,14 +76,14 @@ const callNextToken = async (req, res, next) => {
         type: 'success',
       });
 
-      // Emit real-time socket updates for screens/lobby
+      
       emitTokenCalled(nextToken);
     } else {
-      // No waiting tokens left, queue completed
+      
       emitQueueCompleted(service);
     }
 
-    // 3. Recalculate queue & broadcast changes for today
+    
     await recalculateQueue(service, todayStr);
 
     res.status(200).json({
@@ -105,11 +101,7 @@ const callNextToken = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Skip a specific token
- * @route   POST /api/admin/skip-token
- * @access  Private (Admin Only)
- */
+
 const skipToken = async (req, res, next) => {
   try {
     const { tokenId } = req.params;
@@ -129,7 +121,7 @@ const skipToken = async (req, res, next) => {
       throw new Error('Token not found');
     }
 
-    // Restricted staff check
+    
     if (req.user && req.user.service && req.user.service.toLowerCase() !== token.service.toLowerCase()) {
       res.status(403);
       throw new Error(`Access denied: You are restricted to operating the ${req.user.service} service queue.`);
@@ -140,14 +132,14 @@ const skipToken = async (req, res, next) => {
       throw new Error(`Token is already in ${token.status} state`);
     }
 
-    // Skip sets status to cancelled
+    
     token.status = 'cancelled';
     token.waitTime = 0;
-    token.completedAt = new Date(); // Using completedAt to mark end of lifecycle
+    token.completedAt = new Date(); 
     await token.save();
     sendTokenAlerts(token._id, 'cancelled').catch(console.error);
 
-    // Alert the user that they were skipped
+    
     emitUserNotification(token.userId, {
       id: Math.random().toString(),
       title: `Token ${token.displayId} has been skipped`,
@@ -157,7 +149,7 @@ const skipToken = async (req, res, next) => {
       type: 'alert',
     });
 
-    // Recalculate queue & broadcast
+    
     await recalculateQueue(token.service, token.bookingDate);
 
     res.status(200).json({
@@ -170,11 +162,7 @@ const skipToken = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Complete a specific serving token
- * @route   POST /api/admin/complete-token
- * @access  Private (Admin Only)
- */
+
 const completeToken = async (req, res, next) => {
   try {
     const { service, tokenNumber } = req.body;
@@ -187,7 +175,7 @@ const completeToken = async (req, res, next) => {
 
     const serviceSlug = service.toLowerCase();
 
-    // Restricted staff check
+    
     if (req.user && req.user.service && req.user.service.toLowerCase() !== serviceSlug) {
       res.status(403);
       throw new Error(`Access denied: You are restricted to operating the ${req.user.service} service queue.`);
@@ -210,7 +198,7 @@ const completeToken = async (req, res, next) => {
     await token.save();
     sendTokenAlerts(token._id, 'completed').catch(console.error);
 
-    // Recalculate queue
+    
     await recalculateQueue(serviceSlug, token.bookingDate);
 
     res.status(200).json({
@@ -223,11 +211,7 @@ const completeToken = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Close a service queue (no new tokens allowed)
- * @route   POST /api/admin/close-queue
- * @access  Private (Admin Only)
- */
+
 const closeQueue = async (req, res, next) => {
   try {
     const serviceParam = req.params.service || req.body.service;
@@ -237,7 +221,7 @@ const closeQueue = async (req, res, next) => {
     }
     const service = serviceParam.toLowerCase();
 
-    // Restricted staff check
+    
     if (req.user && req.user.service && req.user.service.toLowerCase() !== service) {
       res.status(403);
       throw new Error(`Access denied: You are restricted to operating the ${req.user.service} service queue.`);
@@ -249,7 +233,7 @@ const closeQueue = async (req, res, next) => {
       { new: true, upsert: true }
     );
 
-    // Broadcast update
+    
     emitQueueUpdate(service, {
       currentServing: queue.currentServing,
       upcoming: queue.upcoming,
@@ -268,11 +252,7 @@ const closeQueue = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Open a service queue
- * @route   POST /api/admin/open-queue
- * @access  Private (Admin Only)
- */
+
 const openQueue = async (req, res, next) => {
   try {
     const serviceParam = req.params.service || req.body.service;
@@ -282,7 +262,7 @@ const openQueue = async (req, res, next) => {
     }
     const service = serviceParam.toLowerCase();
 
-    // Restricted staff check
+    
     if (req.user && req.user.service && req.user.service.toLowerCase() !== service) {
       res.status(403);
       throw new Error(`Access denied: You are restricted to operating the ${req.user.service} service queue.`);
@@ -294,7 +274,7 @@ const openQueue = async (req, res, next) => {
       { new: true, upsert: true }
     );
 
-    // Broadcast update
+    
     emitQueueUpdate(service, {
       currentServing: queue.currentServing,
       upcoming: queue.upcoming,
@@ -323,7 +303,7 @@ const getAnalytics = async (req, res, next) => {
 
     const serviceFilter = req.user.service ? { service: req.user.service } : {};
 
-    // 1. Calculate General Dashboard Stats
+    
     const totalTokens = await Token.countDocuments(serviceFilter);
     const activeQueuesCount = await Queue.countDocuments({ ...serviceFilter, isActive: true });
     const todaysVisitors = await Token.countDocuments({ ...serviceFilter, createdAt: { $gte: startOfToday, $lte: endOfToday } });
@@ -333,21 +313,21 @@ const getAnalytics = async (req, res, next) => {
       updatedAt: { $gte: startOfToday, $lte: endOfToday },
     });
 
-    // Average waiting time for completed tokens today
+    
     const completedTokensToday = await Token.find({
       ...serviceFilter,
       status: 'completed',
       updatedAt: { $gte: startOfToday, $lte: endOfToday },
     });
     
-    let avgWaitTime = 14; // default baseline in minutes
+    let avgWaitTime = 14; 
     if (completedTokensToday.length > 0) {
-      // Calculate based on wait time recorded or simple mock duration
+      
       const totalWait = completedTokensToday.reduce((acc, t) => acc + (t.sequenceNumber * 1.5), 0);
       avgWaitTime = Math.round(totalWait / completedTokensToday.length) || 12;
     }
 
-    // Most used service
+    
     let mostUsedService = req.user.service || 'Hospital';
     if (!req.user.service) {
       const serviceGrouping = await Token.aggregate([
@@ -359,7 +339,7 @@ const getAnalytics = async (req, res, next) => {
     }
     const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
-    // Real Cancellation Rate & Satisfaction Rate
+    
     const cancelledCount = await Token.countDocuments({ ...serviceFilter, status: 'cancelled' });
     const cancellationRate = totalTokens > 0 ? Number(((cancelledCount / totalTokens) * 100).toFixed(1)) : 0;
 
@@ -384,7 +364,7 @@ const getAnalytics = async (req, res, next) => {
       avgRating
     };
 
-    // 2. Service Usage Data (percentage split)
+    
     const usageAggregate = await Token.aggregate([
       { $match: serviceFilter },
       { $group: { _id: '$service', count: { $sum: 1 } } },
@@ -402,7 +382,7 @@ const getAnalytics = async (req, res, next) => {
       serviceUsageData.push({ name: 'No Data', value: 100, fill: '#D1D5DB' });
     }
 
-    // 3. Hourly visitors details for today
+    
     const hourlyAggregate = await Token.aggregate([
       { $match: { ...serviceFilter, createdAt: { $gte: startOfToday, $lte: endOfToday } } },
       { $project: { hour: { $hour: { date: '$createdAt', timezone: 'Asia/Kolkata' } } } },
@@ -436,7 +416,7 @@ const getAnalytics = async (req, res, next) => {
       visitors: hourlyMap.get(h) || 0,
     }));
 
-    // 4. Daily Queue Data (Last 7 Days)
+    
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
     sevenDaysAgo.setHours(0, 0, 0, 0);
@@ -476,7 +456,7 @@ const getAnalytics = async (req, res, next) => {
       });
     }
 
-    // 5. Monthly progression (Real data for last 6 months)
+    
     const sixMonthsAgo = new Date();
     sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
     sixMonthsAgo.setDate(1);
@@ -503,7 +483,7 @@ const getAnalytics = async (req, res, next) => {
        });
     }
 
-    // 6. Weekly Report Summary (Last 4 weeks)
+    
     const fourWeeksAgo = new Date();
     fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
     fourWeeksAgo.setHours(0, 0, 0, 0);
@@ -526,7 +506,7 @@ const getAnalytics = async (req, res, next) => {
        if (t.status === 'cancelled') weeklyReport[weekIdx].cancelled += 1;
     });
 
-    // 6. Recent Activity Logs (last 6 tokens)
+    
     const recentTokens = await Token.find(serviceFilter)
       .sort({ updatedAt: -1 })
       .limit(6);
@@ -546,7 +526,7 @@ const getAnalytics = async (req, res, next) => {
         type = 'cancel';
       }
 
-      // Time difference label
+      
       const diffMs = new Date() - new Date(t.updatedAt);
       const diffMins = Math.floor(diffMs / 60000);
       let timeLabel = 'Just now';
@@ -568,7 +548,7 @@ const getAnalytics = async (req, res, next) => {
       };
     });
 
-    // Provide default activity if none
+    
     if (recentActivity.length === 0) {
       recentActivity.push(
         { id: 1, action: 'Token A093 generated', user: 'Neha Singh', service: 'Hospital', time: '2 min ago', type: 'create' },
@@ -594,11 +574,7 @@ const getAnalytics = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Verify a scanned token displayId (for today's date)
- * @route   POST /api/admin/verify-token
- * @access  Private (Admin Only)
- */
+
 const verifyScannedToken = async (req, res, next) => {
   try {
     const { displayId } = req.body;
@@ -612,7 +588,7 @@ const verifyScannedToken = async (req, res, next) => {
       throw new Error(`Token '${displayId}' not found for today's date.`);
     }
 
-    // Restricted staff check
+    
     if (req.user && req.user.service && req.user.service.toLowerCase() !== token.service.toLowerCase()) {
       res.status(403);
       throw new Error(`Access denied: You are restricted to operating the ${req.user.service} service queue.`);
@@ -628,11 +604,7 @@ const verifyScannedToken = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Admit/Serve a specific scanned token
- * @route   POST /api/admin/serve-token
- * @access  Private (Admin Only)
- */
+
 const serveScannedToken = async (req, res, next) => {
   try {
     const { displayId } = req.body;
@@ -645,7 +617,7 @@ const serveScannedToken = async (req, res, next) => {
       throw new Error(`Token '${displayId}' not found for today's date.`);
     }
 
-    // Restricted staff check
+    
     if (req.user && req.user.service && req.user.service.toLowerCase() !== token.service.toLowerCase()) {
       res.status(403);
       throw new Error(`Access denied: You are restricted to operating the ${req.user.service} service queue.`);
@@ -656,7 +628,7 @@ const serveScannedToken = async (req, res, next) => {
       throw new Error(`Token has already been ${token.status}.`);
     }
 
-    // 1. Mark currently serving token for this service as completed
+    
     const currentServingToken = await Token.findOne({ service: token.service, status: 'serving', bookingDate: todayStr });
     if (currentServingToken) {
       currentServingToken.status = 'completed';
@@ -664,12 +636,12 @@ const serveScannedToken = async (req, res, next) => {
       await currentServingToken.save();
     }
 
-    // 2. Set this token to serving
+    
     token.status = 'serving';
     token.waitTime = 0;
     await token.save();
 
-    // 3. Send Socket notification to the specific user being called
+    
     emitUserNotification(token.userId, {
       id: Math.random().toString(),
       title: `Your token ${token.displayId} is now active!`,
@@ -679,10 +651,10 @@ const serveScannedToken = async (req, res, next) => {
       type: 'success',
     });
 
-    // Emit real-time socket updates for screens/lobby
+    
     emitTokenCalled(token);
 
-    // 4. Recalculate queue & broadcast changes
+    
     await recalculateQueue(token.service, todayStr);
 
     res.status(200).json({
@@ -695,14 +667,10 @@ const serveScannedToken = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Generate a new one-time Admin Invite Code
- * @route   POST /api/admin/invite-codes
- * @access  Private (Super Admin Only)
- */
+
 const generateInviteCode = async (req, res, next) => {
   try {
-    // Only Super Admin can generate codes
+    
     if (req.user.role !== 'admin' || req.user.service) {
       res.status(403);
       throw new Error('Access denied: Only Super Admin can generate invite codes.');
@@ -714,7 +682,7 @@ const generateInviteCode = async (req, res, next) => {
       throw new Error('Please provide a valid service (hospital, college, salon)');
     }
 
-    // Generate random 6-character code
+    
     const rawCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     const code = `${service.substring(0, 4).toUpperCase()}-${rawCode}`;
 
@@ -733,11 +701,7 @@ const generateInviteCode = async (req, res, next) => {
   }
 };
 
-/**
- * @desc    Get all Admin Invite Codes
- * @route   GET /api/admin/invite-codes
- * @access  Private (Super Admin Only)
- */
+
 const getInviteCodes = async (req, res, next) => {
   try {
     if (req.user.role !== 'admin' || req.user.service) {

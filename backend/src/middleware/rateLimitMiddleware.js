@@ -1,14 +1,14 @@
 const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 
-// Key generator that identifies requests by User ID (if authenticated) or IP address
+
 const ipUserKeyGenerator = (req) => {
-  // 1. If authMiddleware has already run, use user ID
+  
   if (req.user && (req.user._id || req.user.id)) {
     return `user_${req.user._id || req.user.id}`;
   }
 
-  // 2. Parse and verify authorization token manually if authMiddleware has not run yet
+  
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
     try {
       const token = req.headers.authorization.split(' ')[1];
@@ -17,18 +17,18 @@ const ipUserKeyGenerator = (req) => {
         return `user_${decoded.id}`;
       }
     } catch (error) {
-      // Token expired, invalid, or signature verification failed: fallback to IP
+      
     }
   }
 
-  // 3. Fallback to client IP
+  
   return `ip_${req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress}`;
 };
 
-// General rate limiter for all standard API calls
+
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // Limit each client to 200 requests per 15 minutes
+  windowMs: 15 * 60 * 1000, 
+  max: 200, 
   keyGenerator: ipUserKeyGenerator,
   message: {
     success: false,
@@ -39,10 +39,10 @@ const generalLimiter = rateLimit({
   validate: false,
 });
 
-// Stricter rate limiter for sensitive authentication & OTP endpoints
+
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Limit each client to 5 login/OTP attempts per 15 minutes
+  windowMs: 15 * 60 * 1000, 
+  max: 5, 
   keyGenerator: ipUserKeyGenerator,
   message: {
     success: false,
@@ -53,10 +53,10 @@ const authLimiter = rateLimit({
   validate: false,
 });
 
-// Rate limiter for public queue status or tracking screens
+
 const publicTrackerLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 60, // Limit each client to 60 requests per minute
+  windowMs: 1 * 60 * 1000, 
+  max: 60, 
   keyGenerator: ipUserKeyGenerator,
   message: {
     success: false,

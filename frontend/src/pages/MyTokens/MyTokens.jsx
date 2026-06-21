@@ -21,10 +21,10 @@ export default function MyTokens() {
   const [submittingRating, setSubmittingRating] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Submit token rating
+  
   const handleRateToken = async (tokenId, ratingVal) => {
     setSubmittingRating(true);
-    // Optimistic update
+    
     const prevTokens = [...myTokens];
     setMyTokens(prev => prev.map(t => t._id === tokenId ? { ...t, rating: ratingVal } : t));
     setSelectedToken(prev => prev ? { ...prev, rating: ratingVal } : prev);
@@ -34,7 +34,7 @@ export default function MyTokens() {
         toast.success('Thank you for rating!');
       }
     } catch (err) {
-      // Revert on failure
+      
       setMyTokens(prevTokens);
       toast.error(err.response?.data?.message || 'Failed to submit rating');
     } finally {
@@ -42,7 +42,7 @@ export default function MyTokens() {
     }
   };
 
-  // Fetch tokens from backend
+  
   const fetchTokens = useCallback(async () => {
     const cachedTokens = getCached('my-tokens');
     if (cachedTokens) {
@@ -55,14 +55,14 @@ export default function MyTokens() {
       if (response.data && response.data.success) {
         const mapped = response.data.data.map(t => ({
           ...t,
-          id: t.displayId, // ensures compatibility with TokenCard.id
+          id: t.displayId, 
         }));
         setMyTokens(mapped);
-        setCache('my-tokens', mapped, 2 * 60 * 1000); // 2 min TTL
+        setCache('my-tokens', mapped, 2 * 60 * 1000); 
       }
     } catch (err) {
       console.error('Error fetching tokens:', err);
-      // Only show error if we don't have cached data to show
+      
       if (!cachedTokens) toast.error('Failed to load your tokens');
     } finally {
       setLoading(false);
@@ -73,7 +73,7 @@ export default function MyTokens() {
     fetchTokens();
   }, [fetchTokens]);
 
-  // Real-time socket token update listeners
+  
   useEffect(() => {
     const socket = getSocket();
     if (!socket) return;
@@ -82,7 +82,7 @@ export default function MyTokens() {
       setMyTokens(prev => prev.map(t => {
         if (t.displayId === payload.displayId) {
           const updated = { ...t, ...payload.data };
-          // If the selected token is updated, update the modal details too
+          
           if (selectedToken && selectedToken.displayId === payload.displayId) {
             setSelectedToken(updated);
           }
@@ -98,10 +98,10 @@ export default function MyTokens() {
     };
   }, [selectedToken]);
 
-  // Cancel token booking handler
+  
   const handleCancelToken = async (tokenId) => {
     if (!window.confirm('Are you sure you want to cancel this token booking?')) return;
-    // Optimistic update
+    
     const prevTokens = [...myTokens];
     setMyTokens(prev => prev.map(t => t._id === tokenId ? { ...t, status: 'cancelled' } : t));
     setSelectedToken(null);
@@ -109,10 +109,10 @@ export default function MyTokens() {
       const response = await api.put(`/tokens/${tokenId}/cancel`);
       if (response.data && response.data.success) {
         toast.success('Token cancelled successfully');
-        fetchTokens(); // Full refresh to get updated positions
+        fetchTokens(); 
       }
     } catch (err) {
-      // Revert on failure
+      
       setMyTokens(prevTokens);
       const errMsg = err.response?.data?.message || 'Failed to cancel token';
       toast.error(errMsg);
@@ -132,7 +132,7 @@ export default function MyTokens() {
         <p>View and manage all your booked tokens</p>
       </m.div>
 
-      {/* Filter Tabs */}
+      {}
       <div className="filter-tabs" style={{ WebkitOverflowScrolling: 'touch' }}>
         {statusFilters.map(status => (
           <m.button
@@ -151,7 +151,7 @@ export default function MyTokens() {
         ))}
       </div>
 
-      {/* Tokens Grid */}
+      {}
       <div className="tokens-grid">
         {loading ? (
           <LoadingSkeleton type="card" count={3} />

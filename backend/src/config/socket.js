@@ -22,11 +22,11 @@ const initSocket = (server) => {
     },
   });
 
-  // Socket authentication middleware (optional token for public trackers, required for private rooms)
+  
   io.use((socket, next) => {
     const token = socket.handshake.auth?.token;
     if (!token) {
-      // Let unauthenticated users connect as guest (needed for public QR token tracking)
+      
       socket.userId = null;
       return next();
     }
@@ -35,7 +35,7 @@ const initSocket = (server) => {
       socket.userId = decoded.id;
       next();
     } catch (error) {
-      // Token exists but is invalid/expired: reject connection
+      
       console.error('Socket authentication failed:', error.message);
       return next(new Error('Authentication error: Invalid or expired token'));
     }
@@ -44,13 +44,13 @@ const initSocket = (server) => {
   io.on('connection', (socket) => {
     console.log(`Socket client connected: ${socket.id} (User: ${socket.userId || 'Guest'})`);
 
-    // Join room based on service type (e.g. 'hospital_queue') for targeted updates
+    
     socket.on('join_service_room', (service) => {
       socket.join(`${service}_queue`);
       console.log(`Socket ${socket.id} joined room: ${service}_queue`);
     });
 
-    // Join room based on userId for personal notifications (secured)
+    
     socket.on('join_user_room', (userId) => {
       if (socket.userId && socket.userId === userId) {
         socket.join(`user_${userId}`);
@@ -75,7 +75,7 @@ const getIO = () => {
   return io;
 };
 
-// Helper function to emit queue updates
+
 const emitQueueUpdate = (service, data) => {
   if (io) {
     io.to(`${service}_queue`).emit('queue-updated', { service, data });
@@ -83,35 +83,35 @@ const emitQueueUpdate = (service, data) => {
   }
 };
 
-// Helper function to emit token-specific changes
+
 const emitTokenUpdate = (userId, tokenDisplayId, data) => {
   if (io) {
     io.to(`user_${userId}`).emit('token_update', { displayId: tokenDisplayId, data });
   }
 };
 
-// Helper function to emit user notifications
+
 const emitUserNotification = (userId, notification) => {
   if (io) {
     io.to(`user_${userId}`).emit('notification', notification);
   }
 };
 
-// Helper function to emit token created event
+
 const emitTokenCreated = (token) => {
   if (io) {
     io.emit('token-created', token);
   }
 };
 
-// Helper function to emit token called event
+
 const emitTokenCalled = (token) => {
   if (io) {
     io.emit('token-called', token);
   }
 };
 
-// Helper function to emit queue completed event
+
 const emitQueueCompleted = (service) => {
   if (io) {
     io.emit('queue-completed', { service });

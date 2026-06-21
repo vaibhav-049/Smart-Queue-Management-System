@@ -75,7 +75,7 @@ export default function Home() {
 
   return (
     <div className={`home-page ${darkMode ? 'dark' : ''}`}>
-      {/* Hero Section */}
+      {}
       <section className="hero-section">
         <div className="hero-bg-shapes">
           <div className="hero-shape shape-1" />
@@ -113,7 +113,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features Section */}
+      {}
       <section className="features-section" id="features">
         <div className="section-container">
           <div className="section-header">
@@ -134,7 +134,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Stats Section */}
+      {}
       <section className="stats-section">
         <div className="section-container">
           <div className="stats-grid-home">
@@ -157,7 +157,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {}
       <section className="cta-section">
         <div className="section-container">
           <m.div

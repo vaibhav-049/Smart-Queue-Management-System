@@ -22,7 +22,7 @@ export default function Tooltip({ text, children, position = 'bottom' }) {
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     hideTimeoutRef.current = setTimeout(() => {
       setVisible(false);
-      // Reset touch flag shortly after hiding so subsequent touches work
+      
       setTimeout(() => { isTouchRef.current = false; }, 100);
     }, 500);
   };
