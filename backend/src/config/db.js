@@ -53,16 +53,6 @@ const seedDatabase = async () => {
         prefix: 'S',
         avgServiceTime: 25,
       },
-      {
-        id: 'hospital-north',
-        name: 'Hospital (North)',
-        branchId: 'north',
-        icon: '🏥',
-        color: '#3B82F6',
-        description: 'North Branch OPD & Consultations',
-        prefix: 'HN',
-        avgServiceTime: 10,
-      },
     ];
 
     

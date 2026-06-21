@@ -269,7 +269,9 @@ export default function Profile() {
                   disabled={paymentLoading}
                   style={{ background: '#D97706', border: 'none' }}
                 >
-                  {paymentLoading ? 'Processing...' : 'Pay ₹99'}
+                  {paymentLoading ? (
+                    <span className="btn-content-loading"><span className="btn-spinner"></span> Processing...</span>
+                  ) : 'Pay ₹99'}
                 </m.button>
               </div>
             </m.div>
@@ -401,7 +403,9 @@ export default function Profile() {
                 disabled={pwdLoading}
                 style={{ width: '100%', padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}
               >
-                {pwdLoading ? 'Sending OTP...' : 'Send OTP to Email'}
+                {pwdLoading ? (
+                  <span className="btn-content-loading"><span className="btn-spinner"></span> Sending OTP...</span>
+                ) : 'Send OTP to Email'}
               </button>
             ) : (
               <form onSubmit={handleChangePassword} className="profile-form">
@@ -462,7 +466,9 @@ export default function Profile() {
                     disabled={pwdLoading}
                     style={{ flex: 1, padding: '0.75rem', borderRadius: 'var(--radius-sm)' }}
                   >
-                    {pwdLoading ? 'Updating...' : 'Update Password'}
+                    {pwdLoading ? (
+                      <span className="btn-content-loading"><span className="btn-spinner"></span> Updating...</span>
+                    ) : 'Update Password'}
                   </button>
                   <button
                     type="button"
