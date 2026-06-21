@@ -101,7 +101,9 @@ export default function ResetPassword() {
                 whileTap={{ scale: 0.98 }}
                 disabled={loading}
               >
-                {loading ? 'Resetting...' : 'Reset Password'}
+                {loading ? (
+                  <span className="btn-content-loading"><span className="btn-spinner"></span> Resetting...</span>
+                ) : 'Reset Password'}
               </m.button>
             </form>
 

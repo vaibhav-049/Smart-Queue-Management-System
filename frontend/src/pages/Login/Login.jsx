@@ -10,7 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 
 export default function Login() {
   const { darkMode } = useTheme();
-  const { login, user } = useAuth();
+  const { login, user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -156,8 +156,11 @@ export default function Login() {
                 className="btn-primary-full"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                disabled={loading}
               >
-                Sign In
+                {loading ? (
+                  <span className="btn-content-loading"><span className="btn-spinner"></span> Signing In...</span>
+                ) : 'Sign In'}
               </m.button>
             </form>
 

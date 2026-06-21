@@ -286,7 +286,9 @@ export default function Register() {
                     style={{ marginTop: '1.25rem' }}
                     disabled={loading}
                   >
-                    {loading ? 'Sending Code...' : 'Send Verification Code'}
+                    {loading ? (
+                      <span className="btn-content-loading"><span className="btn-spinner"></span> Sending Code...</span>
+                    ) : 'Send Verification Code'}
                   </m.button>
                 </>
               ) : (
@@ -318,7 +320,9 @@ export default function Register() {
                     style={{ marginTop: '1rem' }}
                     disabled={loading || resendingOtp}
                   >
-                    Verify & Create Account
+                    {loading && !resendingOtp ? (
+                      <span className="btn-content-loading"><span className="btn-spinner"></span> Verifying...</span>
+                    ) : 'Verify & Create Account'}
                   </m.button>
                   <button
                     type="button"
