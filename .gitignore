@@ -3,3 +3,5 @@ dist/
 .env
 .env.local
 credentials.txt
+PROJECT_CONTEXT.md
+PROJECT_STATUS.md
