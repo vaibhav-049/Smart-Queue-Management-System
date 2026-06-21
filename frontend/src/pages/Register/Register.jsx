@@ -284,8 +284,9 @@ export default function Register() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     style={{ marginTop: '1.25rem' }}
+                    disabled={loading}
                   >
-                    Send Verification Code
+                    {loading ? 'Sending Code...' : 'Send Verification Code'}
                   </m.button>
                 </>
               ) : (
