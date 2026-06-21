@@ -7,9 +7,7 @@ export default function Tooltip({ text, children, position = 'bottom' }) {
   const isTouchRef = useRef(false);
 
   const showTooltip = () => {
-    // If we recently touched, block the simulated mouse enter/focus
     if (isTouchRef.current) return;
-    // Also strictly block hover-based tooltips on mobile widths
     if (window.innerWidth <= 768) return;
     setVisible(true);
   };
@@ -25,10 +23,8 @@ export default function Tooltip({ text, children, position = 'bottom' }) {
     
     if (hideTimeoutRef.current) clearTimeout(hideTimeoutRef.current);
     
-    // Show exactly for 0.5s on mobile
     hideTimeoutRef.current = setTimeout(() => {
       setVisible(false);
-      // Keep touch flag active longer to block delayed simulated mouse events
       setTimeout(() => { isTouchRef.current = false; }, 2000);
     }, 500);
   };

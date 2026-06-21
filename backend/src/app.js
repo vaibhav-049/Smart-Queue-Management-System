@@ -19,8 +19,6 @@ const serviceRoutes = require('./routes/serviceRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 
 const app = express();
-
-// Trust proxy is required when hosted on Render/Vercel so req.ip returns the actual user IP instead of the proxy IP
 app.set('trust proxy', 1);
 
 const allowedOrigins = [
