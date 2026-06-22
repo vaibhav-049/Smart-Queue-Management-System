@@ -40,27 +40,38 @@ const sendOTPEmail = async (to, otp, type) => {
       `;
     }
 
-    const resend = getResendClient();
-    
-    if (!resend) {
-      console.warn(`[DEVELOPMENT/FALLBACK] RESEND_API_KEY missing. Printing OTP for ${to}: ${otp}`);
+    const apiKey = process.env.BREVO_API_KEY;
+    const senderEmail = process.env.BREVO_SENDER_EMAIL; // Need the registered email
+
+    if (!apiKey || !senderEmail) {
+      console.warn(`[FALLBACK] Brevo API Key or Sender Email missing. Printing OTP for ${to}: ${otp}`);
       return true;
     }
 
-    const { data, error } = await resend.emails.send({
-      from: 'SmartQueue <onboarding@resend.dev>',
-      to: [to],
-      subject,
-      html,
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': apiKey,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: { name: 'SmartQueue', email: senderEmail },
+        to: [{ email: to }],
+        subject: subject,
+        htmlContent: html
+      })
     });
 
-    if (error) {
-      console.error('Resend API Error:', error);
-      console.warn(`[FALLBACK] Failed to send email via Resend. Printing OTP for ${to}: ${otp}`);
-      return true; // Don't crash the app, just print OTP in logs
+    if (!response.ok) {
+      const errData = await response.json();
+      console.error('Brevo API Error:', errData);
+      console.warn(`[FALLBACK] Failed to send via Brevo. Printing OTP for ${to}: ${otp}`);
+      return true;
     }
 
-    console.log(`Email sent successfully via Resend to ${to}: ${data?.id}`);
+    const data = await response.json();
+    console.log(`Email sent successfully via Brevo to ${to}: ${data?.messageId}`);
     return true;
   } catch (error) {
     console.error('Critical error sending email:', error);
@@ -117,22 +128,33 @@ const sendQueueAlertEmail = async (to, token, type) => {
       </div>
     `;
 
-    const resend = getResendClient();
-    if (!resend) return true;
+    const apiKey = process.env.BREVO_API_KEY;
+    const senderEmail = process.env.BREVO_SENDER_EMAIL;
 
-    const { data, error } = await resend.emails.send({
-      from: 'SmartQueue <onboarding@resend.dev>',
-      to: [to],
-      subject,
-      html,
+    if (!apiKey || !senderEmail) return true;
+
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': apiKey,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: { name: 'SmartQueue Alerts', email: senderEmail },
+        to: [{ email: to }],
+        subject: subject,
+        htmlContent: html
+      })
     });
 
-    if (error) {
-      console.error('Resend Queue Alert Error:', error);
+    if (!response.ok) {
+      console.error('Brevo Queue Alert Error:', await response.text());
       return false;
     }
 
-    console.log(`Queue Alert Email sent to ${to}: ${data?.id}`);
+    const data = await response.json();
+    console.log(`Queue Alert Email sent to ${to}: ${data?.messageId}`);
     return true;
   } catch (error) {
     console.error('Error sending queue alert email:', error);
