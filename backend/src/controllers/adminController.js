@@ -723,6 +723,33 @@ const getInviteCodes = async (req, res, next) => {
   }
 };
 
+// @desc    Delete an invite code
+// @route   DELETE /api/admin/invite-codes/:id
+// @access  Private/SuperAdmin
+const deleteInviteCode = async (req, res, next) => {
+  try {
+    if (req.user.role !== 'admin' || req.user.service) {
+      res.status(403);
+      throw new Error('Access denied: Only Super Admin can delete invite codes.');
+    }
+
+    const code = await AdminInviteCode.findById(req.params.id);
+    if (!code) {
+      res.status(404);
+      throw new Error('Invite code not found');
+    }
+
+    await AdminInviteCode.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Invite code deleted successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   callNextToken,
   skipToken,
@@ -734,4 +761,5 @@ module.exports = {
   serveScannedToken,
   generateInviteCode,
   getInviteCodes,
+  deleteInviteCode,
 };

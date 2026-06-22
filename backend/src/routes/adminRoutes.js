@@ -38,5 +38,6 @@ router.post('/serve-token', protect, admin, validateBody(verifyTokenSchema), ser
 // Invite Codes (Super Admin only - access controlled inside controller)
 router.get('/invite-codes', protect, admin, getInviteCodes);
 router.post('/invite-codes', protect, admin, generateInviteCode);
+router.delete('/invite-codes/:id', protect, admin, require('../controllers/adminController').deleteInviteCode);
 
 module.exports = router;

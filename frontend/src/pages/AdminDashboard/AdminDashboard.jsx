@@ -397,9 +397,15 @@ export default function AdminDashboard() {
                   {serviceQueue.isActive ? '🔴 Close Bookings (Pause)' : '🟢 Open Bookings (Resume)'}
                 </button>
 
-                <Link 
-                  to={`/tv-display/${selectedService}`} 
-                  target="_blank" 
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (window.innerWidth <= 768) {
+                      toast.error('TV Display can only be opened on laptops or large screens.');
+                      return;
+                    }
+                    window.open(`/tv-display/${selectedService}`, '_blank');
+                  }}
                   className="btn-outline" 
                   style={{
                     width: '100%',
@@ -416,7 +422,7 @@ export default function AdminDashboard() {
                   }}
                 >
                   📺 Open TV Display (New Tab)
-                </Link>
+                </button>
               </div>
             </div>
 

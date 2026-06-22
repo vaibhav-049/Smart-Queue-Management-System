@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { m } from 'framer-motion';
-import { FiPlus, FiCopy, FiCheck, FiKey } from 'react-icons/fi';
+import { FiPlus, FiCopy, FiCheck, FiKey, FiTrash2 } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 import PriorityBadge from '../../components/PriorityBadge/PriorityBadge';
@@ -43,6 +43,20 @@ export default function InviteCodesPanel() {
       toast.error(err.response?.data?.message || 'Failed to generate code');
     } finally {
       setGenerating(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this invite code?')) return;
+    
+    try {
+      const res = await api.delete(`/admin/invite-codes/${id}`);
+      if (res.data.success) {
+        toast.success('Invite code deleted successfully');
+        setCodes(codes.filter(c => c._id !== id));
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete code');
     }
   };
 
@@ -129,13 +143,30 @@ export default function InviteCodesPanel() {
                     {new Date(c.createdAt).toLocaleDateString()}
                   </td>
                   <td style={{ padding: '10px 15px', textAlign: 'right' }}>
-                    {!c.isUsed && (
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                      {!c.isUsed && (
+                        <button
+                          onClick={() => copyToClipboard(c._id, c.code)}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: copiedId === c._id ? '#10B981' : '#3B82F6',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            fontSize: '0.85rem'
+                          }}
+                        >
+                          {copiedId === c._id ? <FiCheck /> : <FiCopy />} Copy
+                        </button>
+                      )}
                       <button
-                        onClick={() => copyToClipboard(c._id, c.code)}
+                        onClick={() => handleDelete(c._id)}
                         style={{
                           background: 'transparent',
                           border: 'none',
-                          color: copiedId === c._id ? '#10B981' : '#3B82F6',
+                          color: '#EF4444',
                           cursor: 'pointer',
                           display: 'inline-flex',
                           alignItems: 'center',
@@ -143,9 +174,9 @@ export default function InviteCodesPanel() {
                           fontSize: '0.85rem'
                         }}
                       >
-                        {copiedId === c._id ? <FiCheck /> : <FiCopy />} Copy
+                        <FiTrash2 /> Delete
                       </button>
-                    )}
+                    </div>
                   </td>
                 </tr>
               ))}
