@@ -58,6 +58,7 @@ export default function BookToken() {
   const [generatedToken, setGeneratedToken] = useState(null);
   const [showQR, setShowQR] = useState(false);
   const [recommendation, setRecommendation] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const getFilteredTimeSlotsForDate = (dateVal) => {
     const todayStr = dateOptions[0].value;
@@ -144,6 +145,7 @@ export default function BookToken() {
       return;
     }
 
+    setLoading(true);
     try {
       const response = await api.post('/tokens/book', {
         service: selectedService.id,
@@ -162,6 +164,8 @@ export default function BookToken() {
     } catch (err) {
       const errMsg = err.response?.data?.message || 'Failed to book token. Please try again.';
       toast.error(errMsg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -383,11 +387,14 @@ export default function BookToken() {
                 <m.button
                   type="submit"
                   className="btn-primary-full"
+                  disabled={loading}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   style={{ background: selectedService.color }}
                 >
-                  🎫 Generate Token
+                  {loading ? (
+                    <span className="btn-content-loading"><span className="btn-spinner"></span> Generating...</span>
+                  ) : '🎫 Generate Token'}
                 </m.button>
               </form>
             </m.div>

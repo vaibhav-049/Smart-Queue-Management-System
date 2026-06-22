@@ -3996,30 +3996,14 @@ input, select, textarea {
 
 .btn-spinner {
   display: inline-block;
-  width: 24px;
-  height: 24px;
-  position: relative;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 1s ease-in-out infinite;
   margin-right: 8px;
   vertical-align: middle;
-}
-
-.btn-spinner::before,
-.btn-spinner::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: 0;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #FFF;
-  transform: translate(-50%, -100%) scale(0);
-  animation: push_401 2s infinite linear;
-}
-
-.btn-spinner::after {
-  animation-delay: 1s;
-  background: rgba(255, 255, 255, 0.4);
 }
 
 .btn-content-loading {
@@ -4027,15 +4011,11 @@ input, select, textarea {
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  letter-spacing: 0.5px;
 }
 
-@keyframes push_401 {
-  0%, 50% {
-    transform: translate(-50%, 0%) scale(1);
-  }
-  100% {
-    transform: translate(-50%, -100%) scale(0);
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
