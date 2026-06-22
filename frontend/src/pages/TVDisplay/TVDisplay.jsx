@@ -15,6 +15,18 @@ export default function TVDisplay() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkIfMobile();
+    window.addEventListener('resize', checkIfMobile);
+    return () => window.removeEventListener('resize', checkIfMobile);
+  }, []);
 
   // Ref to keep track of the last announced token to avoid repeating
   const lastAnnouncedRef = useRef(null);
@@ -105,6 +117,19 @@ export default function TVDisplay() {
       }
     }
   }, [queueData.currentServing]);
+
+  if (isMobile) {
+    return (
+      <div className="tv-loading" style={{ background: '#111827', padding: '2rem', textAlign: 'center' }}>
+        <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🚫</div>
+        <h2 style={{ color: '#EF4444', marginBottom: '1rem' }}>Access Restricted</h2>
+        <p style={{ color: '#9CA3AF', fontSize: '1.2rem', maxWidth: '400px', lineHeight: '1.5' }}>
+          The TV Display interface is designed only for large screens (Laptops, Tablets, or Smart TVs). 
+          Please open this link on a larger display to view the queue.
+        </p>
+      </div>
+    );
+  }
 
   if (loading && !queueData.currentServing && queueData.upcoming.length === 0) {
     return (
