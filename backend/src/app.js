@@ -17,6 +17,7 @@ const adminRoutes = require('./routes/adminRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const serviceRoutes = require('./routes/serviceRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const superAdminRoutes = require('./routes/superAdminRoutes');
 
 const app = express();
 app.set('trust proxy', 1);
@@ -100,6 +101,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/branches', branchRoutes);
+app.use('/api/superadmin', superAdminRoutes);
 
 
 app.use(notFound);

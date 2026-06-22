@@ -21,6 +21,8 @@ import ResetPassword from '../pages/ResetPassword/ResetPassword';
 import QRScanner from '../pages/QRScanner/QRScanner';
 import TVDisplay from '../pages/TVDisplay/TVDisplay';
 
+import SuperAdminDashboard from '../pages/SuperAdminDashboard/SuperAdminDashboard';
+
 function AdminRoute() {
   const { user, loading } = useAuth();
   if (loading) return null;
@@ -30,13 +32,22 @@ function AdminRoute() {
   return <Outlet />;
 }
 
+// Helper component to render the correct dashboard
+function DashboardRouter() {
+  const { user } = useAuth();
+  if (user?.role === 'admin' && !user?.service) {
+    return <SuperAdminDashboard />;
+  }
+  return <AdminDashboard />;
+}
+
 export default function AppRoutes() {
   const location = useLocation();
 
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        {}
+        {/* Public Routes */}
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -46,19 +57,19 @@ export default function AppRoutes() {
           <Route path="/track/:tokenId" element={<TrackToken />} />
         </Route>
 
-        {}
+        {/* TV Display Route */}
         <Route path="/tv-display/:service" element={<TVDisplay />} />
 
-        {}
+        {/* Protected Dashboard Routes */}
         <Route element={<DashboardLayout />}>
           <Route path="/book-token" element={<BookToken />} />
           <Route path="/queue-status" element={<QueueStatus />} />
           <Route path="/my-tokens" element={<MyTokens />} />
           <Route path="/profile" element={<Profile />} />
           
-          {}
+          {/* Admin Routes */}
           <Route element={<AdminRoute />}>
-            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin" element={<DashboardRouter />} />
             <Route path="/admin/scanner" element={<QRScanner />} />
             <Route path="/reports" element={<Reports />} />
           </Route>

@@ -1,0 +1,127 @@
+.super-admin-dashboard {
+  padding: 1rem;
+}
+
+.sa-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.sa-stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sa-stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.sa-stat-icon.users { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.sa-stat-icon.admins { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.sa-stat-icon.tokens { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+.sa-stat-icon.popular { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+
+.sa-stat-info h4 {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem 0;
+  font-weight: 500;
+}
+
+.sa-stat-info p {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.sa-tabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+  overflow-x: auto;
+}
+
+.sa-tab {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 1rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.sa-tab:hover {
+  background: var(--card-bg-hover);
+  color: var(--text-color);
+}
+
+.sa-tab.active {
+  background: var(--primary-color);
+  color: white;
+}
+
+.sa-table-container {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.sa-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.sa-table th, .sa-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sa-table th {
+  background: var(--card-bg-hover);
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.sa-table tr:last-child td {
+  border-bottom: none;
+}
+
+.sa-table tbody tr:hover {
+  background: var(--card-bg-hover);
+}
+
+.vip-badge {
+  background: linear-gradient(135deg, #FFD700, #F59E0B);
+  color: #000;
+  font-size: 0.7rem;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
