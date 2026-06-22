@@ -76,7 +76,7 @@
 }
 
 .sa-tab.active {
-  background: var(--primary-color);
+  background: var(--primary-color, #8B5CF6);
   color: white;
 }
 

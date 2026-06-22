@@ -6,10 +6,12 @@ import api from '../../services/api';
 import InviteCodesPanel from '../AdminDashboard/InviteCodesPanel';
 import './SuperAdminDashboard.css';
 import { useTheme } from '../../context/ThemeContext';
+import ManualTokenForm from '../AdminDashboard/ManualTokenForm';
 
 export default function SuperAdminDashboard() {
   const { darkMode } = useTheme();
   const [activeTab, setActiveTab] = useState('overview');
+  const [selectedService, setSelectedService] = useState('hospital');
   const [stats, setStats] = useState(null);
   const [admins, setAdmins] = useState([]);
   const [customers, setCustomers] = useState([]);
@@ -125,6 +127,9 @@ export default function SuperAdminDashboard() {
         <button className={`sa-tab ${activeTab === 'invites' ? 'active' : ''}`} onClick={() => setActiveTab('invites')}>
           Manage Invites
         </button>
+        <button className={`sa-tab ${activeTab === 'generate' ? 'active' : ''}`} onClick={() => setActiveTab('generate')}>
+          Generate Token
+        </button>
       </div>
 
       <AnimatePresence mode="wait">
@@ -209,6 +214,27 @@ export default function SuperAdminDashboard() {
           {activeTab === 'invites' && (
             <div>
               <InviteCodesPanel />
+            </div>
+          )}
+
+          {activeTab === 'generate' && (
+            <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+              <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <label style={{ fontWeight: '600', color: 'var(--text-color)' }}>Select Service to Generate Token for:</label>
+                <select 
+                  value={selectedService} 
+                  onChange={(e) => setSelectedService(e.target.value)}
+                  style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-color)' }}
+                >
+                  <option value="hospital">Hospital</option>
+                  <option value="college">College</option>
+                  <option value="salon">Salon</option>
+                </select>
+              </div>
+              <ManualTokenForm 
+                selectedService={selectedService} 
+                onSuccess={() => fetchStats()} 
+              />
             </div>
           )}
         </m.div>

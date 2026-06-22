@@ -24,7 +24,10 @@ export default function Sidebar({ isOpen, onClose }) {
   const location = useLocation();
 
   const filteredItems = menuItems.filter((item) => {
-    if (item.path === '/admin' || item.path === '/admin/scanner' || item.path === '/reports') {
+    if (item.path === '/admin/scanner') {
+      return user?.role === 'admin' && user?.service;
+    }
+    if (item.path === '/admin' || item.path === '/reports') {
       return user?.role === 'admin';
     }
     if (item.path === '/book-token' || item.path === '/queue-status' || item.path === '/my-tokens') {
