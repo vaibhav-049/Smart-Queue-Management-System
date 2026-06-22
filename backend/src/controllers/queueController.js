@@ -59,8 +59,8 @@ const getServiceQueueStatus = async (req, res, next) => {
       data: {
         service: serviceInfo,
         currentServing: queueDoc ? queueDoc.currentServing : null,
-        upcoming: queueDoc ? queueDoc.upcoming : [],
-        totalInQueue: queueDoc ? queueDoc.totalInQueue : 0,
+        upcoming: activeTokens.filter(t => t.status === 'waiting'),
+        totalInQueue: activeTokens.filter(t => t.status === 'waiting').length,
         avgWait: queueDoc ? queueDoc.avgWait : serviceInfo.avgServiceTime,
         isActive: queueDoc ? queueDoc.isActive : true,
         activeTokens,

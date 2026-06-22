@@ -54,11 +54,7 @@ export default function TVDisplay() {
 
       socket.on('queue_updated', (data) => {
         if (data.service === service) {
-          setQueueData((prev) => ({
-            ...prev,
-            currentServing: data.currentServing,
-            upcoming: data.upcoming || [],
-          }));
+           fetchQueueStatus(); 
         }
       });
       
