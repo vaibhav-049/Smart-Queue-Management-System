@@ -79,7 +79,7 @@ function QueueStatusDetails({ selectedService, queueInfo, darkMode }) {
                   <div className="ut-left">
                     <span className="ut-position">#{index + 1}</span>
                     <div className="ut-info">
-                      <span className="ut-token">{tokenId}</span>
+                      <span className="ut-token">{tokenId && typeof tokenId === 'object' ? tokenId.displayId : String(tokenId || '')}</span>
                       {tokenData && <span className="ut-name">{tokenData.name}</span>}
                     </div>
                   </div>
@@ -168,9 +168,9 @@ export default function QueueStatus() {
     }
   }, [selectedService]);
 
-  
   useEffect(() => {
     if (!selectedService) return;
+    setQueueInfo(null); // Clear previous data to show skeleton loader and prevent stale data crashes
     joinServiceRoom(selectedService);
     fetchQueueStatus();
   }, [selectedService, fetchQueueStatus]);
