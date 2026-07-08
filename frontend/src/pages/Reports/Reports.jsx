@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react';
+import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import { m } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 import { FiDownload, FiCalendar, FiTrendingUp, FiClock, FiActivity } from 'react-icons/fi';
@@ -7,6 +7,7 @@ import { FiDownload, FiCalendar, FiTrendingUp, FiClock, FiActivity } from 'react
 import LoadingSkeleton from '../../components/common/LoadingSkeleton';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 
 const ReportsCharts = lazy(() => import('./ReportsCharts'));
 
@@ -35,13 +36,35 @@ const handleExportReport = async () => {
   }
 };
 
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
 export default function Reports() {
   const { darkMode } = useTheme();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [analytics, setAnalytics] = useState(null);
 
-  useEffect(() => {
-    api.get('/admin/analytics')
+  const currentDate = new Date();
+  const isSuperAdmin = user?.role === 'admin' && !user?.service;
+
+  const [monthRange, setMonthRange] = useState({
+    startMonth: currentDate.getMonth() - 4 >= 0 ? currentDate.getMonth() - 4 + 1 : currentDate.getMonth() - 4 + 13,
+    startYear: currentDate.getMonth() - 4 >= 0 ? currentDate.getFullYear() : currentDate.getFullYear() - 1,
+    endMonth: currentDate.getMonth() + 1,
+    endYear: currentDate.getFullYear(),
+  });
+
+  const fetchAnalytics = useCallback((range) => {
+    const params = new URLSearchParams();
+    if (isSuperAdmin && range) {
+      params.append('startMonth', range.startMonth);
+      params.append('startYear', range.startYear);
+      params.append('endMonth', range.endMonth);
+      params.append('endYear', range.endYear);
+    }
+    const queryStr = params.toString();
+
+    api.get(`/admin/analytics${queryStr ? `?${queryStr}` : ''}`)
       .then((res) => {
         if (res.data && res.data.success) {
           setAnalytics(res.data.data);
@@ -52,7 +75,15 @@ export default function Reports() {
         toast.error('Failed to load reports data');
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [isSuperAdmin]);
+
+  useEffect(() => {
+    fetchAnalytics(monthRange);
+  }, [fetchAnalytics, monthRange]);
+
+  const handleMonthRangeChange = (newRange) => {
+    setMonthRange(newRange);
+  };
 
   if (loading || !analytics) {
     return (
@@ -129,6 +160,9 @@ export default function Reports() {
           hourlyData={hourlyData}
           monthlyData={monthlyData}
           darkMode={darkMode}
+          onMonthRangeChange={handleMonthRangeChange}
+          monthRange={monthRange}
+          isSuperAdmin={isSuperAdmin}
         />
       </Suspense>
 
@@ -141,7 +175,7 @@ export default function Reports() {
       >
         <div className="chart-header">
           <h3>Weekly Report Summary</h3>
-          <span className="chart-badge"><FiCalendar size={14} /> This Month</span>
+          <span className="chart-badge"><FiCalendar size={14} /> This Month – {MONTH_NAMES[new Date().getMonth()]}</span>
         </div>
         <div className="table-wrapper">
           <table className="report-table">

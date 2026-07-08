@@ -25,6 +25,20 @@ const registerUser = async (req, res, next) => {
       throw new Error('Please enter all required fields');
     }
 
+    // Validate email domain
+    const VALID_EMAIL_DOMAINS = [
+      'gmail.com', 'yahoo.com', 'yahoo.in', 'yahoo.co.in',
+      'outlook.com', 'hotmail.com', 'live.com',
+      'rediffmail.com', 'icloud.com', 'protonmail.com', 'proton.me',
+      'zoho.com', 'aol.com', 'mail.com', 'yandex.com',
+      'gmx.com', 'tutanota.com', 'fastmail.com',
+    ];
+    const emailDomain = email.split('@')[1]?.toLowerCase();
+    if (!emailDomain || !VALID_EMAIL_DOMAINS.includes(emailDomain)) {
+      res.status(400);
+      throw new Error('Please use a valid email provider (e.g. gmail.com, yahoo.com, outlook.com)');
+    }
+
     if (role === 'admin') {
       if (!service) {
         res.status(400);

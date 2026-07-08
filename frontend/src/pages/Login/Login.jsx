@@ -27,10 +27,24 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({});
 
+  const VALID_EMAIL_DOMAINS = [
+    'gmail.com', 'yahoo.com', 'yahoo.in', 'yahoo.co.in',
+    'outlook.com', 'hotmail.com', 'live.com',
+    'rediffmail.com', 'icloud.com', 'protonmail.com', 'proton.me',
+    'zoho.com', 'aol.com', 'mail.com', 'yandex.com',
+    'gmx.com', 'tutanota.com', 'fastmail.com',
+  ];
+
   const validate = () => {
     const errs = {};
     if (!form.email) errs.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(form.email)) errs.email = 'Invalid email format';
+    else {
+      const domain = form.email.split('@')[1]?.toLowerCase();
+      if (!VALID_EMAIL_DOMAINS.includes(domain)) {
+        errs.email = 'Please use a valid email provider (e.g. gmail.com, yahoo.com, outlook.com)';
+      }
+    }
     if (!form.password) errs.password = 'Password is required';
     else if (form.password.length < 6) errs.password = 'Password must be at least 6 characters';
     return errs;

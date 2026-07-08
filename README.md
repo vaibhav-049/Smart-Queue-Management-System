@@ -46,6 +46,21 @@ npm run dev
 ```
 Backend runs at `http://localhost:5000/`. API documentation is available at `http://localhost:5000/api-docs`.
 
+#### Required Backend `.env` Variables
+```env
+PORT=5000
+MONGODB_URI=mongodb://127.0.0.1:27017/smart_queue
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=30d
+NODE_ENV=development
+CORS_ORIGIN=http://localhost:5173
+EMAIL_USER=your_gmail_address
+EMAIL_APP_PASSWORD=your_gmail_app_password
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+ADMIN_ACCESS_CODE=your_admin_access_code
+```
+
 ### Frontend Startup
 1. Run development server:
 ```bash
@@ -76,6 +91,7 @@ Frontend runs at `http://localhost:5173/`.
 - **MongoDB** + **Mongoose 8** (Schema-based models)
 - **Socket.io** (Lobby/lobby screens and private user status notifications)
 - **Nodemailer** (Email OTP delivery for registration and password resets)
+- **Razorpay** (VIP Payment Gateway integration)
 - **Helmet, CORS, Mongo Sanitize, express-rate-limit** (Hardened security and NoSQL injection prevention)
 
 ## 📄 Pages
@@ -109,6 +125,9 @@ Frontend runs at `http://localhost:5173/`.
 - 🛡️ **Session Redirection & Safeguards**: Dynamic redirection of the navbar logo to active dashboards based on user role.
 - 🔒 **OTP-Verified Password Changes**: Secure email OTP verification to update user passwords.
 - 🛡️ **Hardened Security Layer**: 10kb strict JSON payload limits, XSS (Cross-Site Scripting) protection, NoSQL injection sanitization, and 5-attempt/15min Auth Rate Limiting. All secrets managed strictly via environment variables.
+- 📧 **Email Domain Validation**: Strict whitelist-based email validation on both frontend and backend. Only well-known email providers (gmail.com, yahoo.com, outlook.com, hotmail.com, etc.) are accepted during registration and login.
+- 📅 **Super Admin Date Range Controls**: Super Admins can select custom start/end months for the Monthly Token Trend chart in Reports & Analytics (up to 24 months).
+- 📆 **Weekly Report Month Name**: The Weekly Report Summary badge shows the actual current month name for better clarity.
 - 🤖 **Advanced AI Prediction**:
   - **Dynamic Queue Aging (Anti-Starvation)**: Automatically bumps priority for normal tokens waiting significantly longer than expected.
   - **Smart Load Balancing**: Automatically recommends less busy branches for the same service if wait times exceed optimal thresholds.

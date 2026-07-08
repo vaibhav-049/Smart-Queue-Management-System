@@ -1,15 +1,16 @@
 # Smart Queue Management System - Backend
 
-Production-ready, scalable RESTful backend for the Smart Queue Management System. Implements MVC architecture, priority-based token queuing, estimated wait-time calculation, JWT-based Role-Based Access Control (RBAC), automatic service/user seeding, QR Code generation, and real-time synchronization using Socket.io.
+Production-ready, scalable RESTful backend for the Smart Queue Management System. Implements MVC architecture, priority-based token queuing, estimated wait-time calculation, JWT-based Role-Based Access Control (RBAC), automatic service/user seeding, QR Code generation, Razorpay VIP payment gateway, email domain validation, and real-time synchronization using Socket.io.
 
 ## 🚀 Tech Stack
 
 - **Runtime**: Node.js (v16+)
 - **Framework**: Express.js
 - **Database**: MongoDB + Mongoose (ODM)
-- **Security**: JWT (jsonwebtoken), bcryptjs, helmet, CORS
+- **Security**: JWT (jsonwebtoken), bcryptjs, helmet, CORS, xss-clean, mongo-sanitize, express-rate-limit
+- **Payments**: Razorpay (VIP membership gateway)
 - **Real-Time**: Socket.io
-- **Utilities**: qrcode (QR Code generator DataURI), morgan (HTTP logger), dotenv
+- **Utilities**: qrcode (QR Code generator DataURI), morgan (HTTP logger), dotenv, nodemailer (Email OTP)
 
 ---
 
@@ -28,6 +29,7 @@ backend/
 │   │   ├── tokenController.js
 │   │   ├── queueController.js
 │   │   ├── adminController.js
+│   │   ├── paymentController.js
 │   │   └── reportController.js
 │   │
 │   ├── middleware/
@@ -77,6 +79,11 @@ JWT_SECRET=super_secret_key_smart_queue_system_2026_safe
 JWT_EXPIRES_IN=30d
 NODE_ENV=development
 CORS_ORIGIN=http://localhost:5173
+EMAIL_USER=your_gmail_address
+EMAIL_APP_PASSWORD=your_gmail_app_password
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
+ADMIN_ACCESS_CODE=your_admin_access_code
 ```
 
 ---
@@ -123,7 +130,7 @@ Upon connection to MongoDB, if collections are blank, the backend automatically 
 All routes prefix: `/api`
 
 ### 🔒 Authentication (`/api/auth`)
-* `POST /register`: Register user. Body: `{ name, email, phone, password }`.
+* `POST /register`: Register user. Body: `{ name, email, phone, password }`. Email domain must be from an approved provider (gmail.com, yahoo.com, outlook.com, etc.).
 * `POST /login`: Login user. Body: `{ email, password }`.
 * `GET /me` (Private): Retrieves current logged in user details.
 
@@ -147,7 +154,7 @@ All routes prefix: `/api`
 * `POST /queues/:service/skip/:tokenId` (Admin): Skip queue token.
 * `POST /queues/:service/close` (Admin): Close new token bookings for service.
 * `POST /queues/:service/open` (Admin): Open service queue.
-* `GET /analytics` (Admin): Returns full charts and graphs analytics logs (hourly, daily, service usage).
+* `GET /analytics` (Admin): Returns full charts and graphs analytics logs (hourly, daily, service usage). Super Admins can pass `?startMonth=1&startYear=2026&endMonth=7&endYear=2026` to customize the Monthly Token Trend chart date range.
 
 ### 📊 Report Exports (`/api/reports`)
 * `GET /download` (Admin): Query parameter `format=csv` (downloadable file) or `format=json`.

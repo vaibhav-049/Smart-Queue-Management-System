@@ -4,7 +4,41 @@ import {
   LineChart, Line
 } from 'recharts';
 
-export default function ReportsCharts({ hourlyData, monthlyData, darkMode }) {
+export default function ReportsCharts({ hourlyData, monthlyData, darkMode, onMonthRangeChange, monthRange, isSuperAdmin }) {
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
+
+  const months = [
+    { value: 1, label: 'January' },
+    { value: 2, label: 'February' },
+    { value: 3, label: 'March' },
+    { value: 4, label: 'April' },
+    { value: 5, label: 'May' },
+    { value: 6, label: 'June' },
+    { value: 7, label: 'July' },
+    { value: 8, label: 'August' },
+    { value: 9, label: 'September' },
+    { value: 10, label: 'October' },
+    { value: 11, label: 'November' },
+    { value: 12, label: 'December' },
+  ];
+
+  const years = [];
+  for (let y = currentYear; y >= currentYear - 3; y--) {
+    years.push(y);
+  }
+
+  const selectStyle = {
+    padding: '6px 10px',
+    borderRadius: '8px',
+    border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`,
+    background: darkMode ? '#1e293b' : '#fff',
+    color: darkMode ? '#e2e8f0' : '#1e293b',
+    fontSize: '0.85rem',
+    cursor: 'pointer',
+    outline: 'none',
+  };
+
   return (
     <div className="charts-grid">
       {}
@@ -46,7 +80,53 @@ export default function ReportsCharts({ hourlyData, monthlyData, darkMode }) {
       >
         <div className="chart-header">
           <h3>Monthly Token Trend</h3>
-          <span className="chart-badge">6 Months</span>
+          {isSuperAdmin && monthRange ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <select
+                value={monthRange.startMonth}
+                onChange={(e) => onMonthRangeChange({ ...monthRange, startMonth: parseInt(e.target.value) })}
+                style={selectStyle}
+              >
+                {months.map(m => (
+                  <option key={m.value} value={m.value}>{m.label}</option>
+                ))}
+              </select>
+              <select
+                value={monthRange.startYear}
+                onChange={(e) => onMonthRangeChange({ ...monthRange, startYear: parseInt(e.target.value) })}
+                style={selectStyle}
+              >
+                {years.map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+              <span style={{ fontSize: '0.85rem', color: darkMode ? '#94a3b8' : '#64748b' }}>to</span>
+              <select
+                value={monthRange.endMonth}
+                onChange={(e) => onMonthRangeChange({ ...monthRange, endMonth: parseInt(e.target.value) })}
+                style={selectStyle}
+              >
+                {months.map(m => (
+                  <option key={m.value} value={m.value}>{m.label}</option>
+                ))}
+              </select>
+              <select
+                value={monthRange.endYear}
+                onChange={(e) => onMonthRangeChange({ ...monthRange, endYear: parseInt(e.target.value) })}
+                style={selectStyle}
+              >
+                {years.map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <span className="chart-badge">
+              {monthlyData.length > 0
+                ? `${monthlyData[0]?.month} – ${monthlyData[monthlyData.length - 1]?.month}`
+                : '6 Months'}
+            </span>
+          )}
         </div>
         <ResponsiveContainer width="100%" height={280}>
           <LineChart data={monthlyData}>

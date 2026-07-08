@@ -28,11 +28,25 @@ export default function Register() {
   const [errors, setErrors] = useState({});
   const [resendingOtp, setResendingOtp] = useState(false);
 
+  const VALID_EMAIL_DOMAINS = [
+    'gmail.com', 'yahoo.com', 'yahoo.in', 'yahoo.co.in',
+    'outlook.com', 'hotmail.com', 'live.com',
+    'rediffmail.com', 'icloud.com', 'protonmail.com', 'proton.me',
+    'zoho.com', 'aol.com', 'mail.com', 'yandex.com',
+    'gmx.com', 'tutanota.com', 'fastmail.com',
+  ];
+
   const validate = () => {
     const errs = {};
     if (!form.name.trim()) errs.name = 'Name is required';
     if (!form.email) errs.email = 'Email is required';
     else if (!/\S+@\S+\.\S+/.test(form.email)) errs.email = 'Invalid email format';
+    else {
+      const domain = form.email.split('@')[1]?.toLowerCase();
+      if (!VALID_EMAIL_DOMAINS.includes(domain)) {
+        errs.email = 'Please use a valid email provider (e.g. gmail.com, yahoo.com, outlook.com)';
+      }
+    }
     if (!form.phone) errs.phone = 'Phone number is required';
     else if (!/^\+?[\d\s-]{10,}$/.test(form.phone)) errs.phone = 'Invalid phone number';
     if (!form.password) errs.password = 'Password is required';

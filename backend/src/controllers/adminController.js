@@ -457,29 +457,69 @@ const getAnalytics = async (req, res, next) => {
     }
 
     
+    // Monthly data – supports custom date range via query params
+    const { startMonth, startYear, endMonth, endYear } = req.query;
+    
+    let monthStart, monthEnd, monthCount;
+    
+    if (startMonth && startYear && endMonth && endYear) {
+      // Custom range from super admin
+      monthStart = new Date(parseInt(endYear), parseInt(endMonth) - 1, 1);
+      monthStart.setHours(0, 0, 0, 0);
+      const rangeStartDate = new Date(parseInt(startYear), parseInt(startMonth) - 1, 1);
+      rangeStartDate.setHours(0, 0, 0, 0);
+      
+      // Calculate number of months between start and end
+      monthCount = (parseInt(endYear) - parseInt(startYear)) * 12 + (parseInt(endMonth) - parseInt(startMonth)) + 1;
+      monthCount = Math.max(1, Math.min(monthCount, 24)); // limit to 24 months max
+      
+      monthEnd = new Date(parseInt(endYear), parseInt(endMonth), 0, 23, 59, 59, 999); // last day of end month
+    } else {
+      // Default: last 6 months
+      monthCount = 6;
+      monthEnd = new Date();
+      monthEnd.setHours(23, 59, 59, 999);
+    }
+    
     const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
+    if (startMonth && startYear) {
+      sixMonthsAgo.setFullYear(parseInt(startYear));
+      sixMonthsAgo.setMonth(parseInt(startMonth) - 1);
+    } else {
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - (monthCount - 1));
+    }
     sixMonthsAgo.setDate(1);
     sixMonthsAgo.setHours(0, 0, 0, 0);
 
+    const monthlyMatchFilter = { ...serviceFilter, createdAt: { $gte: sixMonthsAgo } };
+    if (monthEnd) {
+      monthlyMatchFilter.createdAt.$lte = monthEnd;
+    }
+
     const monthlyAggregate = await Token.aggregate([
-      { $match: { ...serviceFilter, createdAt: { $gte: sixMonthsAgo } } },
-      { $project: { month: { $month: { date: '$createdAt', timezone: 'Asia/Kolkata' } } } },
-      { $group: { _id: '$month', tokens: { $sum: 1 } } }
+      { $match: monthlyMatchFilter },
+      { $project: { month: { $month: { date: '$createdAt', timezone: 'Asia/Kolkata' } }, year: { $year: { date: '$createdAt', timezone: 'Asia/Kolkata' } } } },
+      { $group: { _id: { month: '$month', year: '$year' }, tokens: { $sum: 1 } } }
     ]);
     
     const monthNamesList = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const monthlyMap = new Map();
-    monthlyAggregate.forEach(item => monthlyMap.set(item._id, item.tokens));
+    monthlyAggregate.forEach(item => monthlyMap.set(`${item._id.year}-${item._id.month}`, item.tokens));
     
     const monthlyData = [];
-    for (let i = 5; i >= 0; i--) {
+    for (let i = monthCount - 1; i >= 0; i--) {
        const d = new Date();
-       d.setMonth(d.getMonth() - i);
+       if (startMonth && startYear && endMonth && endYear) {
+         d.setFullYear(parseInt(endYear));
+         d.setMonth(parseInt(endMonth) - 1 - i);
+       } else {
+         d.setMonth(d.getMonth() - i);
+       }
        const mId = d.getMonth() + 1;
+       const yr = d.getFullYear();
        monthlyData.push({
-           month: monthNamesList[d.getMonth()],
-           tokens: monthlyMap.get(mId) || 0
+           month: `${monthNamesList[d.getMonth()]} ${yr}`,
+           tokens: monthlyMap.get(`${yr}-${mId}`) || 0
        });
     }
 

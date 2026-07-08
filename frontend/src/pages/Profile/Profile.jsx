@@ -115,13 +115,25 @@ export default function Profile() {
   const handleUpgradeVIP = async () => {
     setPaymentLoading(true);
     try {
-      const orderRes = await api.post('/payments/create-order');
-      if (!orderRes.data.success) throw new Error('Order creation failed');
-      const order = orderRes.data.data;
+      // Check if Razorpay SDK is loaded
+      if (typeof window.Razorpay === 'undefined') {
+        toast.error('Payment gateway is loading. Please wait a moment and try again.');
+        // Try to dynamically load the script
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        document.head.appendChild(script);
+        setPaymentLoading(false);
+        return;
+      }
 
       if (!import.meta.env.VITE_RAZORPAY_KEY_ID) {
         throw new Error('Razorpay configuration is missing in the frontend environment variables');
       }
+
+      const orderRes = await api.post('/payments/create-order');
+      if (!orderRes.data.success) throw new Error(orderRes.data.message || 'Order creation failed');
+      const order = orderRes.data.data;
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID,
@@ -153,15 +165,25 @@ export default function Profile() {
         theme: {
           color: '#8B5CF6',
         },
+        modal: {
+          ondismiss: function () {
+            setPaymentLoading(false);
+          }
+        }
       };
 
       const rzp = new window.Razorpay(options);
       rzp.on('payment.failed', function (response) {
-        toast.error(response.error.description);
+        toast.error(response.error.description || 'Payment failed. Please try again.');
       });
       rzp.open();
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Could not initiate payment');
+      const msg = err.response?.data?.message || err.message || 'Could not initiate payment';
+      if (msg.includes('not configured') || msg.includes('RAZORPAY')) {
+        toast.error('Payment gateway is not configured. Please contact the administrator.');
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setPaymentLoading(false);
     }
