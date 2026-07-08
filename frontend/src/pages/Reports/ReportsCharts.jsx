@@ -4,7 +4,7 @@ import {
   LineChart, Line
 } from 'recharts';
 
-export default function ReportsCharts({ hourlyData, monthlyData, darkMode, onMonthRangeChange, monthRange, isSuperAdmin }) {
+export default function ReportsCharts({ hourlyData, monthlyData, darkMode, onMonthRangeChange, monthRange, isSuperAdmin, isChartLoading }) {
   const currentYear = new Date().getFullYear();
   const currentMonth = new Date().getMonth() + 1;
 
@@ -28,16 +28,11 @@ export default function ReportsCharts({ hourlyData, monthlyData, darkMode, onMon
     years.push(y);
   }
 
-  const selectStyle = {
-    padding: '6px 10px',
-    borderRadius: '8px',
-    border: `1px solid ${darkMode ? '#334155' : '#e2e8f0'}`,
-    background: darkMode ? '#1e293b' : '#fff',
-    color: darkMode ? '#e2e8f0' : '#1e293b',
-    fontSize: '0.85rem',
-    cursor: 'pointer',
-    outline: 'none',
-  };
+  const selectClass = `px-3 py-1.5 text-sm rounded-lg border outline-none focus:ring-2 focus:ring-primary-500/50 transition-colors ${
+    darkMode 
+      ? 'bg-slate-800 border-slate-700 text-slate-200 focus:border-primary-500' 
+      : 'bg-white border-slate-300 text-slate-700 focus:border-primary-500'
+  }`;
 
   return (
     <div className="charts-grid">
@@ -85,7 +80,7 @@ export default function ReportsCharts({ hourlyData, monthlyData, darkMode, onMon
               <select
                 value={monthRange.startMonth}
                 onChange={(e) => onMonthRangeChange({ ...monthRange, startMonth: parseInt(e.target.value) })}
-                style={selectStyle}
+                className={selectClass}
               >
                 {months.map(m => (
                   <option key={m.value} value={m.value}>{m.label}</option>
@@ -94,7 +89,7 @@ export default function ReportsCharts({ hourlyData, monthlyData, darkMode, onMon
               <select
                 value={monthRange.startYear}
                 onChange={(e) => onMonthRangeChange({ ...monthRange, startYear: parseInt(e.target.value) })}
-                style={selectStyle}
+                className={selectClass}
               >
                 {years.map(y => (
                   <option key={y} value={y}>{y}</option>
@@ -104,7 +99,7 @@ export default function ReportsCharts({ hourlyData, monthlyData, darkMode, onMon
               <select
                 value={monthRange.endMonth}
                 onChange={(e) => onMonthRangeChange({ ...monthRange, endMonth: parseInt(e.target.value) })}
-                style={selectStyle}
+                className={selectClass}
               >
                 {months.map(m => (
                   <option key={m.value} value={m.value}>{m.label}</option>
@@ -113,7 +108,7 @@ export default function ReportsCharts({ hourlyData, monthlyData, darkMode, onMon
               <select
                 value={monthRange.endYear}
                 onChange={(e) => onMonthRangeChange({ ...monthRange, endYear: parseInt(e.target.value) })}
-                style={selectStyle}
+                className={selectClass}
               >
                 {years.map(y => (
                   <option key={y} value={y}>{y}</option>
@@ -128,7 +123,22 @@ export default function ReportsCharts({ hourlyData, monthlyData, darkMode, onMon
             </span>
           )}
         </div>
-        <ResponsiveContainer width="100%" height={280}>
+        <div style={{ position: 'relative', width: '100%', height: '280px' }}>
+          {isChartLoading && (
+            <div style={{ 
+              position: 'absolute', inset: 0, zIndex: 10, 
+              background: darkMode ? 'rgba(30,41,59,0.7)' : 'rgba(255,255,255,0.7)', 
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              backdropFilter: 'blur(2px)', borderRadius: '8px'
+            }}>
+              <div className="spinner" style={{ 
+                width: '30px', height: '30px', border: '3px solid #e2e8f0', 
+                borderTopColor: '#3B82F6', borderRadius: '50%', animation: 'spin 1s linear infinite' 
+              }}></div>
+              <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+            </div>
+          )}
+          <ResponsiveContainer width="100%" height="100%">
           <LineChart data={monthlyData}>
             <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#334155' : '#e2e8f0'} />
             <XAxis dataKey="month" stroke={darkMode ? '#94a3b8' : '#64748b'} />
@@ -145,6 +155,7 @@ export default function ReportsCharts({ hourlyData, monthlyData, darkMode, onMon
             <Line type="monotone" dataKey="tokens" stroke="#8B5CF6" strokeWidth={3} dot={{ r: 5, fill: '#8B5CF6' }} />
           </LineChart>
         </ResponsiveContainer>
+        </div>
       </m.div>
     </div>
   );

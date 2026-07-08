@@ -518,32 +518,134 @@ const getAnalytics = async (req, res, next) => {
        const mId = d.getMonth() + 1;
        const yr = d.getFullYear();
        monthlyData.push({
-           month: `${monthNamesList[d.getMonth()]} ${yr}`,
+           month: `${monthNamesList[d.getMonth()]} '${yr.toString().slice(-2)}`,
            tokens: monthlyMap.get(`${yr}-${mId}`) || 0
        });
     }
 
     
-    const fourWeeksAgo = new Date();
-    fourWeeksAgo.setDate(fourWeeksAgo.getDate() - 28);
-    fourWeeksAgo.setHours(0, 0, 0, 0);
-
-    const recentTokensList = await Token.find({ ...serviceFilter, createdAt: { $gte: fourWeeksAgo } });
-    const weeklyReport = [
-       { week: 'Week 1', tokens: 0, completed: 0, cancelled: 0 },
-       { week: 'Week 2', tokens: 0, completed: 0, cancelled: 0 },
-       { week: 'Week 3', tokens: 0, completed: 0, cancelled: 0 },
-       { week: 'Week 4', tokens: 0, completed: 0, cancelled: 0 },
-    ];
-    
-    recentTokensList.forEach(t => {
-       const diffTime = Math.abs(t.createdAt - fourWeeksAgo);
-       const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-       const weekIdx = Math.min(Math.floor(diffDays / 7), 3);
+    // 5. Monthly Report Summary (with weekly drill-down)
+    const monthlyReportSummary = [];
+    for (let i = monthCount - 1; i >= 0; i--) {
+       const d = new Date();
+       if (startMonth && startYear && endMonth && endYear) {
+         d.setFullYear(parseInt(endYear));
+         d.setMonth(parseInt(endMonth) - 1 - i);
+       } else {
+         d.setMonth(d.getMonth() - i);
+       }
+       const monthName = `${monthNamesList[d.getMonth()]} ${d.getFullYear()}`;
        
-       weeklyReport[weekIdx].tokens += 1;
-       if (t.status === 'completed') weeklyReport[weekIdx].completed += 1;
-       if (t.status === 'cancelled') weeklyReport[weekIdx].cancelled += 1;
+       const weeksInMonth = [];
+       const firstDay = new Date(d.getFullYear(), d.getMonth(), 1);
+       const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+       
+       let currentWeekStart = new Date(firstDay);
+       let weekNum = 1;
+       while (currentWeekStart <= lastDay) {
+           let currentWeekEnd = new Date(currentWeekStart);
+           currentWeekEnd.setDate(currentWeekStart.getDate() + 6 - currentWeekStart.getDay());
+           if (currentWeekEnd > lastDay) currentWeekEnd = new Date(lastDay);
+           
+           weeksInMonth.push({
+               weekLabel: `Week ${weekNum} (${monthNamesList[currentWeekStart.getMonth()]} ${currentWeekStart.getDate()} - ${monthNamesList[currentWeekEnd.getMonth()]} ${currentWeekEnd.getDate()})`,
+               start: new Date(currentWeekStart),
+               end: new Date(currentWeekEnd),
+               tokens: 0,
+               completed: 0,
+               cancelled: 0
+           });
+           currentWeekStart.setDate(currentWeekEnd.getDate() + 1);
+           weekNum++;
+       }
+
+       monthlyReportSummary.push({
+           month: monthName,
+           mIndex: d.getMonth(),
+           yIndex: d.getFullYear(),
+           tokens: 0,
+           completed: 0,
+           cancelled: 0,
+           weeks: weeksInMonth
+       });
+    }
+
+    const allTokensForMonthly = await Token.find({ ...serviceFilter, createdAt: { $gte: sixMonthsAgo, $lte: monthEnd } });
+    allTokensForMonthly.forEach(t => {
+        const tDate = new Date(t.createdAt);
+        const m = monthlyReportSummary.find(mr => mr.mIndex === tDate.getMonth() && mr.yIndex === tDate.getFullYear());
+        if (m) {
+            m.tokens += 1;
+            if (t.status === 'completed') m.completed += 1;
+            if (t.status === 'cancelled') m.cancelled += 1;
+            
+            const w = m.weeks.find(wk => tDate >= wk.start && tDate <= new Date(wk.end.getTime()).setHours(23,59,59,999));
+            if (w) {
+                w.tokens += 1;
+                if (t.status === 'completed') w.completed += 1;
+                if (t.status === 'cancelled') w.cancelled += 1;
+            }
+        }
+    });
+
+    // 6. Weekly Report Summary (for current calendar month, with daily drill-down)
+    const currentMonthStart = new Date();
+    currentMonthStart.setDate(1);
+    currentMonthStart.setHours(0, 0, 0, 0);
+    const currentMonthEnd = new Date(currentMonthStart.getFullYear(), currentMonthStart.getMonth() + 1, 0, 23, 59, 59, 999);
+    
+    const weeklyReport = [];
+    let cwStart = new Date(currentMonthStart);
+    let wNum = 1;
+    while (cwStart <= currentMonthEnd) {
+        let cwEnd = new Date(cwStart);
+        cwEnd.setDate(cwStart.getDate() + 6 - cwStart.getDay());
+        if (cwEnd > currentMonthEnd) cwEnd = new Date(currentMonthEnd);
+        
+        const days = [];
+        let dStart = new Date(cwStart);
+        while(dStart <= cwEnd) {
+            days.push({
+                date: new Date(dStart),
+                dayLabel: `${daysMap[dStart.getDay() + 1]}, ${monthNamesList[dStart.getMonth()]} ${dStart.getDate()}`,
+                tokens: 0,
+                completed: 0,
+                cancelled: 0
+            });
+            dStart.setDate(dStart.getDate() + 1);
+        }
+
+        weeklyReport.push({
+            week: `Week ${wNum}`,
+            dateRange: `${monthNamesList[cwStart.getMonth()]} ${cwStart.getDate()} - ${monthNamesList[cwEnd.getMonth()]} ${cwEnd.getDate()}`,
+            start: new Date(cwStart),
+            end: new Date(cwEnd),
+            tokens: 0,
+            completed: 0,
+            cancelled: 0,
+            days: days
+        });
+        
+        cwStart.setDate(cwEnd.getDate() + 1);
+        wNum++;
+    }
+
+    const currentMonthTokens = await Token.find({ ...serviceFilter, createdAt: { $gte: currentMonthStart, $lte: currentMonthEnd } });
+    currentMonthTokens.forEach(t => {
+        const tDate = new Date(t.createdAt);
+        const w = weeklyReport.find(wk => tDate >= wk.start && tDate <= new Date(wk.end.getTime()).setHours(23,59,59,999));
+        if (w) {
+            w.tokens += 1;
+            if (t.status === 'completed') w.completed += 1;
+            if (t.status === 'cancelled') w.cancelled += 1;
+            
+            const d = w.days.find(day => day.date.getDate() === tDate.getDate() && day.date.getMonth() === tDate.getMonth());
+            if (d) {
+                d.tokens += 1;
+                if (t.status === 'completed') d.completed += 1;
+                if (t.status === 'cancelled') d.cancelled += 1;
+            }
+        }
     });
 
     
@@ -606,6 +708,7 @@ const getAnalytics = async (req, res, next) => {
         dailyQueueData,
         monthlyData,
         weeklyReport,
+        monthlyReport: monthlyReportSummary,
         recentActivity,
       },
     });
@@ -613,7 +716,6 @@ const getAnalytics = async (req, res, next) => {
     next(error);
   }
 };
-
 
 const verifyScannedToken = async (req, res, next) => {
   try {

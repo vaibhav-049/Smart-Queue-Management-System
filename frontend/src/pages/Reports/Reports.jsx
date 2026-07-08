@@ -42,7 +42,11 @@ export default function Reports() {
   const { darkMode } = useTheme();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [isChartLoading, setIsChartLoading] = useState(false);
   const [analytics, setAnalytics] = useState(null);
+  
+  const [expandedWeek, setExpandedWeek] = useState(null);
+  const [expandedMonth, setExpandedMonth] = useState(null);
 
   const currentDate = new Date();
   const isSuperAdmin = user?.role === 'admin' && !user?.service;
@@ -64,6 +68,7 @@ export default function Reports() {
     }
     const queryStr = params.toString();
 
+    setIsChartLoading(true);
     api.get(`/admin/analytics${queryStr ? `?${queryStr}` : ''}`)
       .then((res) => {
         if (res.data && res.data.success) {
@@ -74,7 +79,10 @@ export default function Reports() {
         console.error('Error loading analytics for reports:', err);
         toast.error('Failed to load reports data');
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setIsChartLoading(false);
+      });
   }, [isSuperAdmin]);
 
   useEffect(() => {
@@ -95,7 +103,7 @@ export default function Reports() {
     );
   }
 
-  const { dashboardStats, hourlyData, monthlyData, weeklyReport } = analytics;
+  const { dashboardStats, hourlyData, monthlyData, weeklyReport, monthlyReport } = analytics;
 
   const totalWeeklyTokens = weeklyReport?.reduce((acc, w) => acc + w.tokens, 0) || 1;
   const totalWeeklyCompleted = weeklyReport?.reduce((acc, w) => acc + w.completed, 0) || 0;
@@ -163,6 +171,7 @@ export default function Reports() {
           onMonthRangeChange={handleMonthRangeChange}
           monthRange={monthRange}
           isSuperAdmin={isSuperAdmin}
+          isChartLoading={isChartLoading}
         />
       </Suspense>
 
@@ -189,34 +198,116 @@ export default function Reports() {
               </tr>
             </thead>
             <tbody>
-              {weeklyReport.map((week, index) => (
-                <m.tr
-                  key={week.week}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.5 + index * 0.1 }}
-                >
-                  <td className="font-medium">{week.week}</td>
-                  <td>{week.tokens.toLocaleString()}</td>
-                  <td className="text-green">{week.completed.toLocaleString()}</td>
-                  <td className="text-red">{week.cancelled}</td>
-                  <td>
-                    <div className="completion-bar-wrapper">
-                      <div className="completion-bar">
-                        <div
-                          className="completion-fill"
-                          style={{ width: `${(week.completed / week.tokens) * 100}%` }}
-                        />
+              {weeklyReport?.map((week, index) => (
+                <React.Fragment key={week.week}>
+                  <m.tr
+                    onClick={() => setExpandedWeek(expandedWeek === week.week ? null : week.week)}
+                    style={{ cursor: 'pointer' }}
+                    className={expandedWeek === week.week ? 'expanded-row-parent' : ''}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5 + index * 0.1 }}
+                  >
+                    <td className="font-medium">
+                      {week.week} <span style={{ fontSize: '0.8em', color: '#888', marginLeft: '4px' }}>({week.dateRange})</span>
+                    </td>
+                    <td>{week.tokens.toLocaleString()}</td>
+                    <td className="text-green">{week.completed.toLocaleString()}</td>
+                    <td className="text-red">{week.cancelled}</td>
+                    <td>
+                      <div className="completion-bar-wrapper">
+                        <div className="completion-bar">
+                          <div
+                            className="completion-fill"
+                            style={{ width: `${(week.completed / (week.tokens || 1)) * 100}%` }}
+                          />
+                        </div>
+                        <span>{week.tokens > 0 ? ((week.completed / week.tokens) * 100).toFixed(1) : 0}%</span>
                       </div>
-                      <span>{week.tokens > 0 ? ((week.completed / week.tokens) * 100).toFixed(1) : 0}%</span>
-                    </div>
-                  </td>
-                </m.tr>
+                    </td>
+                  </m.tr>
+                  {expandedWeek === week.week && week.days && week.days.map((day, dIdx) => (
+                    <tr key={`${week.week}-day-${dIdx}`} className="expanded-row-child" style={{ background: darkMode ? '#1e293b' : '#f8fafc' }}>
+                      <td style={{ paddingLeft: '2rem', fontSize: '0.9rem' }}>{day.dayLabel}</td>
+                      <td style={{ fontSize: '0.9rem' }}>{day.tokens}</td>
+                      <td className="text-green" style={{ fontSize: '0.9rem' }}>{day.completed}</td>
+                      <td className="text-red" style={{ fontSize: '0.9rem' }}>{day.cancelled}</td>
+                      <td></td>
+                    </tr>
+                  ))}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
         </div>
       </m.div>
+
+      {}
+      {monthlyReport && monthlyReport.length > 0 && (
+        <m.div
+          className="report-table-card"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+        >
+          <div className="chart-header">
+            <h3>Monthly Report Summary</h3>
+            <span className="chart-badge"><FiCalendar size={14} /> Selected Range</span>
+          </div>
+          <div className="table-wrapper">
+            <table className="report-table">
+              <thead>
+                <tr>
+                  <th>Month</th>
+                  <th>Tokens Generated</th>
+                  <th>Completed</th>
+                  <th>Cancelled</th>
+                  <th>Completion Rate</th>
+                </tr>
+              </thead>
+              <tbody>
+                {monthlyReport.map((monthData, index) => (
+                  <React.Fragment key={monthData.month}>
+                    <m.tr
+                      onClick={() => setExpandedMonth(expandedMonth === monthData.month ? null : monthData.month)}
+                      style={{ cursor: 'pointer' }}
+                      className={expandedMonth === monthData.month ? 'expanded-row-parent' : ''}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.5 + index * 0.1 }}
+                    >
+                      <td className="font-medium">{monthData.month}</td>
+                      <td>{monthData.tokens.toLocaleString()}</td>
+                      <td className="text-green">{monthData.completed.toLocaleString()}</td>
+                      <td className="text-red">{monthData.cancelled}</td>
+                      <td>
+                        <div className="completion-bar-wrapper">
+                          <div className="completion-bar">
+                            <div
+                              className="completion-fill"
+                              style={{ width: `${(monthData.completed / (monthData.tokens || 1)) * 100}%` }}
+                            />
+                          </div>
+                          <span>{monthData.tokens > 0 ? ((monthData.completed / monthData.tokens) * 100).toFixed(1) : 0}%</span>
+                        </div>
+                      </td>
+                    </m.tr>
+                    {expandedMonth === monthData.month && monthData.weeks && monthData.weeks.map((week, wIdx) => (
+                      <tr key={`${monthData.month}-wk-${wIdx}`} className="expanded-row-child" style={{ background: darkMode ? '#1e293b' : '#f8fafc' }}>
+                        <td style={{ paddingLeft: '2rem', fontSize: '0.9rem' }}>{week.weekLabel}</td>
+                        <td style={{ fontSize: '0.9rem' }}>{week.tokens}</td>
+                        <td className="text-green" style={{ fontSize: '0.9rem' }}>{week.completed}</td>
+                        <td className="text-red" style={{ fontSize: '0.9rem' }}>{week.cancelled}</td>
+                        <td></td>
+                      </tr>
+                    ))}
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </m.div>
+      )}
 
       {}
       <div className="report-extra-grid">
