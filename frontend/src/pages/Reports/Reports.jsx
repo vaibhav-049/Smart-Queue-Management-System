@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
+import React, { useState, useEffect, lazy, Suspense, useCallback } from 'react';
 import { m } from 'framer-motion';
 import { useTheme } from '../../context/ThemeContext';
 import { FiDownload, FiCalendar, FiTrendingUp, FiClock, FiActivity } from 'react-icons/fi';
